@@ -3,223 +3,82 @@
 
 {% block extra_css %}
 <style>
-    /* ===== RESET DE APPEARANCE PARA TODOS LOS INPUTS ===== */
-    input,
-    textarea,
-    select,
-    button {
+    /* ===== RESET DE APPEARANCE ===== */
+    input, textarea, select, button {
         -webkit-appearance: none;
         -moz-appearance: none;
         appearance: none;
     }
     
-    /* Excepciones para elementos nativos */
-    input[type="checkbox"],
-    input[type="radio"] {
+    input[type="checkbox"], input[type="radio"] {
         -webkit-appearance: auto;
         -moz-appearance: auto;
         appearance: auto;
     }
     
-    /* Prevenir zoom automático en iOS */
-    input[type="email"],
-    input[type="password"],
-    input[type="text"] {
+    input[type="email"], input[type="password"], input[type="text"] {
         font-size: 16px;
     }
     
-    /* ===== MEDIDAS RESPONSIVE GLOBALES ===== */
-    * {
-        box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     
-    /* Móviles pequeños (menos de 576px) */
+    /* ===== RESPONSIVE ===== */
     @media (max-width: 576px) {
-        .container {
-            padding: 0 12px;
-        }
-        
-        .row.justify-content-center {
-            margin: 0 !important;
-        }
-        
-        .card-divina {
-            padding: 1.5rem !important;
-        }
-        
-        .text-center.mb-5.pb-4 {
-            margin-bottom: 1.5rem !important;
-            padding-bottom: 1rem !important;
-        }
-        
-        .bg-gradient-divino.rounded-circle {
-            width: 70px !important;
-            height: 70px !important;
-            margin-bottom: 1rem !important;
-        }
-        
-        .bg-gradient-divino.rounded-circle i {
-            font-size: 1.5rem !important;
-        }
-        
-        h2.h3 {
-            font-size: 1.5rem !important;
-        }
-        
-        h4.fw-bold {
-            font-size: 1.25rem !important;
-        }
-        
-        p.text-silver {
-            font-size: 0.85rem !important;
-        }
-        
-        .form-label {
-            font-size: 0.9rem !important;
-            margin-bottom: 0.5rem !important;
-        }
-        
-        .input-group-lg .form-control,
-        .input-group-lg .input-group-text,
-        .input-group-lg .btn {
+        .container { padding: 0 12px; }
+        .row.justify-content-center { margin: 0 !important; }
+        .card-divina { padding: 1.5rem !important; }
+        .text-center.mb-5.pb-4 { margin-bottom: 1.5rem !important; padding-bottom: 1rem !important; }
+        .bg-gradient-divino.rounded-circle { width: 70px !important; height: 70px !important; margin-bottom: 1rem !important; }
+        .bg-gradient-divino.rounded-circle i { font-size: 1.5rem !important; }
+        h2.h3 { font-size: 1.5rem !important; }
+        h4.fw-bold { font-size: 1.25rem !important; }
+        p.text-silver { font-size: 0.85rem !important; }
+        .form-label { font-size: 0.9rem !important; margin-bottom: 0.5rem !important; }
+        .input-group-lg .form-control, .input-group-lg .input-group-text, .input-group-lg .btn {
             min-height: 48px !important;
             font-size: 16px !important;
         }
-        
-        .form-control {
-            font-size: 16px !important;
-            padding: 0.5rem 0.75rem !important;
-        }
-        
-        .btn-xxl {
-            padding: 0.75rem 1rem !important;
-            font-size: 1rem !important;
-            min-height: 48px;
-        }
-        
-        .alert {
-            font-size: 0.8rem;
-            padding: 0.75rem;
-        }
-        
-        .mb-5 {
-            margin-bottom: 1.5rem !important;
-        }
-        
-        .mb-4 {
-            margin-bottom: 1rem !important;
-        }
+        .form-control { font-size: 16px !important; padding: 0.5rem 0.75rem !important; }
+        .btn-xxl { padding: 0.75rem 1rem !important; font-size: 1rem !important; min-height: 48px; }
+        .alert { font-size: 0.8rem; padding: 0.75rem; }
+        .mb-5 { margin-bottom: 1.5rem !important; }
+        .mb-4 { margin-bottom: 1rem !important; }
     }
     
-    /* Tablets (576px - 768px) */
     @media (min-width: 576px) and (max-width: 768px) {
-        .card-divina {
-            padding: 2rem !important;
-        }
-        
-        .bg-gradient-divino.rounded-circle {
-            width: 80px !important;
-            height: 80px !important;
-        }
-        
-        .input-group-lg .form-control,
-        .input-group-lg .input-group-text,
-        .input-group-lg .btn {
+        .card-divina { padding: 2rem !important; }
+        .bg-gradient-divino.rounded-circle { width: 80px !important; height: 80px !important; }
+        .input-group-lg .form-control, .input-group-lg .input-group-text, .input-group-lg .btn {
             min-height: 50px;
         }
     }
     
-    /* Tablets grandes (768px - 992px) */
-    @media (min-width: 768px) and (max-width: 992px) {
-        .col-md-5 {
-            width: 60% !important;
-        }
-    }
-    
-    /* Laptops (992px - 1200px) */
-    @media (min-width: 992px) and (max-width: 1200px) {
-        .col-lg-4 {
-            width: 33.33% !important;
-        }
-    }
-    
-    /* Pantallas grandes (1200px+) */
-    @media (min-width: 1200px) {
-        .col-lg-4 {
-            max-width: 450px !important;
-        }
-    }
-    
-    /* Orientación landscape en móviles */
     @media (max-width: 768px) and (orientation: landscape) {
-        .row.justify-content-center {
-            min-height: auto !important;
-            padding: 1rem 0;
-        }
-        
-        .card-divina {
-            padding: 1.25rem !important;
-        }
-        
-        .text-center.mb-5.pb-4 {
-            margin-bottom: 0.75rem !important;
-            padding-bottom: 0.5rem !important;
-        }
-        
-        .bg-gradient-divino.rounded-circle {
-            width: 50px !important;
-            height: 50px !important;
-            margin-bottom: 0.5rem !important;
-        }
-        
-        .bg-gradient-divino.rounded-circle i {
-            font-size: 1.25rem !important;
-        }
-        
-        h2.h3 {
-            font-size: 1.25rem !important;
-        }
-        
-        h4.fw-bold {
-            font-size: 1rem !important;
-        }
-        
-        .mb-5 {
-            margin-bottom: 0.75rem !important;
-        }
-        
-        .mb-4 {
-            margin-bottom: 0.5rem !important;
-        }
+        .row.justify-content-center { min-height: auto !important; padding: 1rem 0; }
+        .card-divina { padding: 1.25rem !important; }
+        .text-center.mb-5.pb-4 { margin-bottom: 0.75rem !important; padding-bottom: 0.5rem !important; }
+        .bg-gradient-divino.rounded-circle { width: 50px !important; height: 50px !important; margin-bottom: 0.5rem !important; }
+        .bg-gradient-divino.rounded-circle i { font-size: 1.25rem !important; }
+        h2.h3 { font-size: 1.25rem !important; }
+        h4.fw-bold { font-size: 1rem !important; }
+        .mb-5 { margin-bottom: 0.75rem !important; }
+        .mb-4 { margin-bottom: 0.5rem !important; }
     }
     
-    /* Touch-friendly para móviles */
     @media (hover: none) and (pointer: coarse) {
-        button, 
-        .btn,
-        [onclick] {
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        button:active,
-        .btn:active {
-            transform: scale(0.97);
-            transition: transform 0.1s;
-        }
-        
-        .hover-lift:active {
-            transform: translateY(-2px);
-        }
+        button, .btn, [onclick] { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        button:active, .btn:active { transform: scale(0.97); transition: transform 0.1s; }
+        .hover-lift:active { transform: translateY(-2px); }
     }
     
-    /* ===== ESTILOS ORIGINALES MEJORADOS ===== */
+    /* ===== ESTILOS PRINCIPALES ===== */
     .card-divina {
         background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
         border-radius: 20px;
         overflow: hidden;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
         border: none;
+        animation: fadeInUp 0.5s ease-out;
     }
     
     @media (min-width: 768px) {
@@ -237,13 +96,8 @@
         box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
     }
     
-    .text-gold-primary {
-        color: #D4AF37;
-    }
-    
-    .text-silver {
-        color: #6c757d;
-    }
+    .text-gold-primary { color: #D4AF37; }
+    .text-silver { color: #6c757d; }
     
     .btn-warning {
         background: linear-gradient(135deg, #D4AF37 0%, #fbbf24 100%);
@@ -259,12 +113,6 @@
         color: #1E3A8A;
         transform: translateY(-2px);
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-    }
-    
-    @media (max-width: 576px) {
-        .btn-warning:hover {
-            transform: translateY(-1px);
-        }
     }
     
     .btn-xxl {
@@ -290,11 +138,9 @@
     .input-group-text {
         border-radius: 50px 0 0 50px;
     }
-    
     .input-group .form-control {
         border-radius: 0 50px 50px 0;
     }
-    
     .input-group .btn {
         border-radius: 0 50px 50px 0;
     }
@@ -302,63 +148,130 @@
     .hover-lift {
         transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    
     .hover-lift:hover {
         transform: translateY(-3px);
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     }
     
-    /* Animación de entrada */
-    .card-divina {
-        animation: fadeInUp 0.5s ease-out;
-    }
-    
     @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     
-    /* Alertas animadas */
-    .alert {
-        animation: slideDown 0.3s ease-out;
-        border-radius: 12px;
-    }
+    html { scroll-behavior: smooth; }
     
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    /* Scroll suave */
-    html {
-        scroll-behavior: smooth;
-    }
-    
-    /* Mejora para inputs en iOS */
-    input[type="email"],
-    input[type="password"] {
+    input[type="email"], input[type="password"] {
         -webkit-appearance: none;
         -moz-appearance: none;
         appearance: none;
         border-radius: 50px;
     }
     
-    /* Prevenir estilos de autocompletado */
-    input:-webkit-autofill,
-    input:-webkit-autofill:focus {
+    input:-webkit-autofill, input:-webkit-autofill:focus {
         transition: background-color 600000s 0s, color 600000s 0s;
+    }
+    
+    /* ===== ESTILOS PARA ALERTAS ROJAS PREMIUM ===== */
+    .alert {
+        animation: slideDown 0.4s ease-out;
+        border-radius: 14px;
+        padding: 1rem 1.25rem;
+        font-weight: 500;
+        border: none;
+    }
+    
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    
+    /* Alerta de ERROR (ROJO) - Premium */
+    .alert-danger {
+        background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%) !important;
+        color: #fca5a5 !important;
+        border-left: 6px solid #ef4444 !important;
+        box-shadow: 0 8px 30px rgba(220, 38, 38, 0.3) !important;
+        border-radius: 14px !important;
+    }
+    
+    .alert-danger i {
+        color: #fca5a5;
+        font-size: 1.2rem;
+    }
+    
+    .alert-danger .btn-close {
+        filter: brightness(0) invert(1);
+        opacity: 0.7;
+        transition: all 0.2s;
+    }
+    
+    .alert-danger .btn-close:hover {
+        opacity: 1;
+        transform: rotate(90deg);
+    }
+    
+    /* Alerta de ÉXITO (VERDE) */
+    .alert-success {
+        background: linear-gradient(135deg, #064e3b 0%, #065f46 100%) !important;
+        color: #a7f3d0 !important;
+        border-left: 6px solid #34d399 !important;
+        box-shadow: 0 8px 30px rgba(16, 185, 129, 0.2) !important;
+        border-radius: 14px !important;
+    }
+    
+    .alert-success i {
+        color: #34d399;
+        font-size: 1.2rem;
+    }
+    
+    .alert-success .btn-close {
+        filter: brightness(0) invert(1);
+        opacity: 0.7;
+        transition: all 0.2s;
+    }
+    
+    .alert-success .btn-close:hover {
+        opacity: 1;
+        transform: rotate(90deg);
+    }
+    
+    /* Estilo especial para mensajes de BLOQUEO o CIERRE DE SESIÓN */
+    .alert-block {
+        background: linear-gradient(135deg, #450a0a 0%, #7f1d1d 100%) !important;
+        color: #fecaca !important;
+        border-left: 6px solid #dc2626 !important;
+        box-shadow: 0 8px 30px rgba(220, 38, 38, 0.4) !important;
+        border-radius: 14px !important;
+        padding: 1.25rem 1.5rem !important;
+    }
+    
+    .alert-block i {
+        color: #ef4444;
+        font-size: 1.5rem;
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+    
+    .alert-block .alert-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #fca5a5;
+        display: block;
+    }
+    
+    .alert-block .btn-close {
+        filter: brightness(0) invert(1);
+        opacity: 0.7;
+        transition: all 0.2s;
+    }
+    
+    .alert-block .btn-close:hover {
+        opacity: 1;
+        transform: rotate(90deg);
     }
 </style>
 {% endblock %}
@@ -378,17 +291,60 @@
                 <p class="text-silver mt-2 small">Accede a tu cuenta Salesiana</p>
             </div>
 
-            <!-- FLASH MESSAGES -->
+            <!-- ===== FLASH MESSAGES MEJORADOS ===== -->
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-            {% for category, message in messages %}
-            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show shadow-sm mb-4"
-                role="alert">
-                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            {% endfor %}
+                {% for category, message in messages %}
+                    {% set is_block = 'IP bloqueada' in message or 'Sesión cerrada' in message or 'bloqueado' in message.lower() or 'cerrada' in message.lower() %}
+                    
+                    {% if is_block %}
+                    <!-- Alerta especial para BLOQUEO o CIERRE DE SESIÓN (ROJO INTENSO) -->
+                    <div class="alert alert-block alert-dismissible fade show shadow-lg mb-4" role="alert">
+                        <div class="d-flex align-items-start gap-3">
+                            <i class="fas fa-ban fa-lg mt-1"></i>
+                            <div>
+                                <span class="alert-title">
+                                    <i class="fas fa-shield-alt me-1"></i> ACCESO RESTRINGIDO
+                                </span>
+                                <span style="display: block; font-size: 0.95rem; margin-top: 2px;">
+                                    {{ message }}
+                                </span>
+                            </div>
+                            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close" style="margin-top: -4px;"></button>
+                        </div>
+                    </div>
+                    
+                    {% elif category == 'error' %}
+                    <!-- Alerta de error estándar (ROJO) -->
+                    <div class="alert alert-danger alert-dismissible fade show shadow-lg mb-4" role="alert">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="fas fa-exclamation-triangle fa-lg mt-1"></i>
+                            <span>{{ message }}</span>
+                            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                    
+                    {% elif category == 'success' %}
+                    <!-- Alerta de éxito (VERDE) -->
+                    <div class="alert alert-success alert-dismissible fade show shadow-lg mb-4" role="alert">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="fas fa-check-circle fa-lg mt-1"></i>
+                            <span>{{ message }}</span>
+                            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                    
+                    {% else %}
+                    <!-- Alerta por defecto -->
+                    <div class="alert alert-info alert-dismissible fade show shadow-lg mb-4" role="alert">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="fas fa-info-circle fa-lg mt-1"></i>
+                            <span>{{ message }}</span>
+                            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
             {% endif %}
             {% endwith %}
 
@@ -454,7 +410,7 @@
 </div>
 
 <script>
-    // TOGGLE PASSWORD MEJORADO
+    // TOGGLE PASSWORD
     function togglePassword(inputId) {
         const input = document.getElementById(inputId);
         const icon = document.getElementById('toggleIcon');
@@ -472,7 +428,7 @@
         }
     }
 
-    // VALIDACIÓN CLIENTE ANTES DE ENVIAR
+    // VALIDACIÓN CLIENTE
     (() => {
         'use strict';
         
@@ -485,7 +441,6 @@
                 const passwordInput = document.getElementById('claveInput');
                 let isValid = true;
                 
-                // Validar email
                 if (emailInput && emailInput.value.trim() === '') {
                     emailInput.classList.add('is-invalid');
                     isValid = false;
@@ -497,7 +452,6 @@
                     emailInput.classList.add('is-valid');
                 }
                 
-                // Validar password
                 if (passwordInput && passwordInput.value.trim() === '') {
                     passwordInput.classList.add('is-invalid');
                     isValid = false;
@@ -510,13 +464,11 @@
                     event.preventDefault();
                     event.stopPropagation();
                 } else {
-                    // Mostrar estado de carga
                     if (submitBtn) {
                         const originalText = submitBtn.innerHTML;
                         submitBtn.disabled = true;
                         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Ingresando...';
                         
-                        // Restaurar después de 3 segundos por si hay error
                         setTimeout(() => {
                             if (submitBtn.disabled) {
                                 submitBtn.disabled = false;
@@ -530,7 +482,6 @@
             });
         });
         
-        // Validación en tiempo real
         const emailInput = document.getElementById('correoInput');
         const passwordInput = document.getElementById('claveInput');
         
@@ -561,7 +512,6 @@
         }
     })();
     
-    // Mejorar experiencia táctil en móviles
     if ('ontouchstart' in window) {
         document.querySelectorAll('.btn, .hover-lift').forEach(btn => {
             btn.addEventListener('touchstart', function() {
@@ -575,16 +525,12 @@
         });
     }
     
-    // Prevenir envío duplicado con tecla Enter
     document.addEventListener('keypress', function(event) {
         if (event.key === 'Enter') {
             const submitBtn = document.getElementById('submitBtn');
             if (submitBtn && !submitBtn.disabled) {
-                // Prevenir múltiples envíos
                 setTimeout(() => {
-                    if (submitBtn.disabled) {
-                        // Ya está procesando
-                    }
+                    if (submitBtn.disabled) {}
                 }, 100);
             }
         }
