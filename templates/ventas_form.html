@@ -1,0 +1,734 @@
+{% extends "base.html" %}
+{% block titulito %}🛒 Nueva Venta Salesiana{% endblock %}
+
+{% block contenido %}
+{% set vendedores = vendedores or [] %}
+
+<div class="container-fluid px-2 px-sm-3">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10 col-xl-10">
+            <div class="row g-4">
+
+                <div class="col-12">
+                    <div class="text-center mb-4 mb-md-5">
+                        <div class="hero-icon mb-3 mb-md-4">
+                            <i class="fas fa-cash-register fa-3x fa-md-4x text-success glow-icon"></i>
+                        </div>
+                        <h1 class="display-5 display-md-4 fw-bolder text-dark mb-2">Nueva Venta</h1>
+                        <p class="lead text-muted mb-0 fs-6 fs-sm-5">Registra ventas con bendición salesiana</p>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-8 col-xl-8 order-2 order-lg-1">
+                    <div class="card shadow-3xl border-0 overflow-hidden">
+                        <div class="card-body p-3 p-sm-4 p-lg-6">
+
+                            {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                            {% for category, message in messages %}
+                            <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show shadow-sm mb-4 mb-md-5">
+                                <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' }} me-2 me-md-3"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+                            {% endwith %}
+
+                            <form method="POST" id="ventaForm" class="needs-validation" novalidate>
+                                <input type="hidden" name="cliente_email" id="cliente_email_hidden" value="">
+                                <input type="hidden" name="cliente_documento" id="cliente_documento_hidden" value="">
+
+                                <div class="mb-4 mb-md-5">
+                                    <label class="form-label fw-bolder fs-6 fs-md-5 mb-2 mb-md-3">
+                                        <i class="fas fa-user-tie me-2 me-md-3 text-purple"></i>Vendedor
+                                    </label>
+                                    {% if session.rol == 'administrador' %}
+                                    <select name="vendedor_id" class="form-select form-select-xl shadow-sm" required>
+                                        <option value="">👤 Seleccione vendedor</option>
+                                        {% for v in vendedores %}
+                                        <option value="{{ v.id }}">{{ v.nombres }} {{ v.apellidos }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    {% else %}
+                                    {% if vendedores|length > 0 %}
+                                    <input type="hidden" name="vendedor_id" value="{{ vendedores[0].id }}">
+                                    <div class="input-group input-group-xl shadow-sm">
+                                        <span class="input-group-text bg-white"><i class="fas fa-user-check text-success"></i></span>
+                                        <input type="text" class="form-control fw-semibold" value="{{ vendedores[0].nombres }} {{ vendedores[0].apellidos }}" readonly>
+                                    </div>
+                                    {% else %}
+                                    <div class="alert alert-danger mb-0">No hay vendedor asignado.</div>
+                                    <input type="hidden" name="vendedor_id" value="">
+                                    {% endif %}
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-4 mb-md-5">
+                                    <label class="form-label fw-bolder fs-6 fs-md-5 mb-2 mb-md-3">
+                                        <i class="fas fa-file-invoice me-2 me-md-3 text-primary"></i>Tipo de Comprobante
+                                    </label>
+                                    <div class="row g-3">
+                                        <div class="col-md-12 d-flex flex-column flex-sm-row gap-2 gap-sm-0">
+                                            <div class="form-check form-check-inline me-0 me-sm-4">
+                                                <input class="form-check-input" type="radio" name="tipo_comprobante" id="boleta" value="boleta" checked>
+                                                <label class="form-check-label fw-semibold" for="boleta">
+                                                    <i class="fas fa-receipt text-info me-1"></i> Boleta (Consumidor Final)
+                                                </label>
+                                            </div>
+                                            <div class="form-check form-check-inline me-0">
+                                                <input class="form-check-input" type="radio" name="tipo_comprobante" id="factura" value="factura">
+                                                <label class="form-check-label fw-semibold" for="factura">
+                                                    <i class="fas fa-file-invoice text-success me-1"></i> Factura (Con RUC)
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="datos_boleta" class="mb-4 mb-md-5">
+                                    <label class="form-label fw-bolder fs-6 fs-md-5 mb-2 mb-md-3">
+                                        <i class="fas fa-user me-2 me-md-3 text-primary"></i>Datos del Cliente - Boleta
+                                    </label>
+                                    <div class="row g-3">
+                                        <div class="col-12 col-md-4">
+                                            <label class="form-label fw-semibold">Tipo de Documento</label>
+                                            <select id="tipo_documento" class="form-select shadow-sm">
+                                                <option value="DNI">DNI</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-12 col-md-5">
+                                            <label class="form-label fw-semibold">Número de Documento</label>
+                                            <input type="text" id="numero_documento" class="form-control shadow-sm" placeholder="Ingrese DNI (8 dígitos)" maxlength="8">
+                                        </div>
+                                        <div class="col-12 col-md-3 d-flex align-items-end">
+                                            <button type="button" id="btnConsultarDni" class="btn btn-info w-100 py-2 py-md-auto">
+                                                <i class="fas fa-search"></i> Consultar
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="resultadoCliente" class="mt-3"></div>
+                                    <div class="mt-4 p-3 bg-light rounded">
+                                        <h6 class="fw-bold"><i class="fas fa-edit"></i> Datos del Cliente</h6>
+                                        <div class="row g-3 mt-2">
+                                            <div class="col-12 col-md-6">
+                                                <label class="form-label small">Nombres</label>
+                                                <input type="text" name="cliente_nombres" id="cliente_nombres" class="form-control" placeholder="Nombres">
+                                            </div>
+                                            <div class="col-12 col-md-6">
+                                                <label class="form-label small">Apellidos</label>
+                                                <input type="text" name="cliente_apellidos" id="cliente_apellidos" class="form-control" placeholder="Apellidos">
+                                            </div>
+                                            <div class="col-12 col-md-6">
+                                                <label class="form-label small">N° Documento</label>
+                                                <input type="text" name="cliente_documento" id="cliente_documento_boleta" class="form-control" placeholder="Número de documento">
+                                            </div>
+                                            <div class="col-12 col-md-6">
+                                                <label class="form-label small"><i class="fas fa-envelope me-1 text-primary"></i>Correo Electrónico</label>
+                                                <input type="email" id="cliente_email_boleta" class="form-control mb-1" placeholder="cliente@ejemplo.com">
+                                                <small class="text-muted d-block">📧 Recibirá la boleta por correo</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="datos_factura" class="mb-4 mb-md-5" style="display: none;">
+                                    <label class="form-label fw-bolder fs-6 fs-md-5 mb-2 mb-md-3">
+                                        <i class="fas fa-building me-2 me-md-3 text-success"></i>Datos del Cliente - Factura
+                                    </label>
+                                    <div class="row g-3">
+                                        <div class="col-12 col-md-8">
+                                            <input type="text" name="factura_ruc" id="factura_ruc" class="form-control shadow-sm" placeholder="Ingrese RUC (11 dígitos)" maxlength="11">
+                                        </div>
+                                        <div class="col-12 col-md-4">
+                                            <button type="button" id="btnConsultarRuc" class="btn btn-info w-100">
+                                                <i class="fas fa-search"></i> Consultar RUC
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="resultadoRuc" class="mt-3"></div>
+                                    <div class="mt-4 p-3 bg-light rounded">
+                                        <h6 class="fw-bold"><i class="fas fa-file-invoice"></i> Datos para Facturación</h6>
+                                        <div class="row g-3 mt-2">
+                                            <div class="col-12">
+                                                <label class="form-label small">Razón Social</label>
+                                                <input type="text" name="cliente_razon_social" id="factura_razon_social" class="form-control" placeholder="Razón Social">
+                                            </div>
+                                            <div class="col-12 col-md-6">
+                                                <label class="form-label small">RUC</label>
+                                                <input type="text" id="factura_ruc_display" class="form-control" placeholder="N° RUC" readonly>
+                                            </div>
+                                            <div class="col-12 col-md-6">
+                                                <label class="form-label small">Dirección</label>
+                                                <input type="text" name="factura_direccion" id="factura_direccion" class="form-control" placeholder="Dirección">
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label small"><i class="fas fa-envelope me-1 text-primary"></i>Correo Electrónico</label>
+                                                <input type="email" name="factura_email" id="factura_email" class="form-control mb-1" placeholder="cliente@ejemplo.com">
+                                                <small class="text-muted d-block">📧 Recibirá la factura por correo</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4 p-3 border rounded bg-white">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="checkbox_email" checked>
+                                        <label class="form-check-label fw-semibold text-wrap" for="checkbox_email">
+                                            <i class="fas fa-envelope-open-text me-2 text-success"></i>
+                                            Enviar comprobante por correo electrónico
+                                        </label>
+                                    </div>
+                                    <small class="text-muted d-block ms-4 mt-1">📧 El cliente recibirá su comprobante en el correo proporcionado</small>
+                                    <input type="hidden" name="enviar_email" id="enviar_email" value="1">
+                                </div>
+
+                                <!-- ========================================= -->
+                                <!-- PRODUCTO CON IMAGEN Y VALIDACIÓN DE STOCK -->
+                                <!-- ========================================= -->
+                                <div class="mb-4 mb-md-5">
+                                    <label class="form-label fw-bolder fs-6 fs-md-5 mb-2 mb-md-3">
+                                        <i class="fas fa-box me-2 me-md-3 text-warning"></i>Producto
+                                    </label>
+                                    <select name="producto_id" class="form-select form-select-xl shadow-sm" id="producto_select" required>
+                                        <option value="" disabled selected>📦 Seleccione producto</option>
+                                        {% for p in productos %}
+                                        <option value="{{ p.id }}" 
+                                                data-precio="{{ p.precio }}" 
+                                                data-stock="{{ p.cantidad }}" 
+                                                data-nombre="{{ p.nombre }}"
+                                                data-imagen="{{ p.imagen if p.imagen else '' }}">
+                                            {{ p.nombre }} - S/.{{ p.precio }}
+                                            {% if p.cantidad == 0 %}(❌ Sin stock)
+                                            {% elif p.cantidad <= 5 %}(⚠️ {{ p.cantidad }})
+                                            {% else %}(✅ {{ p.cantidad }})
+                                            {% endif %}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div id="stock_info" class="mt-3 p-3 bg-light rounded"></div>
+                                </div>
+
+                                <!-- ========================================= -->
+                                <!-- CANTIDAD CON VALIDACIÓN EN TIEMPO REAL -->
+                                <!-- ========================================= -->
+                                <div class="row g-4 mb-4">
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label fw-semibold mb-2 mb-md-3">
+                                            <i class="fas fa-hashtag me-2 text-info"></i>Cantidad
+                                        </label>
+                                        <input type="number" name="cantidad" id="cantidad_input" 
+                                               class="form-control form-control-lg shadow-sm" 
+                                               value="1" min="1" required>
+                                        <div id="cantidad_error" class="text-danger mt-1 small" style="display: none;">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            <span id="cantidad_error_text"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label fw-semibold mb-2 mb-md-3">
+                                            <i class="fas fa-coins me-2 text-success"></i>Total
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">S/.</span>
+                                            <input type="text" id="total_display" class="form-control form-control-lg shadow-sm fw-bold fs-4 text-success" value="0.00" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ========================================= -->
+                                <!-- FECHA Y HORA DE PERÚ EN TIEMPO REAL -->
+                                <!-- ========================================= -->
+                                <div class="row g-4 mb-4 mb-md-5">
+                                    <div class="col-12 col-md-12">
+                                        <label class="form-label fw-semibold mb-2 mb-md-3">
+                                            <i class="fas fa-calendar-alt me-2 text-info"></i>Fecha y Hora de Venta
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light"><i class="fas fa-clock text-success"></i></span>
+                                            <input type="text" id="fecha_hora_display" class="form-control form-control-lg shadow-sm bg-light fw-semibold" readonly>
+                                        </div>
+                                        <small class="text-muted d-block mt-1">
+                                            <i class="fas fa-clock me-1"></i> Hora de Perú (UTC-5) - Se actualiza automáticamente
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="d-grid gap-3">
+                                    <button type="submit" class="btn btn-success btn-lg px-5 py-3 shadow-lg fw-bold fs-5" id="submitBtn">
+                                        <i class="fas fa-check-circle me-2"></i>¡REALIZAR VENTA!
+                                    </button>
+                                    <a href="/productos" class="btn btn-outline-secondary btn-lg px-5 py-3 shadow-sm">Cancelar</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========================================= -->
+                <!-- COLUMNA DERECHA - VISTA PREVIA DEL PRODUCTO -->
+                <!-- ========================================= -->
+                <div class="col-12 col-lg-4 col-xl-4 order-1 order-lg-2">
+                    <div class="card shadow-lg h-100 card-preview-sticky">
+                        <div class="card-header bg-info text-white text-center py-3 py-md-4">
+                            <i class="fas fa-image fa-2x mb-2 d-none d-sm-inline-block"></i>
+                            <h6 class="mb-0 fw-bold">Producto Seleccionado</h6>
+                        </div>
+                        <div class="card-body p-4 text-center">
+                            <div id="producto-preview" class="producto-preview mb-4">
+                                <div class="bg-light rounded-3 p-3 d-flex align-items-center justify-content-center contenedor-preview-caja">
+                                    <div class="text-center">
+                                        <i class="fas fa-box fa-3x text-muted mb-2"></i>
+                                        <small class="text-muted d-block">Selecciona un producto</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="producto-info" class="text-center text-muted small">
+                                <i class="fas fa-info-circle me-2"></i>Información del producto aparecerá aquí
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const API_TOKEN = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6IkkyMzExNTYxQENPTlRJTkVOVEFMLkVEVS5QRSJ9.j1hIU4cRaCSzCNHlfWWZrWIf0zfqQAur7QV1AZab6cI';
+
+// ============================================
+// FUNCIÓN PARA OBTENER HORA DE PERÚ (CORREGIDA)
+// ============================================
+function obtenerHoraPeru() {
+    const ahora = new Date();
+    
+    // Opción 1: USAR LA HORA LOCAL DEL NAVEGADOR (recomendado)
+    // Si el usuario está en Perú, esto ya es hora Perú
+    const dia = String(ahora.getDate()).padStart(2, '0');
+    const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+    const anio = ahora.getFullYear();
+    const horas = String(ahora.getHours()).padStart(2, '0');
+    const minutos = String(ahora.getMinutes()).padStart(2, '0');
+    const segundos = String(ahora.getSeconds()).padStart(2, '0');
+    
+    return `${dia}/${mes}/${anio} ${horas}:${minutos}:${segundos}`;
+}
+
+// ============================================
+// ACTUALIZAR FECHA Y HORA EN TIEMPO REAL
+// ============================================
+function actualizarFechaHora() {
+    const fechaHoraDisplay = document.getElementById('fecha_hora_display');
+    if (fechaHoraDisplay) {
+        fechaHoraDisplay.value = obtenerHoraPeru();
+    }
+}
+
+// ============================================
+// FUNCIONES DE VALIDACIÓN DE STOCK
+// ============================================
+let stockDisponible = 0;
+let productoNombre = '';
+
+function validarStockEnTiempoReal() {
+    const cantidadInput = document.getElementById('cantidad_input');
+    const cantidad = parseInt(cantidadInput.value) || 0;
+    const errorDiv = document.getElementById('cantidad_error');
+    const errorText = document.getElementById('cantidad_error_text');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    if (cantidad <= 0) {
+        errorDiv.style.display = 'block';
+        errorText.textContent = 'La cantidad debe ser al menos 1';
+        submitBtn.disabled = true;
+        return false;
+    }
+    
+    if (cantidad > stockDisponible) {
+        errorDiv.style.display = 'block';
+        errorText.textContent = `La cantidad (${cantidad}) excede el stock disponible (${stockDisponible} unidades de "${productoNombre}")`;
+        submitBtn.disabled = true;
+        return false;
+    }
+    
+    errorDiv.style.display = 'none';
+    submitBtn.disabled = false;
+    return true;
+}
+
+// ============================================
+// ACTUALIZAR TOTAL, STOCK Y VISTA PREVIA
+// ============================================
+function actualizarTotalYStock() {
+    const productoSelect = document.getElementById('producto_select');
+    const cantidadInput = document.getElementById('cantidad_input');
+    const totalDisplay = document.getElementById('total_display');
+    const stockInfo = document.getElementById('stock_info');
+    const previewContainer = document.getElementById('producto-preview');
+    const infoContainer = document.getElementById('producto-info');
+    
+    const option = productoSelect.options[productoSelect.selectedIndex];
+    const precio = parseFloat(option?.dataset.precio) || 0;
+    const stock = parseInt(option?.dataset.stock) || 0;
+    const nombre = option?.dataset.nombre || '';
+    const imagen = option?.dataset.imagen || '';
+    
+    stockDisponible = stock;
+    productoNombre = nombre;
+    
+    const cantidad = parseInt(cantidadInput.value) || 1;
+    const total = precio * cantidad;
+    totalDisplay.value = total.toFixed(2);
+    
+    // ============================================
+    // ACTUALIZAR VISTA PREVIA CON IMAGEN
+    // ============================================
+    if (option && option.value) {
+        let imagenUrl = '';
+        if (imagen) {
+            imagenUrl = `/static/img/productos/${imagen}`;
+        }
+        
+        let previewHtml = '';
+        if (imagen) {
+            previewHtml = `
+                <div class="bg-light rounded-3 p-2">
+                    <img src="${imagenUrl}" 
+                         alt="${nombre}" 
+                         class="img-fluid rounded-3" 
+                         style="max-height: 180px; width: auto; object-fit: contain;"
+                         onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'text-center p-3\\'><i class=\\'fas fa-image fa-3x text-muted mb-2\\'></i><br><small class=\\'text-muted\\'>Imagen no disponible</small></div>'">
+                    <h6 class="fw-bold mt-2 mb-1">${nombre}</h6>
+                    <p class="mb-0 small">Precio: S/. ${precio.toFixed(2)}</p>
+                    <p class="mb-0 small text-muted">Stock: ${stock} unidades</p>
+                </div>
+            `;
+        } else {
+            previewHtml = `
+                <div class="bg-light rounded-3 p-3 text-center">
+                    <i class="fas fa-box fa-3x text-primary mb-2"></i>
+                    <h6 class="fw-bold">${nombre}</h6>
+                    <p class="mb-0">Precio: S/. ${precio.toFixed(2)}</p>
+                    <p class="mb-0 small text-muted">Stock: ${stock} unidades</p>
+                    <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Sin imagen disponible</small>
+                </div>
+            `;
+        }
+        previewContainer.innerHTML = previewHtml;
+        infoContainer.innerHTML = `<i class="fas fa-check-circle text-success me-1"></i> Producto seleccionado: ${nombre}`;
+    } else {
+        previewContainer.innerHTML = `
+            <div class="bg-light rounded-3 p-3 text-center">
+                <i class="fas fa-box fa-3x text-muted mb-2"></i>
+                <small class="text-muted d-block">Selecciona un producto</small>
+            </div>
+        `;
+        infoContainer.innerHTML = `<i class="fas fa-info-circle me-2"></i>Información del producto aparecerá aquí`;
+    }
+    
+    // Mostrar información de stock
+    let stockHtml = '';
+    if (stock <= 0) {
+        stockHtml = '<div class="alert alert-danger mb-0">❌ Producto sin stock disponible</div>';
+        document.getElementById('submitBtn').disabled = true;
+    } else if (stock <= 5) {
+        stockHtml = `<div class="alert alert-warning mb-0">⚠️ Stock bajo: solo ${stock} unidades disponibles</div>`;
+        document.getElementById('submitBtn').disabled = false;
+    } else {
+        stockHtml = `<div class="alert alert-success mb-0">✅ Stock disponible: ${stock} unidades</div>`;
+        document.getElementById('submitBtn').disabled = false;
+    }
+    stockInfo.innerHTML = stockHtml;
+    
+    // Validar cantidad en tiempo real
+    validarStockEnTiempoReal();
+}
+
+// ============================================
+// ACTUALIZAR CAMPOS OCULTOS
+// ============================================
+function actualizarCamposOcultos() {
+    var tipo = document.querySelector('input[name="tipo_comprobante"]:checked').value;
+    var emailOculto = document.getElementById('cliente_email_hidden');
+    var documentoOculto = document.getElementById('cliente_documento_hidden');
+    
+    if (tipo === 'factura') {
+        var emailFactura = document.getElementById('factura_email');
+        var rucFactura = document.getElementById('factura_ruc');
+        emailOculto.value = emailFactura ? emailFactura.value : '';
+        documentoOculto.value = rucFactura ? rucFactura.value : '';
+    } else {
+        var emailBoleta = document.getElementById('cliente_email_boleta');
+        var documentoBoleta = document.getElementById('cliente_documento_boleta');
+        emailOculto.value = emailBoleta ? emailBoleta.value : '';
+        documentoOculto.value = documentoBoleta ? documentoBoleta.value : '';
+    }
+}
+
+function actualizarEnvioEmail() {
+    var checkbox = document.getElementById('checkbox_email');
+    var hidden = document.getElementById('enviar_email');
+    hidden.value = checkbox.checked ? '1' : '0';
+}
+
+// ============================================
+// CONSULTA DE DNI
+// ============================================
+async function consultarDNI() {
+    const dni = document.getElementById('numero_documento').value.trim();
+    const resultadoDiv = document.getElementById('resultadoCliente');
+    
+    if (!dni || dni.length !== 8) {
+        resultadoDiv.innerHTML = '<div class="alert alert-warning">⚠️ Ingrese un DNI válido de 8 dígitos</div>';
+        return;
+    }
+    
+    resultadoDiv.innerHTML = '<div class="alert alert-info">🔄 Consultando DNI...</div>';
+    
+    try {
+        const url = `https://dniruc.apisperu.com/api/v1/dni/${dni}?token=${encodeURIComponent(API_TOKEN)}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        document.getElementById('cliente_nombres').value = data.nombres || '';
+        document.getElementById('cliente_apellidos').value = (data.apellidoPaterno || '') + ' ' + (data.apellidoMaterno || '');
+        document.getElementById('cliente_documento_boleta').value = dni;
+        
+        resultadoDiv.innerHTML = '<div class="alert alert-success">✅ Datos encontrados correctamente</div>';
+        actualizarCamposOcultos();
+        
+    } catch (error) {
+        console.error('Error:', error);
+        resultadoDiv.innerHTML = '<div class="alert alert-danger">❌ Error al consultar DNI. Verifique el número o intente más tarde.</div>';
+    }
+}
+
+// ============================================
+// CONSULTA DE RUC
+// ============================================
+async function consultarRUC() {
+    const ruc = document.getElementById('factura_ruc').value.trim();
+    const resultadoDiv = document.getElementById('resultadoRuc');
+    
+    if (!ruc || ruc.length !== 11) {
+        resultadoDiv.innerHTML = '<div class="alert alert-warning">⚠️ Ingrese un RUC válido de 11 dígitos</div>';
+        return;
+    }
+    
+    resultadoDiv.innerHTML = '<div class="alert alert-info">🔄 Consultando RUC...</div>';
+    
+    try {
+        const url = `https://dniruc.apisperu.com/api/v1/ruc/${ruc}?token=${encodeURIComponent(API_TOKEN)}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        document.getElementById('factura_razon_social').value = data.razonSocial || '';
+        document.getElementById('factura_direccion').value = data.direccion || '';
+        document.getElementById('factura_ruc_display').value = ruc;
+        
+        resultadoDiv.innerHTML = '<div class="alert alert-success">✅ RUC encontrado correctamente</div>';
+        actualizarCamposOcultos();
+        
+    } catch (error) {
+        console.error('Error:', error);
+        resultadoDiv.innerHTML = '<div class="alert alert-danger">❌ Error al consultar RUC. Verifique el número o intente más tarde.</div>';
+    }
+}
+
+// ============================================
+// INIT
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    const boletaRadio = document.getElementById('boleta');
+    const facturaRadio = document.getElementById('factura');
+    const datosBoleta = document.getElementById('datos_boleta');
+    const datosFactura = document.getElementById('datos_factura');
+    
+    function toggleComprobanteSections() {
+        if (facturaRadio.checked) {
+            datosBoleta.style.display = 'none';
+            datosFactura.style.display = 'block';
+        } else {
+            datosBoleta.style.display = 'block';
+            datosFactura.style.display = 'none';
+        }
+        actualizarCamposOcultos();
+    }
+    
+    boletaRadio.addEventListener('change', toggleComprobanteSections);
+    facturaRadio.addEventListener('change', toggleComprobanteSections);
+    toggleComprobanteSections();
+    
+    // Escuchar cambios en emails y documentos
+    document.getElementById('factura_email')?.addEventListener('input', actualizarCamposOcultos);
+    document.getElementById('cliente_email_boleta')?.addEventListener('input', actualizarCamposOcultos);
+    document.getElementById('factura_ruc')?.addEventListener('input', actualizarCamposOcultos);
+    document.getElementById('cliente_documento_boleta')?.addEventListener('input', actualizarCamposOcultos);
+    
+    document.getElementById('checkbox_email')?.addEventListener('change', actualizarEnvioEmail);
+    actualizarEnvioEmail();
+    
+    // Botón consultar DNI
+    const btnConsultarDni = document.getElementById('btnConsultarDni');
+    if (btnConsultarDni) {
+        btnConsultarDni.addEventListener('click', consultarDNI);
+    }
+    
+    // Botón consultar RUC
+    const btnConsultarRuc = document.getElementById('btnConsultarRuc');
+    if (btnConsultarRuc) {
+        btnConsultarRuc.addEventListener('click', consultarRUC);
+    }
+    
+    // Permitir consultar con Enter en los inputs
+    const dniInput = document.getElementById('numero_documento');
+    if (dniInput) {
+        dniInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                consultarDNI();
+            }
+        });
+    }
+    
+    const rucInput = document.getElementById('factura_ruc');
+    if (rucInput) {
+        rucInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                consultarRUC();
+            }
+        });
+    }
+    
+    // ============================================
+    // EVENTOS DE VALIDACIÓN DE STOCK EN TIEMPO REAL
+    // ============================================
+    const productoSelect = document.getElementById('producto_select');
+    const cantidadInput = document.getElementById('cantidad_input');
+    
+    // Cuando cambia el producto
+    productoSelect.addEventListener('change', function() {
+        actualizarTotalYStock();
+    });
+    
+    // Cuando cambia la cantidad (en tiempo real)
+    cantidadInput.addEventListener('input', function() {
+        if (parseInt(this.value) < 0) {
+            this.value = 1;
+        }
+        actualizarTotalYStock();
+    });
+    
+    cantidadInput.addEventListener('blur', function() {
+        if (parseInt(this.value) < 1 || this.value === '') {
+            this.value = 1;
+            actualizarTotalYStock();
+        }
+    });
+    
+    // ============================================
+    // ACTUALIZAR FECHA Y HORA CADA SEGUNDO
+    // ============================================
+    // Actualizar inmediatamente
+    actualizarFechaHora();
+    
+    // Actualizar cada segundo
+    setInterval(actualizarFechaHora, 1000);
+    
+    // Inicializar
+    actualizarTotalYStock();
+    
+    // ============================================
+    // VALIDACIÓN ANTES DE ENVIAR
+    // ============================================
+    document.getElementById('ventaForm').addEventListener('submit', function(e) {
+        actualizarCamposOcultos();
+        
+        if (!productoSelect.value) {
+            e.preventDefault();
+            alert('❌ Seleccione un producto');
+            return false;
+        }
+        
+        const cantidad = parseInt(cantidadInput.value);
+        const option = productoSelect.options[productoSelect.selectedIndex];
+        const stock = parseInt(option?.dataset.stock) || 0;
+        
+        if (cantidad > stock) {
+            e.preventDefault();
+            alert(`❌ La cantidad (${cantidad}) excede el stock disponible (${stock})`);
+            cantidadInput.focus();
+            return false;
+        }
+        
+        if (cantidad < 1) {
+            e.preventDefault();
+            alert('❌ La cantidad debe ser al menos 1');
+            cantidadInput.focus();
+            return false;
+        }
+        
+        if (document.getElementById('checkbox_email').checked) {
+            var email = document.getElementById('cliente_email_hidden').value;
+            if (!email) {
+                e.preventDefault();
+                alert('⚠️ Ingrese un correo electrónico para enviar el comprobante');
+                return false;
+            }
+        }
+        
+        var tipo = document.querySelector('input[name="tipo_comprobante"]:checked').value;
+        if (tipo === 'factura') {
+            var razonSocial = document.getElementById('factura_razon_social').value;
+            if (!razonSocial) {
+                e.preventDefault();
+                alert('⚠️ Complete los datos del cliente (Razón Social)');
+                return false;
+            }
+        } else {
+            var nombres = document.getElementById('cliente_nombres').value;
+            var apellidos = document.getElementById('cliente_apellidos').value;
+            if (!nombres || !apellidos) {
+                e.preventDefault();
+                alert('⚠️ Complete los datos del cliente (Nombres y Apellidos)');
+                return false;
+            }
+        }
+        
+        return true;
+    });
+});
+</script>
+
+<style>
+    .glow-icon { filter: drop-shadow(0 0 10px rgba(40, 167, 69, 0.3)); }
+    .shadow-3xl { box-shadow: 0 20px 40px -10px rgba(0,0,0,0.15); }
+    .text-purple { color: #6f42c1; }
+    
+    .contenedor-preview-caja {
+        min-height: 180px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    @media (min-width: 992px) {
+        .card-preview-sticky {
+            position: sticky;
+            top: 20px;
+        }
+        .contenedor-preview-caja {
+            min-height: 220px;
+        }
+    }
+</style>
+{% endblock %}

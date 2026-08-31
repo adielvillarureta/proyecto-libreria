@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Microservicios</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .card-micro {
+            transition: transform 0.3s;
+        }
+        .card-micro:hover {
+            transform: translateY(-5px);
+        }
+        .status-active {
+            color: #28a745;
+        }
+        .status-warning {
+            color: #ffc107;
+        }
+        .status-danger {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="mb-4">📊 Dashboard de Microservicios</h1>
+        
+        <div class="row">
+            <!-- Microservicio Comercial -->
+            <div class="col-md-6 mb-4">
+                <div class="card card-micro">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">🛒 Microservicio Comercial</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-center p-3 border rounded">
+                                    <h5>Total Pedidos</h5>
+                                    <h2 class="text-primary">{{ total_pedidos }}</h2>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-3 border rounded">
+                                    <h5>Pendientes</h5>
+                                    <h2 class="text-warning">{{ pedidos_pendientes }}</h2>
+                                </div>
+                            </div>
+                            <div class="col-12 mt-3">
+                                <div class="text-center p-3 border rounded">
+                                    <h5>Confirmados</h5>
+                                    <h2 class="text-success">{{ pedidos_confirmados }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <span class="badge bg-success">✅ Activo</span>
+                        <span class="badge bg-info">Última sincronización: {{ now().strftime('%H:%M:%S') }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Microservicio Inventario -->
+            <div class="col-md-6 mb-4">
+                <div class="card card-micro">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="mb-0">📦 Microservicio Inventario</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-center p-3 border rounded">
+                                    <h5>Total Productos</h5>
+                                    <h2 class="text-success">{{ total_productos }}</h2>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-3 border rounded">
+                                    <h5>Bajo Stock (&lt; 10)</h5>
+                                    <h2 class="text-warning">{{ productos_bajo_stock }}</h2>
+                                </div>
+                            </div>
+                            <div class="col-12 mt-3">
+                                <div class="text-center p-3 border rounded">
+                                    <h5>Agotados (0)</h5>
+                                    <h2 class="text-danger">{{ productos_agotados }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <span class="badge bg-success">✅ Activo</span>
+                        <span class="badge bg-info">Última sincronización: {{ now().strftime('%H:%M:%S') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>🔗 Endpoints Disponibles</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group">
+                            <li class="list-group-item">
+                                <strong>Comercial:</strong>
+                                <code>/api/comercial/pedidos</code>
+                                <code>/api/comercial/pedidos/&lt;id&gt;</code>
+                                <code>/api/comercial/ventas</code>
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Inventario:</strong>
+                                <code>/api/inventario/productos</code>
+                                <code>/api/inventario/productos/&lt;id&gt;</code>
+                                <code>/api/inventario/stock/&lt;id&gt;</code>
+                                <code>/api/inventario/stock/bajo/&lt;min&gt;</code>
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Health Check:</strong>
+                                <code>/api/health</code>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">← Volver al Dashboard Principal</a>
+            <a href="{{ url_for('api_health') }}" class="btn btn-info" target="_blank">🔍 Ver Health Check</a>
+        </div>
+    </div>
+</body>
+</html>

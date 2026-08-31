@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block titulito %}🧾 Comprobante de Venta{% endblock %}
+
+{% block contenido %}
+<div class="container py-3 py-md-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8 col-xl-6">
+            <div class="card shadow-lg border-0 rounded-3 overflow-hidden">
+                <div class="card-header bg-primary text-white text-center py-3 py-md-4">
+                    <i class="fas fa-file-invoice fa-2x fa-md-3x mb-2"></i>
+                    <h3 class="mb-0 fs-4 fs-md-3">COMPROBANTE DE VENTA</h3>
+                    <small class="d-block mt-1">Librería Salesiana Don Bosco</small>
+                </div>
+
+                <div class="card-body p-3 p-md-4">
+                    <div class="text-center mb-3 mb-md-4">
+                        <h5 class="fs-6 fs-md-5">{{ venta.Venta.tipo_comprobante|upper }}</h5>
+                        <p class="text-muted small mb-1">N° {{ venta.Venta.numero_comprobante }}</p>
+                        <p class="text-muted small">Fecha: {{ venta.Venta.fecha_venta.strftime('%d/%m/%Y %H:%M') }}</p>
+                    </div>
+
+                    <hr class="my-3 my-md-4">
+
+                    <div class="mb-3 mb-md-4">
+                        <h6 class="fw-bold fs-6 fs-md-5"><i class="fas fa-user me-2"></i>DATOS DEL CLIENTE</h6>
+                        <div class="small">
+                            <p class="mb-1"><strong>Nombre/Razón Social:</strong> {{ venta.Venta.cliente_nombres or 'Consumidor Final' }} {{ venta.Venta.cliente_apellidos or '' }}</p>
+                            <p class="mb-1"><strong>RUC/DNI:</strong> {% if venta.Venta.cliente_documento and venta.Venta.cliente_documento != '' %}{{ venta.Venta.cliente_documento }}{% else %}—{% endif %}</p>
+                            <p class="mb-1"><strong>Dirección:</strong> {{ venta.Venta.cliente_direccion or 'No registrada' }}</p>
+                            <p class="mb-1"><strong>Email:</strong> {{ venta.Venta.cliente_email or 'No registrado' }}</p>
+                        </div>
+                    </div>
+
+                    <hr class="my-3 my-md-4">
+
+                    <div class="mb-3 mb-md-4">
+                        <h6 class="fw-bold fs-6 fs-md-5"><i class="fas fa-box me-2"></i>DETALLE DEL PRODUCTO</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr class="small">
+                                        <th>Producto</th>
+                                        <th class="text-center">Cantidad</th>
+                                        <th class="text-center">Precio Unit.</th>
+                                        <th class="text-end">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="small">
+                                        <td><strong>{{ venta.producto_nombre }}</strong></td>
+                                        <td class="text-center">{{ venta.Venta.cantidad }}</td>
+                                        <td class="text-center">S/. {{ "%.2f"|format(venta.precio) }}</td>
+                                        <td class="text-end">S/. {{ "%.2f"|format(total) }}</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="fw-bold">
+                                        <td colspan="3" class="text-end">TOTAL:</td>
+                                        <td class="text-end text-success fs-6 fs-md-5">S/. {{ "%.2f"|format(total) }}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <hr class="my-3 my-md-4">
+
+                    <div class="mb-3 mb-md-4">
+                        <h6 class="fw-bold fs-6 fs-md-5"><i class="fas fa-user-tie me-2"></i>ATENDIDO POR</h6>
+                        <p class="small">{{ venta.vendedor_nombres }} {{ venta.vendedor_apellidos }}</p>
+                    </div>
+
+                    <div class="text-center mt-3 mt-md-4">
+                        <i class="fas fa-prayer-hands text-warning fa-2x mb-2"></i>
+                        <p class="text-muted small mb-1">¡Gracias por su compra!</p>
+                        <p class="text-muted small mb-0">Que Dios lo bendiga.</p>
+                        <p class="text-muted small mt-2 mb-0">Válido como comprobante de pago</p>
+                    </div>
+                </div>
+
+                <div class="card-footer bg-light text-center py-3">
+                    <button onclick="window.print()" class="btn btn-primary btn-sm btn-md-normal me-2">
+                        <i class="fas fa-print me-2"></i>Imprimir
+                    </button>
+                    <a href="/ventas" class="btn btn-secondary btn-sm btn-md-normal">
+                        <i class="fas fa-arrow-left me-2"></i>Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @media print {
+        .navbar, .btn, .card-footer { display: none !important; }
+        .card { box-shadow: none !important; border: none !important; }
+        body { background: white !important; }
+        .container { padding: 0 !important; margin: 0 !important; }
+    }
+    
+    /* Responsive */
+    @media (max-width: 576px) {
+        .card-header {
+            padding: 0.75rem !important;
+        }
+        .card-header h3 {
+            font-size: 1rem !important;
+        }
+        .card-header i {
+            font-size: 1.5rem !important;
+        }
+        .card-body {
+            padding: 1rem !important;
+        }
+        h5, h6 {
+            font-size: 0.85rem !important;
+        }
+        .small, p, .text-muted {
+            font-size: 0.7rem !important;
+        }
+        .table-sm td, .table-sm th {
+            padding: 0.3rem !important;
+            font-size: 0.65rem !important;
+        }
+        .btn {
+            font-size: 0.7rem !important;
+            padding: 0.3rem 0.6rem !important;
+        }
+        .fs-6 {
+            font-size: 0.8rem !important;
+        }
+    }
+    
+    @media (min-width: 577px) and (max-width: 768px) {
+        .card-body {
+            padding: 1.25rem !important;
+        }
+        .small, p {
+            font-size: 0.75rem !important;
+        }
+    }
+</style>
+{% endblock %}

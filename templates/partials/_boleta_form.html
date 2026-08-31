@@ -1,0 +1,217 @@
+<!-- Datos del Cliente - BOLETA (Persona Natural) -->
+<div class="mb-4">
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> <strong>Boleta de Venta</strong> - Consumidor Final
+    </div>
+    
+    <label class="form-label fw-bolder fs-5 mb-3">
+        <i class="fas fa-user me-3 text-primary"></i>Datos del Cliente
+    </label>
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label fw-semibold">Tipo de Documento</label>
+            <select id="tipo_documento_boleta" name="tipo_documento_boleta" class="form-select shadow-sm">
+                <option value="DNI">DNI</option>
+                <option value="RUC">RUC (Persona Natural)</option>
+            </select>
+        </div>
+        <div class="col-md-5">
+            <label class="form-label fw-semibold">Número de Documento</label>
+            <input type="text" id="numero_documento_boleta" name="numero_documento_boleta" 
+                class="form-control shadow-sm" placeholder="Ingrese DNI (8 dígitos)" maxlength="8">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-semibold">&nbsp;</label>
+            <button type="button" id="btnConsultarBoleta" class="btn btn-info w-100">
+                <i class="fas fa-search"></i> Consultar
+            </button>
+        </div>
+    </div>
+
+    <!-- Resultado de consulta -->
+    <div id="resultadoClienteBoleta" class="mt-3"></div>
+
+    <!-- Datos manuales del cliente -->
+    <div class="mt-4 p-3 bg-light rounded">
+        <h6><i class="fas fa-edit"></i> Datos del Cliente</h6>
+        <div class="row g-3 mt-2">
+            <div class="col-md-6">
+                <label class="form-label small">Nombres</label>
+                <input type="text" name="cliente_nombres_boleta" id="cliente_nombres_boleta"
+                    class="form-control" placeholder="Nombres">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small">Apellidos</label>
+                <input type="text" name="cliente_apellidos_boleta" id="cliente_apellidos_boleta"
+                    class="form-control" placeholder="Apellidos">
+            </div>
+            <div class="col-md-12">
+                <label class="form-label small">N° Documento</label>
+                <input type="text" name="cliente_documento_boleta" id="cliente_documento_boleta"
+                    class="form-control" placeholder="Número de documento">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function inicializarBoleta() {
+    const tipoDocumento = document.getElementById('tipo_documento_boleta');
+    const numeroDocumento = document.getElementById('numero_documento_boleta');
+    const btnConsultar = document.getElementById('btnConsultarBoleta');
+    const resultadoCliente = document.getElementById('resultadoClienteBoleta');
+    const clienteNombres = document.getElementById('cliente_nombres_boleta');
+    const clienteApellidos = document.getElementById('cliente_apellidos_boleta');
+    const clienteDocumento = document.getElementById('cliente_documento_boleta');
+    const API_TOKEN = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6IkkyMzExNTYxQENPTlRJTkVOVEFMLkVEVS5QRSJ9.j1hIU4cRaCSzCNHlfWWZrWIf0zfqQAur7QV1AZab6cI';
+
+    if (!tipoDocumento) return;
+
+    function configurarPlaceholder() {
+        if (tipoDocumento.value === 'DNI') {
+            numeroDocumento.placeholder = 'Ingrese DNI (8 dígitos)';
+            numeroDocumento.maxLength = 8;
+        } else {
+            numeroDocumento.placeholder = 'Ingrese RUC (11 dígitos)';
+            numeroDocumento.maxLength = 11;
+        }
+        numeroDocumento.value = '';
+        clienteNombres.value = '';
+        clienteApellidos.value = '';
+        clienteDocumento.value = '';
+        resultadoCliente.innerHTML = '';
+    }
+
+    tipoDocumento.addEventListener('change', configurarPlaceholder);
+
+    if (numeroDocumento) {
+        numeroDocumento.addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            const tipo = tipoDocumento.value;
+            if (tipo === 'DNI' && this.value.length > 8) {
+                this.value = this.value.slice(0, 8);
+            } else if (tipo === 'RUC' && this.value.length > 11) {
+                this.value = this.value.slice(0, 11);
+            }
+        });
+    }
+
+    async function consultarDocumento() {
+        const tipo = tipoDocumento.value;
+        const numero = numeroDocumento.value.trim();
+
+        if (!numero) {
+            resultadoCliente.innerHTML = '<div class="alert alert-warning">⚠️ Ingrese un número de documento</div>';
+            return;
+        }
+        if (tipo === "DNI" && numero.length !== 8) {
+            resultadoCliente.innerHTML = '<div class="alert alert-warning">⚠️ El DNI debe tener 8 dígitos</div>';
+            return;
+        }
+        if (tipo === "RUC" && numero.length !== 11) {
+            resultadoCliente.innerHTML = '<div class="alert alert-warning">⚠️ El RUC debe tener 11 dígitos</div>';
+            return;
+        }
+
+        resultadoCliente.innerHTML = '<div class="alert alert-info">🔄 Consultando...</div>';
+
+        try {
+            const baseurl = tipo === "DNI" ? "https://dniruc.apisperu.com/api/v1/dni/" : "https://dniruc.apisperu.com/api/v1/ruc/";
+            const urlFinal = baseurl + numero + "?token=" + encodeURIComponent(API_TOKEN);
+            const response = await fetch(urlFinal);
+
+            if (response.status === 401 || response.status === 403) throw new Error("Token inválido o expirado");
+            if (!response.ok) throw new Error("Error en la consulta");
+
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+
+            if (tipo === "DNI") {
+                const nombres = data.nombres || '';
+                const apellidoPaterno = data.apellidoPaterno || '';
+                const apellidoMaterno = data.apellidoMaterno || '';
+                const apellidos = `${apellidoPaterno} ${apellidoMaterno}`.trim();
+
+                if (clienteNombres) clienteNombres.value = nombres;
+                if (clienteApellidos) clienteApellidos.value = apellidos;
+                if (clienteDocumento) clienteDocumento.value = data.dni || '';
+
+                resultadoCliente.innerHTML = `
+                    <div class="card border-success">
+                        <div class="card-body">
+                            <h6 class="card-title text-success">✅ Datos encontrados</h6>
+                            <hr>
+                            <div class="row small">
+                                <div class="col-5"><strong>DNI:</strong></div>
+                                <div class="col-7">${data.dni || ''}</div>
+                            </div>
+                            <div class="row small">
+                                <div class="col-5"><strong>Nombres:</strong></div>
+                                <div class="col-7">${data.nombres || ''}</div>
+                            </div>
+                            <div class="row small">
+                                <div class="col-5"><strong>Apellido Paterno:</strong></div>
+                                <div class="col-7">${data.apellidoPaterno || ''}</div>
+                            </div>
+                            <div class="row small">
+                                <div class="col-5"><strong>Apellido Materno:</strong></div>
+                                <div class="col-7">${data.apellidoMaterno || ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                if (clienteNombres) clienteNombres.value = data.razonSocial || '';
+                if (clienteApellidos) clienteApellidos.value = '';
+                if (clienteDocumento) clienteDocumento.value = data.ruc || '';
+
+                resultadoCliente.innerHTML = `
+                    <div class="card border-warning">
+                        <div class="card-body">
+                            <h6 class="card-title text-warning">⚠️ Persona Natural con RUC</h6>
+                            <hr>
+                            <div class="row small">
+                                <div class="col-5"><strong>RUC:</strong></div>
+                                <div class="col-7">${data.ruc || ''}</div>
+                            </div>
+                            <div class="row small">
+                                <div class="col-5"><strong>Razón Social:</strong></div>
+                                <div class="col-7">${data.razonSocial || ''}</div>
+                            </div>
+                            <div class="row small">
+                                <div class="col-5"><strong>Estado:</strong></div>
+                                <div class="col-7">${data.estado || ''}</div>
+                            </div>
+                            <div class="row small">
+                                <div class="col-5"><strong>Condición:</strong></div>
+                                <div class="col-7">${data.condicion || ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            resultadoCliente.innerHTML = `<div class="alert alert-danger">❌ Error: ${error.message}</div>`;
+        }
+    }
+
+    if (btnConsultar) {
+        btnConsultar.addEventListener('click', consultarDocumento);
+    }
+    if (numeroDocumento) {
+        numeroDocumento.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') consultarDocumento();
+        });
+    }
+
+    configurarPlaceholder();
+}
+
+// Inicializar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inicializarBoleta);
+} else {
+    inicializarBoleta();
+}
+</script>

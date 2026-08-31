@@ -1,0 +1,643 @@
+{% extends "base.html" %}
+{% block titulito %}📋 Detalle Pedido #{{ pedido.id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== RESET DE APPEARANCE ===== */
+    input,
+    textarea,
+    select,
+    button {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
+    
+    /* Para selects (mantener funcionalidad) */
+    select {
+        -webkit-appearance: menulist;
+        -moz-appearance: menulist;
+        appearance: auto;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        padding-right: 2.5rem;
+    }
+    
+    /* Prevenir zoom automático en iOS */
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    select,
+    textarea {
+        font-size: 16px;
+    }
+    
+    /* ===== MEDIDAS RESPONSIVE GLOBALES ===== */
+    * {
+        box-sizing: border-box;
+    }
+    
+    /* Móviles pequeños (menos de 576px) */
+    @media (max-width: 576px) {
+        .container {
+            padding: 0 12px;
+        }
+        
+        .card-header h3 {
+            font-size: 1.25rem !important;
+        }
+        
+        .card-header {
+            padding: 0.75rem 1rem !important;
+        }
+        
+        .card-body {
+            padding: 1rem !important;
+        }
+        
+        h5 {
+            font-size: 1rem !important;
+            margin-bottom: 0.75rem !important;
+        }
+        
+        .bg-light.p-3 {
+            padding: 0.75rem !important;
+            margin-bottom: 1rem !important;
+        }
+        
+        .bg-light.p-3 p {
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+        
+        /* Tabla responsive - scroll horizontal */
+        .table-responsive-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        table {
+            min-width: 500px;
+        }
+        
+        table th,
+        table td {
+            padding: 0.5rem !important;
+            font-size: 0.85rem;
+        }
+        
+        .fs-4 {
+            font-size: 1.25rem !important;
+        }
+        
+        .btn {
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.85rem !important;
+            min-height: 40px;
+        }
+        
+        .form-select {
+            width: 100% !important;
+            margin-bottom: 0.5rem !important;
+            min-height: 40px;
+            font-size: 14px;
+        }
+        
+        .alert {
+            padding: 0.75rem;
+            font-size: 0.8rem;
+        }
+        
+        .row > [class*="col-"] {
+            margin-bottom: 1rem;
+        }
+        
+        .row > [class*="col-"]:last-child {
+            margin-bottom: 0;
+        }
+        
+        /* DEBUG alert responsive */
+        .alert-warning {
+            font-size: 11px !important;
+            padding: 0.5rem !important;
+        }
+    }
+    
+    /* Tablets (576px - 768px) */
+    @media (min-width: 576px) and (max-width: 768px) {
+        .card-body {
+            padding: 1.25rem !important;
+        }
+        
+        .bg-light.p-3 {
+            padding: 1rem !important;
+        }
+        
+        table th,
+        table td {
+            padding: 0.75rem !important;
+        }
+        
+        .form-select {
+            width: auto !important;
+            min-width: 180px;
+        }
+    }
+    
+    /* Tablets grandes (768px - 992px) */
+    @media (min-width: 768px) and (max-width: 992px) {
+        .container {
+            max-width: 95%;
+        }
+    }
+    
+    /* Laptops (992px - 1200px) */
+    @media (min-width: 992px) and (max-width: 1200px) {
+        .container {
+            max-width: 1100px;
+        }
+    }
+    
+    /* Pantallas grandes (1200px+) */
+    @media (min-width: 1200px) {
+        .container {
+            max-width: 1140px;
+        }
+    }
+    
+    /* Orientación landscape en móviles */
+    @media (max-width: 768px) and (orientation: landscape) {
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        
+        .col-md-6 {
+            width: 50%;
+        }
+        
+        .bg-light.p-3 {
+            height: 100%;
+        }
+        
+        .table-responsive-wrapper {
+            max-height: 300px;
+        }
+    }
+    
+    /* Touch-friendly para móviles */
+    @media (hover: none) and (pointer: coarse) {
+        button, 
+        .btn,
+        select {
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        button:active,
+        .btn:active {
+            transform: scale(0.98);
+            transition: transform 0.1s;
+        }
+        
+        select:active {
+            background-color: #f8f9fa;
+        }
+    }
+    
+    /* ===== ESTILOS ORIGINALES MEJORADOS ===== */
+    .card {
+        border: none;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    @media (min-width: 768px) {
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
+        }
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
+        border: none;
+    }
+    
+    .card-header h3 {
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .bg-light {
+        background-color: #f8f9fc !important;
+        border-radius: 10px;
+    }
+    
+    .table {
+        margin-bottom: 0;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .table-dark {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    }
+    
+    .table-dark th {
+        border: none;
+        font-weight: 600;
+    }
+    
+    .table-active {
+        background-color: #f8f9fc;
+    }
+    
+    .badge {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        border-radius: 50px;
+    }
+    
+    .btn-outline-primary,
+    .btn-outline-secondary {
+        border-radius: 50px;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-outline-primary:hover,
+    .btn-outline-secondary:hover {
+        transform: translateY(-2px);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+        border: none;
+        border-radius: 50px;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #0b5ed7 0%, #0a58ca 100%);
+        transform: translateY(-2px);
+    }
+    
+    .form-select {
+        border-radius: 50px;
+        border: 1px solid #ddd;
+        padding: 0.5rem 2rem 0.5rem 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .form-select:focus {
+        border-color: #0d6efd;
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .alert {
+        border-radius: 10px;
+        border: none;
+    }
+    
+    hr {
+        margin: 1.5rem 0;
+        opacity: 0.1;
+    }
+    
+    /* Animación de entrada */
+    .card {
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Scroll suave */
+    html {
+        scroll-behavior: smooth;
+    }
+    
+    /* Mejora para tablas responsivas */
+    .table-responsive-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Estados de pedido */
+    .badge.bg-warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    }
+    
+    .badge.bg-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    }
+    
+    .badge.bg-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    }
+    
+    /* Números y totales destacados */
+    .text-success.fs-4 {
+        font-weight: 800;
+    }
+    
+    /* Información del cliente */
+    .bg-light p strong {
+        display: inline-block;
+        min-width: 90px;
+    }
+    
+    @media (max-width: 576px) {
+        .bg-light p strong {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block contenido %}
+<div class="container mt-3 mt-md-4 mb-4">
+    <div class="row">
+        <div class="col-12">
+            
+            <!-- DEBUG - VER QUÉ DATOS LLEGAN (solo visible para admin) -->
+            {% if es_admin %}
+            <div class="alert alert-warning mb-3" style="font-size: 12px; border-radius: 8px;">
+                <i class="fas fa-bug me-2"></i>
+                <strong>🔍 VERIFICACIÓN:</strong><br>
+                Venta encontrada: {% if venta %} ✅ SI (ID: {{ venta.id }}) {% else %} ❌ NO {% endif %}<br>
+                {% if venta %}
+                - Número: {{ venta.numero_comprobante }}<br>
+                - Tipo: {{ venta.tipo_comprobante }}<br>
+                - Razón Social: <strong class="text-success">{{ venta.cliente_razon_social or 'VACÍO' }}</strong><br>
+                - Dirección Fiscal: <strong class="text-info">{{ venta.cliente_direccion_fiscal or 'VACÍO' }}</strong>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <!-- Botón volver - SIN CONDICIONAL -->
+            <div class="mb-3">
+                <a href="/pedidos" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver a Pedidos
+                </a>
+            </div>
+            
+
+            <!-- Card principal -->
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white py-3 py-md-4">
+                    <h3 class="mb-0">
+                        <i class="fas fa-clipboard-list me-2"></i>
+                        Detalle Pedido #{{ pedido.id }}
+                    </h3>
+                </div>
+                
+                <div class="card-body p-3 p-md-4 p-lg-5">
+                    <!-- Información del pedido en 2 columnas responsive -->
+                    <div class="row g-3 g-md-4">
+                        <!-- Columna izquierda - Cliente -->
+                        <div class="col-12 col-md-6">
+                            <h5 class="fw-bold mb-3">
+                                <i class="fas fa-user-circle me-2 text-primary"></i>
+                                Información del Cliente
+                            </h5>
+                            <div class="bg-light p-3 p-md-4 rounded-3">
+                                <p><strong>👤 Nombre:</strong><br>
+                                    {{ venta.cliente_nombres if venta else cliente.nombres }} 
+                                    {{ venta.cliente_apellidos if venta else cliente.apellidos }}
+                                </p>
+                                <p><strong>📧 Email:</strong><br>
+                                    {{ venta.cliente_email if venta else cliente.email }}
+                                </p>
+                                <p><strong>📱 Teléfono:</strong><br>
+                                    {{ venta.cliente_telefono if venta else cliente.telefono }}
+                                </p>
+                                <p><strong>🆔 DNI / RUC:</strong><br>
+                                    <strong class="text-primary">{{ venta.cliente_documento if venta else cliente.dni }}</strong>
+                                </p>
+                                
+                                {% if venta and venta.cliente_razon_social %}
+                                <p class="mt-3 pt-2 border-top">
+                                    <strong>🏢 Razón Social:</strong><br>
+                                    <span class="text-success fw-bold">{{ venta.cliente_razon_social }}</span>
+                                </p>
+                                {% endif %}
+                                
+                                {% if venta and venta.cliente_direccion_fiscal %}
+                                <p>
+                                    <strong>📍 Dirección Fiscal:</strong><br>
+                                    {{ venta.cliente_direccion_fiscal }}
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Columna derecha - Pedido -->
+                        <div class="col-12 col-md-6">
+                            <h5 class="fw-bold mb-3">
+                                <i class="fas fa-truck me-2 text-success"></i>
+                                Información del Pedido
+                            </h5>
+                            <div class="bg-light p-3 p-md-4 rounded-3">
+                                <p><strong>📅 Fecha:</strong><br>
+                                    {{ pedido.fecha_pedido.strftime('%d/%m/%Y %H:%M') }}
+                                </p>
+                                <p><strong>🚚 Tipo de Entrega:</strong><br>
+                                    {% if pedido.tipo_entrega == 'delivery' %}
+                                        <span class="badge bg-info">🚚 Delivery</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">📍 Recojo en tienda</span>
+                                    {% endif %}
+                                </p>
+                                <p><strong>📍 Dirección:</strong><br>
+                                    {{ pedido.direccion_entrega or 'Recojo en tienda' }}
+                                </p>
+                                <p><strong>⏱️ Estado:</strong><br>
+                                    {% if pedido.estado == 'pendiente' %}
+                                        <span class="badge bg-warning">⏳ PENDIENTE</span>
+                                    {% elif pedido.estado == 'confirmado' %}
+                                        <span class="badge bg-success">✅ CONFIRMADO</span>
+                                    {% elif pedido.estado == 'cancelado' %}
+                                        <span class="badge bg-danger">❌ CANCELADO</span>
+                                    {% endif %}
+                                </p>
+                                <p><strong>📄 Tipo Comprobante:</strong><br>
+                                    {% if venta and venta.tipo_comprobante == 'factura' %}
+                                        <span class="badge bg-primary">🏢 FACTURA</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">📄 BOLETA</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Tabla de productos (responsive con scroll) -->
+                    <h5 class="fw-bold mb-3">
+                        <i class="fas fa-boxes me-2 text-warning"></i>
+                        Productos del Pedido
+                    </h5>
+                    
+                    <div class="table-responsive-wrapper">
+                        <table class="table table-bordered table-hover align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>📦 Producto</th>
+                                    <th class="text-center" style="width: 100px">🔢 Cantidad</th>
+                                    <th class="text-end" style="width: 120px">💰 Precio</th>
+                                    <th class="text-end" style="width: 140px">💵 Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for detalle in detalles %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ detalle.producto_nombre }}</strong>
+                                        {% if detalle.producto_sku %}
+                                        <br><small class="text-muted">SKU: {{ detalle.producto_sku }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="fw-bold">{{ detalle.DetallePedido.cantidad }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        S/. {{ "%.2f"|format(detalle.DetallePedido.precio_unitario) }}
+                                    </td>
+                                    <td class="text-end text-primary fw-bold">
+                                        S/. {{ "%.2f"|format(detalle.DetallePedido.subtotal) }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-active">
+                                    <td colspan="3" class="text-end fw-bold fs-5">
+                                        <strong>TOTAL:</strong>
+                                    </td>
+                                    <td class="text-end text-success fs-4 fw-bold">
+                                        S/. {{ "%.2f"|format(pedido.total) }}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <!-- Comprobante -->
+                    {% if venta %}
+                    <div class="alert alert-secondary mt-3">
+                        <i class="fas fa-file-invoice me-2"></i> 
+                        <strong>Comprobante:</strong> 
+                        {{ venta.tipo_comprobante|upper }} N° {{ venta.numero_comprobante }}
+                        {% if venta.comprobante_pdf %}
+                        <a href="{{ venta.comprobante_pdf }}" target="_blank" class="btn btn-sm btn-outline-primary ms-2">
+                            <i class="fas fa-download"></i> Descargar PDF
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Acciones para ADMIN -->
+                    {% if es_admin and pedido.estado == 'pendiente' %}
+                    <div class="mt-4 p-3 bg-light rounded-3">
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-cog me-2"></i>Acciones de Administrador
+                        </h6>
+                        <form action="/pedidos/cambiar-estado/{{ pedido.id }}" method="POST" class="row g-2 align-items-end">
+                            <div class="col-12 col-sm-auto">
+                                <label class="form-label mb-1 small">Cambiar estado:</label>
+                                <select name="estado" class="form-select">
+                                    <option value="confirmado">✅ Confirmar pedido</option>
+                                    <option value="cancelado">❌ Cancelar pedido</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-sm-auto">
+                                <button type="submit" class="btn btn-primary w-100 w-sm-auto">
+                                    <i class="fas fa-save me-2"></i>Actualizar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function() {
+        'use strict';
+        
+        // Mejorar experiencia táctil en móviles
+        if ('ontouchstart' in window) {
+            // Feedback táctil para botones
+            document.querySelectorAll('.btn, .form-select').forEach(element => {
+                element.addEventListener('touchstart', function() {
+                    if (this.classList && this.classList.contains('btn')) {
+                        this.style.transform = 'scale(0.97)';
+                    }
+                    if (this.classList && this.classList.contains('form-select')) {
+                        this.style.backgroundColor = '#f8f9fa';
+                    }
+                });
+                element.addEventListener('touchend', function() {
+                    if (this.classList && this.classList.contains('btn')) {
+                        this.style.transform = '';
+                    }
+                    if (this.classList && this.classList.contains('form-select')) {
+                        this.style.backgroundColor = '';
+                    }
+                });
+            });
+        }
+        
+        // Confirmación antes de cambiar estado del pedido (solo admin)
+        const estadoForm = document.querySelector('form[action*="/pedidos/cambiar-estado/"]');
+        if (estadoForm) {
+            estadoForm.addEventListener('submit', function(e) {
+                const select = this.querySelector('select[name="estado"]');
+                const nuevoEstado = select.options[select.selectedIndex].text;
+                
+                if (confirm(`¿Estás seguro de que deseas ${nuevoEstado.toLowerCase()} este pedido?`)) {
+                    // Mostrar loading
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        const originalText = submitBtn.innerHTML;
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Procesando...';
+                        
+                        // Restaurar después de 5 segundos por si hay error
+                        setTimeout(() => {
+                            if (submitBtn.disabled) {
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = originalText;
+                            }
+                        }, 5000);
+                    }
+                } else {
+                    e.preventDefault();
+                }
+            });
+        }
+    })();
+</script>
+{% endblock %}

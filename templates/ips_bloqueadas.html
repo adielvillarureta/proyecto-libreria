@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block titulito %}IPs Bloqueadas por Seguridad{% endblock %}
+
+{% block contenido %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h3><i class="fas fa-shield-alt"></i> IPs Bloqueadas por Seguridad</h3>
+        </div>
+        <div class="card-body">
+            {% if ips %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Dirección IP</th>
+                            <th>Email Intentado</th>
+                            <th>Usuarios Distintos</th>
+                            <th>Intentos Fallidos</th>
+                            <th>Bloqueada Desde</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ip in ips %}
+                        <tr>
+                            <td><code>{{ ip.ip }}</code></td>
+                            <td>{{ ip.email }}</td>
+                            <td><span class="badge bg-warning">{{ ip.usuarios_distintos }}</span></td>
+                            <td>{{ ip.intentos }}</td>
+                            <td>{{ ip.ips_bloqueadas.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+                            <td>
+                                <a href="{{ url_for('desbloquear_ip', ip=ip.ip) }}" 
+                                   class="btn btn-sm btn-warning"
+                                   onclick="return confirm('¿Estás seguro de desbloquear esta IP?')">
+                                    <i class="fas fa-unlock-alt"></i> Desbloquear
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-success text-center">
+                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                <h5>No hay IPs bloqueadas actualmente</h5>
+                <p>Todas las IPs pueden acceder normalmente al sistema.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,149 @@
+<!-- Datos del Cliente - FACTURA (Empresa) -->
+<div class="mb-4">
+    <div class="alert alert-success">
+        <i class="fas fa-building"></i> <strong>Factura Electrónica</strong> - Para personas jurídicas o naturales con RUC
+    </div>
+    
+    <label class="form-label fw-bolder fs-5 mb-3">
+        <i class="fas fa-building me-3 text-success"></i>Datos del Cliente - Factura
+    </label>
+
+    <div class="row g-3">
+        <div class="col-md-8">
+            <label class="form-label fw-semibold">Número de RUC</label>
+            <input type="text" id="numero_ruc_factura" name="numero_ruc_factura" 
+                class="form-control shadow-sm" placeholder="Ingrese RUC (11 dígitos)" maxlength="11">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold">&nbsp;</label>
+            <button type="button" id="btnConsultarRucFactura" class="btn btn-info w-100">
+                <i class="fas fa-search"></i> Consultar RUC
+            </button>
+        </div>
+    </div>
+
+    <!-- Resultado de consulta RUC -->
+    <div id="resultadoRucFactura" class="mt-3"></div>
+
+    <!-- Datos de facturación -->
+    <div class="mt-4 p-3 bg-light rounded">
+        <h6><i class="fas fa-file-invoice"></i> Datos para Facturación</h6>
+        <div class="row g-3 mt-2">
+            <div class="col-md-12">
+                <label class="form-label small">Razón Social / Nombre</label>
+                <input type="text" name="factura_razon_social" id="factura_razon_social"
+                    class="form-control" placeholder="Razón Social o Nombre">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small">RUC / Documento</label>
+                <input type="text" name="cliente_documento_factura" id="factura_ruc"
+                    class="form-control" placeholder="N° RUC">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small">Dirección Fiscal</label>
+                <input type="text" name="cliente_direccion_factura" id="factura_direccion"
+                    class="form-control" placeholder="Dirección">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function inicializarFactura() {
+    const numeroRuc = document.getElementById('numero_ruc_factura');
+    const btnConsultar = document.getElementById('btnConsultarRucFactura');
+    const resultadoRuc = document.getElementById('resultadoRucFactura');
+    const facturaRazonSocial = document.getElementById('factura_razon_social');
+    const facturaRuc = document.getElementById('factura_ruc');
+    const facturaDireccion = document.getElementById('factura_direccion');
+    const API_TOKEN = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6IkkyMzExNTYxQENPTlRJTkVOVEFMLkVEVS5QRSJ9.j1hIU4cRaCSzCNHlfWWZrWIf0zfqQAur7QV1AZab6cI';
+
+    if (!numeroRuc) return;
+
+    if (numeroRuc) {
+        numeroRuc.addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            if (this.value.length > 11) {
+                this.value = this.value.slice(0, 11);
+            }
+        });
+    }
+
+    async function consultarRuc() {
+        const numero = numeroRuc.value.trim();
+
+        if (!numero) {
+            resultadoRuc.innerHTML = '<div class="alert alert-warning">⚠️ Ingrese un número de RUC</div>';
+            return;
+        }
+        if (numero.length !== 11) {
+            resultadoRuc.innerHTML = '<div class="alert alert-warning">⚠️ El RUC debe tener 11 dígitos</div>';
+            return;
+        }
+
+        resultadoRuc.innerHTML = '<div class="alert alert-info">🔄 Consultando RUC...</div>';
+
+        try {
+            const urlFinal = `https://dniruc.apisperu.com/api/v1/ruc/${numero}?token=${encodeURIComponent(API_TOKEN)}`;
+            const response = await fetch(urlFinal);
+
+            if (response.status === 401 || response.status === 403) throw new Error("Token inválido o expirado");
+            if (!response.ok) throw new Error("Error en la consulta");
+
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+
+            if (facturaRazonSocial) facturaRazonSocial.value = data.razonSocial || '';
+            if (facturaRuc) facturaRuc.value = data.ruc || '';
+            if (facturaDireccion) facturaDireccion.value = data.direccion || '';
+
+            resultadoRuc.innerHTML = `
+                <div class="card border-success">
+                    <div class="card-body">
+                        <h6 class="card-title text-success">✅ Datos encontrados</h6>
+                        <hr>
+                        <div class="row small">
+                            <div class="col-5"><strong>RUC:</strong></div>
+                            <div class="col-7">${data.ruc || ''}</div>
+                        </div>
+                        <div class="row small">
+                            <div class="col-5"><strong>Razón Social:</strong></div>
+                            <div class="col-7">${data.razonSocial || ''}</div>
+                        </div>
+                        <div class="row small">
+                            <div class="col-5"><strong>Dirección:</strong></div>
+                            <div class="col-7">${data.direccion || ''}</div>
+                        </div>
+                        <div class="row small">
+                            <div class="col-5"><strong>Estado:</strong></div>
+                            <div class="col-7">${data.estado || ''}</div>
+                        </div>
+                        <div class="row small">
+                            <div class="col-5"><strong>Condición:</strong></div>
+                            <div class="col-7">${data.condicion || ''}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } catch (error) {
+            resultadoRuc.innerHTML = `<div class="alert alert-danger">❌ Error: ${error.message}</div>`;
+        }
+    }
+
+    if (btnConsultar) {
+        btnConsultar.addEventListener('click', consultarRuc);
+    }
+    if (numeroRuc) {
+        numeroRuc.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') consultarRuc();
+        });
+    }
+}
+
+// Inicializar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inicializarFactura);
+} else {
+    inicializarFactura();
+}
+</script>
