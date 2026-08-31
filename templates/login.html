@@ -1,413 +1,189 @@
 {% extends "base.html" %}
 {% block titulito %}🔐 Login Salesiano{% endblock %}
 
-{% block extra_css %}
-<style>
-    /* ===== RESET DE APPEARANCE ===== */
-    input, textarea, select, button {
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-    }
-    
-    input[type="checkbox"], input[type="radio"] {
-        -webkit-appearance: auto;
-        -moz-appearance: auto;
-        appearance: auto;
-    }
-    
-    input[type="email"], input[type="password"], input[type="text"] {
-        font-size: 16px;
-    }
-    
-    * { box-sizing: border-box; }
-    
-    /* ===== RESPONSIVE ===== */
-    @media (max-width: 576px) {
-        .container { padding: 0 12px; }
-        .row.justify-content-center { margin: 0 !important; }
-        .card-divina { padding: 1.5rem !important; }
-        .text-center.mb-5.pb-4 { margin-bottom: 1.5rem !important; padding-bottom: 1rem !important; }
-        .bg-gradient-divino.rounded-circle { width: 70px !important; height: 70px !important; margin-bottom: 1rem !important; }
-        .bg-gradient-divino.rounded-circle i { font-size: 1.5rem !important; }
-        h2.h3 { font-size: 1.5rem !important; }
-        h4.fw-bold { font-size: 1.25rem !important; }
-        p.text-silver { font-size: 0.85rem !important; }
-        .form-label { font-size: 0.9rem !important; margin-bottom: 0.5rem !important; }
-        .input-group-lg .form-control, .input-group-lg .input-group-text, .input-group-lg .btn {
-            min-height: 48px !important;
-            font-size: 16px !important;
-        }
-        .form-control { font-size: 16px !important; padding: 0.5rem 0.75rem !important; }
-        .btn-xxl { padding: 0.75rem 1rem !important; font-size: 1rem !important; min-height: 48px; }
-        .alert { font-size: 0.8rem; padding: 0.75rem; }
-        .mb-5 { margin-bottom: 1.5rem !important; }
-        .mb-4 { margin-bottom: 1rem !important; }
-    }
-    
-    @media (min-width: 576px) and (max-width: 768px) {
-        .card-divina { padding: 2rem !important; }
-        .bg-gradient-divino.rounded-circle { width: 80px !important; height: 80px !important; }
-        .input-group-lg .form-control, .input-group-lg .input-group-text, .input-group-lg .btn {
-            min-height: 50px;
-        }
-    }
-    
-    @media (max-width: 768px) and (orientation: landscape) {
-        .row.justify-content-center { min-height: auto !important; padding: 1rem 0; }
-        .card-divina { padding: 1.25rem !important; }
-        .text-center.mb-5.pb-4 { margin-bottom: 0.75rem !important; padding-bottom: 0.5rem !important; }
-        .bg-gradient-divino.rounded-circle { width: 50px !important; height: 50px !important; margin-bottom: 0.5rem !important; }
-        .bg-gradient-divino.rounded-circle i { font-size: 1.25rem !important; }
-        h2.h3 { font-size: 1.25rem !important; }
-        h4.fw-bold { font-size: 1rem !important; }
-        .mb-5 { margin-bottom: 0.75rem !important; }
-        .mb-4 { margin-bottom: 0.5rem !important; }
-    }
-    
-    @media (hover: none) and (pointer: coarse) {
-        button, .btn, [onclick] { cursor: pointer; -webkit-tap-highlight-color: transparent; }
-        button:active, .btn:active { transform: scale(0.97); transition: transform 0.1s; }
-        .hover-lift:active { transform: translateY(-2px); }
-    }
-    
-    /* ===== ESTILOS PRINCIPALES ===== */
-    .card-divina {
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-        border-radius: 20px;
-        overflow: hidden;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border: none;
-        animation: fadeInUp 0.5s ease-out;
-    }
-    
-    @media (min-width: 768px) {
-        .card-divina:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
-        }
-    }
-    
-    .bg-gradient-divino {
-        background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
-    }
-    
-    .shadow-gold-lg {
-        box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
-    }
-    
-    .text-gold-primary { color: #D4AF37; }
-    .text-silver { color: #6c757d; }
-    
-    .btn-warning {
-        background: linear-gradient(135deg, #D4AF37 0%, #fbbf24 100%);
-        border: none;
-        color: #1E3A8A;
-        font-weight: bold;
-        transition: all 0.3s ease;
-        border-radius: 50px;
-    }
-    
-    .btn-warning:hover {
-        background: linear-gradient(135deg, #c8a82e 0%, #f59e0b 100%);
-        color: #1E3A8A;
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-    }
-    
-    .btn-xxl {
-        padding: 0.875rem 1.5rem;
-        font-size: 1.1rem;
-        font-weight: 700;
-    }
-    
-    .form-control {
-        border-radius: 50px;
-        transition: all 0.2s ease;
-    }
-    
-    .form-control:focus {
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-        outline: none;
-        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-        border-color: #0d6efd;
-    }
-    
-    .input-group-text {
-        border-radius: 50px 0 0 50px;
-    }
-    .input-group .form-control {
-        border-radius: 0 50px 50px 0;
-    }
-    .input-group .btn {
-        border-radius: 0 50px 50px 0;
-    }
-    
-    .hover-lift {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .hover-lift:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    }
-    
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    html { scroll-behavior: smooth; }
-    
-    input[type="email"], input[type="password"] {
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-        border-radius: 50px;
-    }
-    
-    input:-webkit-autofill, input:-webkit-autofill:focus {
-        transition: background-color 600000s 0s, color 600000s 0s;
-    }
-    
-    /* ===== ESTILOS PARA ALERTAS ROJAS PREMIUM ===== */
-    .alert {
-        animation: slideDown 0.4s ease-out;
-        border-radius: 14px;
-        padding: 1rem 1.25rem;
-        font-weight: 500;
-        border: none;
-    }
-    
-    @keyframes slideDown {
-        from { opacity: 0; transform: translateY(-20px) scale(0.95); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    
-    /* Alerta de ERROR (ROJO) - Premium */
-    .alert-danger {
-        background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%) !important;
-        color: #fca5a5 !important;
-        border-left: 6px solid #ef4444 !important;
-        box-shadow: 0 8px 30px rgba(220, 38, 38, 0.3) !important;
-        border-radius: 14px !important;
-    }
-    
-    .alert-danger i {
-        color: #fca5a5;
-        font-size: 1.2rem;
-    }
-    
-    .alert-danger .btn-close {
-        filter: brightness(0) invert(1);
-        opacity: 0.7;
-        transition: all 0.2s;
-    }
-    
-    .alert-danger .btn-close:hover {
-        opacity: 1;
-        transform: rotate(90deg);
-    }
-    
-    /* Alerta de ÉXITO (VERDE) */
-    .alert-success {
-        background: linear-gradient(135deg, #064e3b 0%, #065f46 100%) !important;
-        color: #a7f3d0 !important;
-        border-left: 6px solid #34d399 !important;
-        box-shadow: 0 8px 30px rgba(16, 185, 129, 0.2) !important;
-        border-radius: 14px !important;
-    }
-    
-    .alert-success i {
-        color: #34d399;
-        font-size: 1.2rem;
-    }
-    
-    .alert-success .btn-close {
-        filter: brightness(0) invert(1);
-        opacity: 0.7;
-        transition: all 0.2s;
-    }
-    
-    .alert-success .btn-close:hover {
-        opacity: 1;
-        transform: rotate(90deg);
-    }
-    
-    /* Estilo especial para mensajes de BLOQUEO o CIERRE DE SESIÓN */
-    .alert-block {
-        background: linear-gradient(135deg, #450a0a 0%, #7f1d1d 100%) !important;
-        color: #fecaca !important;
-        border-left: 6px solid #dc2626 !important;
-        box-shadow: 0 8px 30px rgba(220, 38, 38, 0.4) !important;
-        border-radius: 14px !important;
-        padding: 1.25rem 1.5rem !important;
-    }
-    
-    .alert-block i {
-        color: #ef4444;
-        font-size: 1.5rem;
-        animation: pulse 1.5s ease-in-out infinite;
-    }
-    
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-    }
-    
-    .alert-block .alert-title {
-        font-size: 1.05rem;
-        font-weight: 700;
-        color: #fca5a5;
-        display: block;
-    }
-    
-    .alert-block .btn-close {
-        filter: brightness(0) invert(1);
-        opacity: 0.7;
-        transition: all 0.2s;
-    }
-    
-    .alert-block .btn-close:hover {
-        opacity: 1;
-        transform: rotate(90deg);
-    }
-</style>
-{% endblock %}
-
 {% block contenido %}
-<div class="row justify-content-center min-vh-100 align-items-center py-3 py-md-5">
-    <div class="col-11 col-sm-10 col-md-6 col-lg-5 col-xl-4">
-        <!-- CARD LOGIN PREMIUM -->
-        <div class="card card-divina shadow-3xl hover-lift p-4 p-md-5">
-            <div class="text-center mb-4 mb-md-5 pb-2 pb-md-4">
-                <div class="bg-gradient-divino rounded-circle mx-auto mb-3 mb-md-4 shadow-gold-lg"
-                    style="width: 90px; height: 90px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-unlock fa-2x text-white"></i>
+<div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem 0; background: #f0f4f8;">
+    <div style="width: 100%; max-width: 450px; padding: 0 1rem;">
+        
+        <!-- CARD LOGIN -->
+        <div style="background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); border-radius: 20px; padding: 2rem 2.5rem; box-shadow: 0 20px 60px rgba(0,0,0,0.1); border: none; transition: transform 0.3s;">
+            
+            <!-- HEADER -->
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <div style="background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%); width: 90px; height: 90px; border-radius: 50%; margin: 0 auto 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);">
+                    <i class="fas fa-unlock" style="font-size: 2rem; color: white;"></i>
                 </div>
-                <h2 class="h3 fw-extrabold mb-2 text-gold-primary">Bienvenido</h2>
-                <h4 class="fw-bold text-dark mb-0">Iniciar Sesión</h4>
-                <p class="text-silver mt-2 small">Accede a tu cuenta Salesiana</p>
+                <h2 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.5rem; color: #D4AF37;">Bienvenido</h2>
+                <h4 style="font-weight: 700; color: #1a1a1a; margin-bottom: 0;">Iniciar Sesión</h4>
+                <p style="color: #6c757d; margin-top: 0.5rem; font-size: 0.9rem;">Accede a tu cuenta Salesiana</p>
             </div>
 
-            <!-- ===== FLASH MESSAGES MEJORADOS ===== -->
+            <!-- ===== MENSAJES FLASH ===== -->
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    {% set is_block = 'IP bloqueada' in message or 'Sesión cerrada' in message or 'bloqueado' in message.lower() or 'cerrada' in message.lower() %}
+                    {% set is_block = 'IP bloqueada' in message or 'Sesión cerrada' in message or 'bloqueado' in message.lower() or 'cerrada' in message.lower() or 'agotado' in message.lower() or 'bloqueada' in message.lower() %}
                     
                     {% if is_block %}
-                    <!-- Alerta especial para BLOQUEO o CIERRE DE SESIÓN (ROJO INTENSO) -->
-                    <div class="alert alert-block alert-dismissible fade show shadow-lg mb-4" role="alert">
-                        <div class="d-flex align-items-start gap-3">
-                            <i class="fas fa-ban fa-lg mt-1"></i>
-                            <div>
-                                <span class="alert-title">
-                                    <i class="fas fa-shield-alt me-1"></i> ACCESO RESTRINGIDO
-                                </span>
-                                <span style="display: block; font-size: 0.95rem; margin-top: 2px;">
-                                    {{ message }}
-                                </span>
+                    <!-- ===== ALERTA DE BLOQUEO - ROJO EXTREMO (CUENTA BLOQUEADA) ===== -->
+                    <div style="background: linear-gradient(135deg, #450a0a 0%, #7f1d1d 100%); color: #ffffff; border-left: 8px solid #ef4444; border-radius: 14px; padding: 1.5rem 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 0 40px rgba(220, 38, 38, 0.6); display: flex; align-items: flex-start; gap: 1rem; animation: slideDown 0.5s ease-out; position: relative; overflow: hidden;">
+                        <!-- Efecto de brillo superior -->
+                        <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #ef4444, #fca5a5, #ef4444);"></div>
+                        
+                        <i class="fas fa-ban" style="font-size: 2.5rem; color: #ef4444; margin-top: 0.25rem; animation: pulse 1.5s ease-in-out infinite; text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);"></i>
+                        <div style="flex: 1;">
+                            <div style="font-size: 1.1rem; font-weight: 800; color: #fca5a5; display: block; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px;">
+                                <i class="fas fa-shield-alt" style="margin-right: 6px;"></i> 🚫 CUENTA BLOQUEADA
                             </div>
-                            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close" style="margin-top: -4px;"></button>
+                            <div style="display: block; font-size: 1.05rem; font-weight: 600; color: #ffffff; margin-top: 2px; line-height: 1.4;">
+                                {{ message }}
+                            </div>
+                            <div style="display: block; font-size: 0.85rem; margin-top: 6px; color: #fca5a5; opacity: 0.9; background: rgba(239, 68, 68, 0.15); padding: 6px 12px; border-radius: 8px; display: inline-block;">
+                                <i class="fas fa-clock" style="margin-right: 6px;"></i> Tiempo de espera: 10 minutos
+                            </div>
                         </div>
+                        <button type="button" onclick="this.parentElement.style.display='none'" style="background: none; border: none; color: #fca5a5; font-size: 1.3rem; cursor: pointer; opacity: 0.7; padding: 0; transition: all 0.3s; margin-top: -4px; flex-shrink: 0;">✕</button>
                     </div>
                     
                     {% elif category == 'error' %}
-                    <!-- Alerta de error estándar (ROJO) -->
-                    <div class="alert alert-danger alert-dismissible fade show shadow-lg mb-4" role="alert">
-                        <div class="d-flex align-items-start gap-2">
-                            <i class="fas fa-exclamation-triangle fa-lg mt-1"></i>
-                            <span>{{ message }}</span>
-                            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <!-- ALERTA DE ERROR - ROJO INTENSO (CONTRASEÑA INCORRECTA) -->
+                    <div style="background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%); color: #ffffff; border-left: 8px solid #fca5a5; border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 0 30px rgba(220, 38, 38, 0.5); display: flex; align-items: flex-start; gap: 1rem; animation: slideDown 0.4s ease-out;">
+                        <i class="fas fa-exclamation-circle" style="font-size: 2rem; color: #fca5a5; margin-top: 0.25rem; animation: pulse 1.5s ease-in-out infinite;"></i>
+                        <div style="flex: 1;">
+                            <div style="font-size: 0.75rem; color: #fca5a5; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">
+                                <i class="fas fa-shield-alt"></i> ERROR DE AUTENTICACIÓN
+                            </div>
+                            <div style="font-size: 1.1rem; font-weight: 700; color: #ffffff; margin-top: 2px;">
+                                {{ message }}
+                            </div>
+                            <div style="font-size: 0.8rem; color: #fca5a5; margin-top: 4px; opacity: 0.9;">
+                                <i class="fas fa-info-circle"></i> Verifica tus credenciales
+                            </div>
                         </div>
+                        <button type="button" onclick="this.parentElement.style.display='none'" style="background: none; border: none; color: #ffffff; font-size: 1.2rem; cursor: pointer; opacity: 0.7; padding: 0; margin-top: -2px;">✕</button>
                     </div>
                     
                     {% elif category == 'success' %}
-                    <!-- Alerta de éxito (VERDE) -->
-                    <div class="alert alert-success alert-dismissible fade show shadow-lg mb-4" role="alert">
-                        <div class="d-flex align-items-start gap-2">
-                            <i class="fas fa-check-circle fa-lg mt-1"></i>
-                            <span>{{ message }}</span>
-                            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <!-- ALERTA DE ÉXITO - VERDE -->
+                    <div style="background: linear-gradient(135deg, #064e3b 0%, #065f46 100%); color: #a7f3d0; border-left: 8px solid #34d399; border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 8px 30px rgba(16, 185, 129, 0.2); display: flex; align-items: flex-start; gap: 1rem; animation: slideDown 0.4s ease-out;">
+                        <i class="fas fa-check-circle" style="font-size: 1.5rem; color: #34d399; margin-top: 0.25rem;"></i>
+                        <div style="flex: 1;">
+                            <div style="font-size: 0.75rem; color: #a7f3d0; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">
+                                <i class="fas fa-check"></i> ÉXITO
+                            </div>
+                            <div style="font-size: 1rem; font-weight: 600; color: #ffffff; margin-top: 2px;">
+                                {{ message }}
+                            </div>
                         </div>
+                        <button type="button" onclick="this.parentElement.style.display='none'" style="background: none; border: none; color: #a7f3d0; font-size: 1.2rem; cursor: pointer; opacity: 0.7; padding: 0;">✕</button>
                     </div>
                     
                     {% else %}
-                    <!-- Alerta por defecto -->
-                    <div class="alert alert-info alert-dismissible fade show shadow-lg mb-4" role="alert">
-                        <div class="d-flex align-items-start gap-2">
-                            <i class="fas fa-info-circle fa-lg mt-1"></i>
-                            <span>{{ message }}</span>
-                            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
+                    <!-- ALERTA POR DEFECTO -->
+                    <div style="background: #e0f2fe; color: #0369a1; border-left: 8px solid #0ea5e9; border-radius: 14px; padding: 1rem 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: flex-start; gap: 0.75rem;">
+                        <i class="fas fa-info-circle" style="font-size: 1.2rem; margin-top: 0.25rem;"></i>
+                        <div style="flex: 1;">{{ message }}</div>
+                        <button type="button" onclick="this.parentElement.style.display='none'" style="background: none; border: none; color: #0369a1; font-size: 1rem; cursor: pointer; padding: 0;">✕</button>
                     </div>
                     {% endif %}
                 {% endfor %}
             {% endif %}
             {% endwith %}
 
-            <form method="POST" id="loginForm" class="needs-validation" novalidate>
+            <!-- FORMULARIO -->
+            <form method="POST" id="loginForm" novalidate>
+                
                 <!-- CORREO -->
-                <div class="mb-4">
-                    <label class="form-label fw-semibold text-dark mb-2 mb-md-3">
-                        <i class="fas fa-envelope me-2 text-info"></i>Correo Electrónico
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="font-weight: 600; color: #1a1a1a; display: block; margin-bottom: 0.5rem;">
+                        <i class="fas fa-envelope" style="color: #0ea5e9;"></i> Correo Electrónico
                     </label>
-                    <div class="input-group input-group-lg">
-                        <span class="input-group-text bg-transparent border-0 text-silver">
+                    <div style="display: flex; align-items: center; background: #f8f9fa; border-radius: 50px; border: 1px solid #e2e8f0; overflow: hidden;">
+                        <span style="padding: 0 0 0 1rem; color: #6c757d;">
                             <i class="fas fa-at"></i>
                         </span>
                         <input type="email" name="correo" id="correoInput" 
-                            class="form-control form-control-lg border-0 shadow-sm ps-4"
-                            style="-webkit-appearance: none; -moz-appearance: none; appearance: none;"
+                            style="flex: 1; padding: 0.75rem 1rem; border: none; background: transparent; outline: none; font-size: 1rem;"
                             placeholder="tu@correo.com" required autofocus>
-                        <div class="invalid-feedback">
-                            Ingresa un correo válido
-                        </div>
                     </div>
                 </div>
 
                 <!-- CONTRASEÑA -->
-                <div class="mb-4 mb-md-5">
-                    <label class="form-label fw-semibold text-dark mb-2 mb-md-3">
-                        <i class="fas fa-lock me-2 text-warning"></i>Contraseña
+                <div style="margin-bottom: 2rem;">
+                    <label style="font-weight: 600; color: #1a1a1a; display: block; margin-bottom: 0.5rem;">
+                        <i class="fas fa-lock" style="color: #f59e0b;"></i> Contraseña
                     </label>
-                    <div class="input-group input-group-lg">
-                        <span class="input-group-text bg-transparent border-0 text-silver">
+                    <div style="display: flex; align-items: center; background: #f8f9fa; border-radius: 50px; border: 1px solid #e2e8f0; overflow: hidden;">
+                        <span style="padding: 0 0 0 1rem; color: #6c757d;">
                             <i class="fas fa-lock"></i>
                         </span>
                         <input type="password" name="clave" id="claveInput"
-                            class="form-control form-control-lg border-0 shadow-sm ps-4"
-                            style="-webkit-appearance: none; -moz-appearance: none; appearance: none;"
+                            style="flex: 1; padding: 0.75rem 1rem; border: none; background: transparent; outline: none; font-size: 1rem;"
                             placeholder="••••••••" required>
-                        <button class="btn btn-outline-secondary border-0" type="button"
-                            onclick="togglePassword('claveInput')" style="min-width: 50px;">
+                        <button type="button" onclick="togglePassword('claveInput')" 
+                            style="padding: 0.75rem 1rem; background: none; border: none; color: #6c757d; cursor: pointer;">
                             <i class="fas fa-eye" id="toggleIcon"></i>
                         </button>
-                        <div class="invalid-feedback">
-                            Ingresa tu contraseña
-                        </div>
                     </div>
                 </div>
 
-                <!-- BOTÓN PREMIUM -->
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-warning btn-xxl shadow-lg hover-lift" id="submitBtn">
-                        <i class="fas fa-sign-in-alt me-2"></i>
-                        <span class="fw-extrabold">Ingresar</span>
+                <!-- BOTÓN -->
+                <div style="display: grid;">
+                    <button type="submit" style="background: linear-gradient(135deg, #D4AF37 0%, #fbbf24 100%); border: none; color: #1E3A8A; font-weight: 700; padding: 0.875rem 1.5rem; font-size: 1.1rem; border-radius: 50px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); cursor: pointer; transition: all 0.3s;">
+                        <i class="fas fa-sign-in-alt"></i> Ingresar
                     </button>
                 </div>
             </form>
         </div>
-
-        <!-- BACKGROUND DECORATIVO -->
-        <div class="position-absolute top-0 end-0 d-none d-lg-block" style="z-index: -1;">
-            <div class="bg-gradient-divino rounded-circle shadow-3xl"
-                style="width: 300px; height: 300px; opacity: 0.1;"></div>
-        </div>
     </div>
 </div>
+
+<!-- ===== ESTILOS INLINE ===== -->
+<style>
+    /* ANIMACIONES */
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+    }
+    
+    /* HOVER DEL BOTÓN */
+    button[type="submit"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    }
+    
+    button[type="submit"]:active {
+        transform: scale(0.97);
+    }
+    
+    /* RESPONSIVE */
+    @media (max-width: 576px) {
+        .card-login {
+            padding: 1.5rem !important;
+        }
+        .header-icon {
+            width: 70px !important;
+            height: 70px !important;
+        }
+        .header-icon i {
+            font-size: 1.5rem !important;
+        }
+        h2 { font-size: 1.5rem !important; }
+        h4 { font-size: 1.25rem !important; }
+        .alert-danger, .alert-block {
+            padding: 0.75rem 1rem !important;
+            font-size: 0.85rem !important;
+        }
+        .alert-block i {
+            font-size: 2rem !important;
+        }
+    }
+</style>
 
 <script>
     // TOGGLE PASSWORD
@@ -429,109 +205,44 @@
     }
 
     // VALIDACIÓN CLIENTE
-    (() => {
-        'use strict';
-        
-        const forms = document.querySelectorAll('.needs-validation');
-        const submitBtn = document.getElementById('submitBtn');
-        
-        Array.from(forms).forEach(form => {
-            form.addEventListener('submit', event => {
-                const emailInput = document.getElementById('correoInput');
-                const passwordInput = document.getElementById('claveInput');
-                let isValid = true;
-                
-                if (emailInput && emailInput.value.trim() === '') {
-                    emailInput.classList.add('is-invalid');
-                    isValid = false;
-                } else if (emailInput && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value)) {
-                    emailInput.classList.add('is-invalid');
-                    isValid = false;
-                } else if (emailInput) {
-                    emailInput.classList.remove('is-invalid');
-                    emailInput.classList.add('is-valid');
-                }
-                
-                if (passwordInput && passwordInput.value.trim() === '') {
-                    passwordInput.classList.add('is-invalid');
-                    isValid = false;
-                } else if (passwordInput) {
-                    passwordInput.classList.remove('is-invalid');
-                    passwordInput.classList.add('is-valid');
-                }
-                
-                if (!form.checkValidity() || !isValid) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                } else {
-                    if (submitBtn) {
-                        const originalText = submitBtn.innerHTML;
-                        submitBtn.disabled = true;
-                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Ingresando...';
-                        
-                        setTimeout(() => {
-                            if (submitBtn.disabled) {
-                                submitBtn.disabled = false;
-                                submitBtn.innerHTML = originalText;
-                            }
-                        }, 5000);
-                    }
-                }
-                
-                form.classList.add('was-validated');
-            });
-        });
-        
+    document.getElementById('loginForm').addEventListener('submit', function(event) {
         const emailInput = document.getElementById('correoInput');
         const passwordInput = document.getElementById('claveInput');
+        let isValid = true;
         
-        if (emailInput) {
-            emailInput.addEventListener('input', function() {
-                if (this.value.trim() !== '' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value)) {
-                    this.classList.remove('is-invalid');
-                    this.classList.add('is-valid');
-                } else {
-                    this.classList.remove('is-valid');
-                    if (this.value.trim() !== '') {
-                        this.classList.add('is-invalid');
-                    }
-                }
-            });
+        if (emailInput && emailInput.value.trim() === '') {
+            isValid = false;
+            emailInput.style.border = '2px solid #dc2626';
+        } else if (emailInput && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value)) {
+            isValid = false;
+            emailInput.style.border = '2px solid #dc2626';
+        } else if (emailInput) {
+            emailInput.style.border = '2px solid #22c55e';
         }
         
-        if (passwordInput) {
-            passwordInput.addEventListener('input', function() {
-                if (this.value.trim() !== '') {
-                    this.classList.remove('is-invalid');
-                    this.classList.add('is-valid');
-                } else {
-                    this.classList.remove('is-valid');
-                    this.classList.add('is-invalid');
-                }
-            });
+        if (passwordInput && passwordInput.value.trim() === '') {
+            isValid = false;
+            passwordInput.style.border = '2px solid #dc2626';
+        } else if (passwordInput) {
+            passwordInput.style.border = '2px solid #22c55e';
         }
-    })();
-    
-    if ('ontouchstart' in window) {
-        document.querySelectorAll('.btn, .hover-lift').forEach(btn => {
-            btn.addEventListener('touchstart', function() {
-                if (this.classList && this.classList.contains('btn') && !this.disabled) {
-                    this.style.transform = 'scale(0.97)';
-                }
-            });
-            btn.addEventListener('touchend', function() {
-                this.style.transform = '';
-            });
-        });
-    }
-    
-    document.addEventListener('keypress', function(event) {
-        if (event.key === 'Enter') {
-            const submitBtn = document.getElementById('submitBtn');
-            if (submitBtn && !submitBtn.disabled) {
+        
+        if (!isValid) {
+            event.preventDefault();
+            event.stopPropagation();
+        } else {
+            const submitBtn = document.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                const originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Ingresando...';
+                
                 setTimeout(() => {
-                    if (submitBtn.disabled) {}
-                }, 100);
+                    if (submitBtn.disabled) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                }, 5000);
             }
         }
     });
