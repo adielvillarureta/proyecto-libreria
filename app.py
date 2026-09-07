@@ -12,6 +12,8 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
+load_dotenv(verbose=True)
+
 
 db_host = os.getenv('DB_HOST')
 db_user = os.getenv('DB_USER')
@@ -19,7 +21,8 @@ db_password = os.getenv('DB_PASSWORD')
 db_name = os.getenv('DB_NAME')
 secret_key = os.getenv('SECRET_KEY')
 
-
+API_PERU_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImkyNTExOTExQGNvbnRpbmVudGFsLmVkdS5wZSJ9.fNVvZJpJitDHY9c3Hrr2T7iLhfZ-NhyJ90Ynh5Delys"
+print(f"🔑 API_PERU_TOKEN cargado: {bool(API_PERU_TOKEN)}")
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "clave_secreta_segura")
@@ -72,7 +75,7 @@ class IntentosLogin(db.Model):
     usuarios_distintos = db.Column(db.Integer, default=0)
     ips_bloqueadas = db.Column(db.DateTime, nullable=True)  
     email_bloqueado = db.Column(db.DateTime, nullable=True)
-    intentos_totales = db.Column(db.Integer, default=0)  # ← NUEVO
+    intentos_totales = db.Column(db.Integer, default=0) 
 
 class Proveedor(db.Model):
     __tablename__ = "proveedores"
@@ -111,7 +114,7 @@ class UsuarioSistema(db.Model):
     clave = db.Column(db.String(255), nullable=False)
     estado = db.Column(db.Integer, default=1)
     rol_id = db.Column(db.Integer, db.ForeignKey("roles.id"), nullable=False)
-    rol = db.Column(db.String(20), nullable=False)  # ← Mantener para compatibilidad
+    rol = db.Column(db.String(20), nullable=False)  
     ventas = db.relationship("Venta", back_populates="vendedor")
 
 class Categoria(db.Model):
@@ -122,6 +125,7 @@ class Categoria(db.Model):
     activo = db.Column(db.Boolean, default=True)
     
     productos = db.relationship("Producto", back_populates="categoria_rel") 
+
 class Venta(db.Model):
     __tablename__ = "ventas"
     id = db.Column(db.Integer, primary_key=True)
@@ -133,27 +137,31 @@ class Venta(db.Model):
     numero_comprobante = db.Column(db.String(50), nullable=True)
     cliente_id = db.Column(db.Integer, db.ForeignKey("clientes.id"), nullable=True)
     estado = db.Column(db.Integer, default=1)
+    
+    cliente_nombres = db.Column(db.String(100), nullable=True)
+    cliente_apellidos = db.Column(db.String(100), nullable=True)
+    cliente_documento = db.Column(db.String(20), nullable=True)
+    cliente_email = db.Column(db.String(150), nullable=True)
+    cliente_direccion = db.Column(db.Text, nullable=True)
+    cliente_direccion_fiscal = db.Column(db.Text, nullable=True)
+    cliente_razon_social = db.Column(db.String(200), nullable=True)
+    
     producto = db.relationship("Producto", back_populates="ventas")
     vendedor = db.relationship("UsuarioSistema", back_populates="ventas")
     cliente = db.relationship("Cliente", back_populates="ventas")
-
-    @property
-    def proveedor(self):
-        return self.producto.proveedor
-
+    
     @property
     def cliente_nombre_completo(self):
         if self.cliente_nombres and self.cliente_apellidos:
             return f"{self.cliente_nombres} {self.cliente_apellidos}"
         return self.cliente_nombres or ""
-
 class Cliente(db.Model):
     __tablename__ = "clientes"
     id = db.Column(db.Integer, primary_key=True)
     dni = db.Column(db.String(8))
     nombres = db.Column(db.String(100), nullable=False)
     apellidos = db.Column(db.String(100), nullable=False)
-    correo = db.Column(db.String(150), unique=True, nullable=False)  # ← CAMBIADO de email a correo
+    correo = db.Column(db.String(150), unique=True, nullable=False)     
     telefono = db.Column(db.String(15))
     direccion = db.Column(db.Text)
     clave = db.Column(db.String(255), nullable=False)
@@ -161,7 +169,7 @@ class Cliente(db.Model):
     puntos = db.Column(db.Integer, default=0)
     token_recuperacion = db.Column(db.String(100), nullable=True)
     token_expiracion = db.Column(db.DateTime, nullable=True)
-    estado = db.Column(db.Integer, default=1)  # ← AGREGAR campo estado
+    estado = db.Column(db.Integer, default=1)  
     pedidos = db.relationship("Pedido", back_populates="cliente")
     ventas = db.relationship("Venta", back_populates="cliente")
 class Rol(db.Model):
@@ -216,14 +224,13 @@ def registrar_intento_fallido(email, ip, es_cliente=False):
     """
     ahora = datetime.now()
     
-    # Verificar si el email existe
     email_existe = False
     if es_cliente:
         email_existe = Cliente.query.filter_by(correo=email).first() is not None
     else:
         email_existe = UsuarioSistema.query.filter_by(correo=email).first() is not None
     
-    # Verificar bloqueo de IP
+
     ip_bloqueada = IntentosLogin.query.filter(
         IntentosLogin.ip == ip,
         IntentosLogin.ips_bloqueadas > ahora
@@ -231,8 +238,7 @@ def registrar_intento_fallido(email, ip, es_cliente=False):
     
     if ip_bloqueada:
         return {"bloqueado": True, "tipo": "ip", "mensaje": "IP bloqueada por 10 minutos"}
-    
-    # Si el email no existe, registrar intento con email inexistente
+ 
     if not email_existe:
         registro = IntentosLogin.query.filter_by(email=email).first()
         
@@ -269,9 +275,7 @@ def registrar_intento_fallido(email, ip, es_cliente=False):
         
         return {"bloqueado": False, "intentos_restantes": 999, "email_no_existe": True}
     
-    # ==========================================
-    # EL EMAIL EXISTE - PROCESAR INTENTOS
-    # ==========================================
+
     registro = IntentosLogin.query.filter_by(email=email).first()
     
     if not registro:
@@ -280,17 +284,14 @@ def registrar_intento_fallido(email, ip, es_cliente=False):
             ip=ip, 
             intentos=1, 
             ultimo_intento=ahora, 
-            usuarios_distintos=1,  # ← NUEVO: Primer usuario desde esta IP
+            usuarios_distintos=1, 
             intentos_totales=1
         )
         db.session.add(registro)
         db.session.commit()
         return {"bloqueado": False, "intentos_restantes": 2, "intentos_totales": 1}
     
-    # ==========================================
-    # ACTUALIZAR usuarios_distintos
-    # ==========================================
-    # Contar cuántos emails diferentes han intentado login desde esta IP
+
     emails_desde_ip = db.session.execute(text("""
         SELECT COUNT(DISTINCT email) 
         FROM intentos_login 
@@ -298,9 +299,9 @@ def registrar_intento_fallido(email, ip, es_cliente=False):
         AND email != :email
     """), {"ip": ip, "email": email}).scalar()
     
-    # Si es un nuevo email desde esta IP, incrementar usuarios_distintos
+
     if emails_desde_ip > 0:
-        # Verificar si este email ya existe en intentos_login para esta IP
+
         existe_email_ip = db.session.execute(text("""
             SELECT COUNT(*) 
             FROM intentos_login 
@@ -309,34 +310,26 @@ def registrar_intento_fallido(email, ip, es_cliente=False):
         """), {"ip": ip, "email": email}).scalar()
         
         if existe_email_ip == 0:
-            # Es un nuevo email desde esta IP
+    
             registro.usuarios_distintos = emails_desde_ip + 1
         else:
-            # El email ya existe, mantener el contador
+
             registro.usuarios_distintos = emails_desde_ip
     else:
-        # Es el primer email desde esta IP
+
         registro.usuarios_distintos = 1
-    
-    # Incrementar contadores
+
     registro.intentos += 1
     registro.intentos_totales += 1
     registro.ultimo_intento = ahora
     registro.ip = ip
     
-    # ==========================================
-    # VERIFICAR BLOQUEO POR IP (múltiples usuarios distintos)
-    # ==========================================
-    # Si hay 2 o más usuarios distintos desde esta IP, bloquear la IP
+
     if registro.usuarios_distintos >= 2 and not registro.ips_bloqueadas:
         registro.ips_bloqueadas = ahora + timedelta(minutes=10)
         db.session.commit()
         return {"bloqueado": True, "tipo": "ip", "mensaje": "IP bloqueada por 10 minutos (múltiples usuarios desde la misma IP)"}
     
-    # ==========================================
-    # VERIFICAR BLOQUEO PERMANENTE
-    # ==========================================
-    # Verificar si ya está bloqueado permanentemente
     if es_cliente:
         bloqueo_permanente = db.session.execute(text("""
             SELECT id FROM bloqueos 
@@ -358,9 +351,7 @@ def registrar_intento_fallido(email, ip, es_cliente=False):
         db.session.commit()
         return {"bloqueado": True, "tipo": "permanente", "mensaje": "CUENTA BLOQUEADA PERMANENTEMENTE. Contacta al administrador."}
     
-    # ==========================================
-    # NIVEL 1: 3 INTENTOS → BLOQUEO TEMPORAL (10 min)
-    # ==========================================
+
     if registro.intentos >= 3 and not registro.email_bloqueado:
         registro.email_bloqueado = ahora + timedelta(minutes=10)
         
@@ -407,10 +398,7 @@ def registrar_intento_fallido(email, ip, es_cliente=False):
         
         db.session.commit()
         return {"bloqueado": True, "tipo": "email", "mensaje": "Correo bloqueado temporalmente por 10 minutos. 3 intentos fallidos."}
-    
-    # ==========================================
-    # NIVEL 2: 5 INTENTOS → BLOQUEO PERMANENTE
-    # ==========================================
+
     if registro.intentos_totales >= 5:
         registro.email_bloqueado = None
         registro.intentos = 0
@@ -460,9 +448,7 @@ def registrar_intento_fallido(email, ip, es_cliente=False):
         db.session.commit()
         return {"bloqueado": True, "tipo": "permanente", "mensaje": "CUENTA BLOQUEADA PERMANENTEMENTE por 5 intentos fallidos. Contacta al administrador."}
     
-    # ==========================================
-    # MENOS DE 3 INTENTOS → AÚN NO BLOQUEADO
-    # ==========================================
+
     db.session.commit()
     
     intentos_restantes_temporales = 3 - registro.intentos
@@ -505,9 +491,7 @@ def verificar_bloqueo_email(email):
     if registro and registro.email_bloqueado and registro.email_bloqueado > ahora:
         print(f"Email {email} BLOQUEADO TEMPORALMENTE hasta {registro.email_bloqueado}", flush=True)
         return True
-    
-    # 2. Verificar bloqueo permanente en tabla bloqueos
-    # Primero verificar si es un cliente
+
     cliente = Cliente.query.filter_by(correo=email).first()
     if cliente:
         bloqueo = db.session.execute(text("""
@@ -522,7 +506,7 @@ def verificar_bloqueo_email(email):
             print(f"Email {email} BLOQUEADO PERMANENTEMENTE (cliente)", flush=True)
             return True
     
-    # Verificar si es un usuario del sistema
+
     usuario = UsuarioSistema.query.filter_by(correo=email).first()
     if usuario:
         bloqueo = db.session.execute(text("""
@@ -550,22 +534,20 @@ def limpiar_intentos_exitosos(email, ip):
     try:
         print(f"🔍 Limpiando intentos para {email}")
         
-        # 1. Buscar el registro de intentos
+  
         registro = IntentosLogin.query.filter_by(email=email).first()
         
         if registro:
             # Resetear TODO
             registro.intentos = 0
-            registro.intentos_totales = 0  # ← NUEVO: Resetear también
+            registro.intentos_totales = 0 
             registro.email_bloqueado = None
             registro.ultimo_intento = datetime.now()
             db.session.commit()
             print(f"✅ Intentos y totales reseteados para {email}")
         else:
             print(f"ℹ️ No hay registro de intentos para {email}")
-        
-        # 2. Desactivar bloqueos temporales en tabla 'bloqueos'
-        # Buscar si es cliente
+
         cliente = Cliente.query.filter_by(correo=email).first()
         if cliente:
             db.session.execute(text("""
@@ -579,7 +561,6 @@ def limpiar_intentos_exitosos(email, ip):
             db.session.commit()
             print(f"✅ Bloqueos temporales desactivados para cliente {email}")
         
-        # Buscar si es usuario del sistema
         usuario = UsuarioSistema.query.filter_by(correo=email).first()
         if usuario:
             db.session.execute(text("""
@@ -593,7 +574,6 @@ def limpiar_intentos_exitosos(email, ip):
             db.session.commit()
             print(f"✅ Bloqueos temporales desactivados para usuario {email}")
         
-        # 3. Verificar si la IP ya no tiene bloqueos activos
         ahora = datetime.now()
         emails_bloqueados = IntentosLogin.query.filter(
             IntentosLogin.ip == ip,
@@ -616,7 +596,6 @@ def limpiar_bloqueos_expirados():
     """Limpia bloqueos temporales que ya expiraron (no toca los permanentes)"""
     ahora = datetime.now()
     
-    # Limpiar bloqueos temporales en intentos_login
     IntentosLogin.query.filter(
         IntentosLogin.email_bloqueado < ahora,
         IntentosLogin.email_bloqueado.isnot(None)
@@ -627,7 +606,7 @@ def limpiar_bloqueos_expirados():
         IntentosLogin.ips_bloqueadas.isnot(None)
     ).update({IntentosLogin.ips_bloqueadas: None})
     
-    # Limpiar bloqueos temporales en tabla bloqueos (NO los permanentes)
+
     db.session.execute(text("""
         UPDATE bloqueos 
         SET estado = 0, fecha_desbloqueo = NOW() 
@@ -823,9 +802,7 @@ def enviar_comprobante_email(destinatario, cliente_nombre, tipo_comprobante, num
 def inicio():
     return render_template("index.html")
 
-# ===============================
-# CONTEXT PROCESSOR - CATEGORÍAS
-# ===============================
+
 
 @app.context_processor
 def inject_categorias():
@@ -873,10 +850,7 @@ def login():
                         return redirect(url_for("login"))
                     return render_template("login.html")
                 
-                # ============================================
-                # VERIFICAR SI EL USUARIO SISTEMA ESTÁ BLOQUEADO
-                # ============================================
-                # 1. Verificar bloqueo manual en tabla 'bloqueos'
+
                 bloqueo = db.session.execute(text("""
                     SELECT id, motivo, fecha_bloqueo 
                     FROM bloqueos 
@@ -892,7 +866,7 @@ def login():
                     flash("🔒 Contacta al administrador para desbloquear tu cuenta.", "warning")
                     return render_template("login.html")
                 
-                # 2. Verificar bloqueo automático en 'intentos_login'
+
                 bloqueo_auto = db.session.execute(text("""
                     SELECT email_bloqueado, intentos 
                     FROM intentos_login 
@@ -907,7 +881,7 @@ def login():
                     flash(f"⏳ Tiempo restante: {(bloqueo_auto['email_bloqueado'] - datetime.now()).seconds // 60} minutos", "info")
                     flash("🔄 Espera a que se desbloquee automáticamente o contacta al administrador.", "warning")
                     return render_template("login.html")
-                # ============================================
+
                 
                 if bcrypt.check_password_hash(usuario.clave, clave):
                     limpiar_intentos_exitosos(correo, ip_cliente)
@@ -952,7 +926,7 @@ def login_cliente():
     ip_cliente = obtener_ip_cliente()
     limpiar_bloqueos_expirados()
     
-    # Variables para el template
+
     template_data = {
         "bloqueo_permanente": None,
         "bloqueo_temporal": False,
@@ -974,9 +948,7 @@ def login_cliente():
             flash("❌ Ingresa email y contraseña", "danger")
             return render_template("login_cliente.html", **template_data)
         
-        # ============================================
-        # VERIFICAR BLOQUEO DE EMAIL (TEMPORAL O PERMANENTE)
-        # ============================================
+
         if verificar_bloqueo_email(email):
             cliente_tmp = Cliente.query.filter_by(correo=email).first()
             if cliente_tmp:
@@ -1044,7 +1016,7 @@ def login_cliente():
             }
             return render_template("login_cliente.html", **template_data)
         
-        # 2. Verificar bloqueo temporal (debe estar en intentos_login)
+
         registro_intentos = IntentosLogin.query.filter_by(email=email).first()
         if registro_intentos and registro_intentos.email_bloqueado and registro_intentos.email_bloqueado > datetime.now():
             minutos_restantes = (registro_intentos.email_bloqueado - datetime.now()).seconds // 60
@@ -1053,15 +1025,11 @@ def login_cliente():
             template_data["bloqueo_temporal"] = True
             template_data["minutos_restantes"] = minutos_restantes
             return render_template("login_cliente.html", **template_data)
-        
-        # ============================================
-        # VERIFICAR CONTRASEÑA
-        # ============================================
+
         if bcrypt.check_password_hash(cliente.clave, clave):
-            # Login exitoso - limpiar intentos
+
             limpiar_intentos_exitosos(email, ip_cliente)
-            
-            # Si tenía un bloqueo temporal en tabla bloqueos, desactivarlo
+
             db.session.execute(text("""
                 UPDATE bloqueos 
                 SET estado = 0, fecha_desbloqueo = NOW() 
@@ -1085,7 +1053,6 @@ def login_cliente():
    
             resultado = registrar_intento_fallido(email, ip_cliente, es_cliente=True)
             
-            # Actualizar template_data con los intentos
             template_data["intentos_restantes"] = resultado.get("intentos_restantes", 0)
             template_data["intentos_totales"] = resultado.get("intentos_totales", 0)
             template_data["intentos_para_permanente"] = resultado.get("intentos_para_bloqueo_permanente", 5)
@@ -1101,7 +1068,6 @@ def login_cliente():
                 elif resultado["tipo"] == "email":
                     flash(f"⛔ {resultado['mensaje']}", "danger")
                     flash("⏳ Espera 10 minutos antes de volver a intentar.", "warning")
-                    # Verificar si hay minutos restantes
                     registro = IntentosLogin.query.filter_by(email=email).first()
                     if registro and registro.email_bloqueado:
                         minutos_restantes = (registro.email_bloqueado - datetime.now()).seconds // 60
@@ -1125,7 +1091,7 @@ def login_cliente():
                         flash(f"❌ Contraseña incorrecta. Te quedan {intentos_restantes} intentos para bloqueo TEMPORAL.", "danger")
                         flash(f"ℹ️ Intentos totales: {intentos_totales} de 5. Si llegas a 5, tu cuenta será BLOQUEADA PERMANENTEMENTE.", "info")
                 else:
-                    # Mostrar información del progreso hacia bloqueo permanente
+
                     if intentos_totales >= 4:
                         flash(f"⚠️ ¡ÚLTIMO INTENTO! Contraseña incorrecta. Si fallas una vez más (5 de 5), tu cuenta será BLOQUEADA PERMANENTEMENTE.", "danger")
                     else:
@@ -1277,13 +1243,13 @@ def bloquear_usuario_sistema(usuario_id):
     motivo = request.form.get("motivo", "Bloqueo manual por administrador")
     
     try:
-        # Verificar si el usuario existe
+
         usuario = UsuarioSistema.query.get(usuario_id)
         if not usuario:
             flash("❌ Usuario no encontrado", "danger")
             return redirect(url_for("usuarios_sistema"))
         
-        # Verificar si ya tiene un bloqueo activo
+
         existe = db.session.execute(text("""
             SELECT id FROM bloqueos 
             WHERE usuario_sistema_id = :usuario_id 
@@ -1321,7 +1287,7 @@ def desbloquear_usuario_sistema(usuario_id):
         return redirect(url_for("usuarios_sistema"))
     
     try:
-        # Buscar bloqueo activo
+
         bloqueo = db.session.execute(text("""
             SELECT id FROM bloqueos 
             WHERE usuario_sistema_id = :usuario_id 
@@ -1330,7 +1296,7 @@ def desbloquear_usuario_sistema(usuario_id):
         """), {"usuario_id": usuario_id}).fetchone()
         
         if bloqueo:
-            # Desbloquear manual
+
             db.session.execute(text("""
                 UPDATE bloqueos 
                 SET estado = 0, 
@@ -1340,7 +1306,7 @@ def desbloquear_usuario_sistema(usuario_id):
             """), {"bloqueo_id": bloqueo[0], "admin_id": session["usuario_id"]})
             flash("✅ Usuario desbloqueado exitosamente", "success")
         else:
-            # Verificar si tiene bloqueo automático en intentos_login
+
             usuario = UsuarioSistema.query.get(usuario_id)
             if usuario:
                 db.session.execute(text("""
@@ -1783,7 +1749,6 @@ def ver_bloqueos():
 
         bloqueos_lista = []
         
-        # Permanentes
         for b in bloqueos_permanentes:
             bloqueo_dict = {
                 'id_bloqueo': b['id'],
@@ -1798,8 +1763,7 @@ def ver_bloqueos():
                 'permanente': True
             }
             bloqueos_lista.append(bloqueo_dict)
-        
-        # Temporales
+
         for b in bloqueos_temporales:
             bloqueo_dict = {
                 'id_bloqueo': b['id'],
@@ -1959,16 +1923,10 @@ def api_bloqueos():
             ORDER BY i.email_bloqueado DESC
         """)).mappings().all()
         
-        # ============================================
-        # 3. UNIFICAR RESULTADOS SIN DUPLICADOS
-        # ============================================
         resultado = []
         emails_vistos = set()
-        
-        # Procesar bloqueos de la tabla 'bloqueos'
         for b in bloqueos_bd:
             email = b['cliente_correo']
-            # Si ya vimos este email en intentos_login, usar el de intentos_login (más reciente)
             if email in emails_vistos:
                 continue
             
@@ -1985,10 +1943,8 @@ def api_bloqueos():
                 'permanente': bool(b['permanente'])
             })
         
-        # Procesar bloqueos automáticos de intentos_login
         for i in intentos_bloqueados:
             email = i['email']
-            # Si ya vimos este email, saltar (el de intentos_login es más reciente)
             if email in emails_vistos:
                 continue
             
@@ -2014,16 +1970,14 @@ def api_bloqueos():
 @login_required
 def ventas():
     try:
-        # Si es vendedor, solo ve sus propias ventas
+        
         if session.get("rol") == "vendedor":
             vendedor_id = session.get("usuario_id")
             vendedor_filtro = vendedor_id
         else:
             vendedor_filtro = request.args.get('vendedor_id', type=int)
         
-        # ============================================
-        # CONSULTA SIN COLUMNAS QUE NO EXISTEN
-        # ============================================
+   
         query = """
             SELECT 
                 v.id, 
@@ -2282,34 +2236,31 @@ def venta_rapida():
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)})
 
-# ===============================
-# CLIENTES (TIENDA ONLINE)
-# ===============================
 
 @app.route("/catalogo", methods=["GET"])
 def catalogo_cliente():
     try:
-        # Obtener el ID de categoría desde la URL
+
         categoria_id = request.args.get('categoria', type=int)
         
-        # Obtener todas las categorías activas
+
         categorias = Categoria.query.filter_by(activo=True).all()
         
-        # Construir la consulta de productos
+   
         query = Producto.query.filter(Producto.cantidad > 0)
         
-        # Si hay una categoría seleccionada, filtrar
+
         if categoria_id:
             query = query.filter(Producto.id_categoria == categoria_id)
-            # Obtener el nombre de la categoría seleccionada para mostrarlo
+
             categoria_seleccionada = Categoria.query.get(categoria_id)
         else:
             categoria_seleccionada = None
         
-        # Ejecutar la consulta
+
         productos = query.order_by(Producto.nombre.asc()).all()
         
-        # Renderizar la plantilla con los datos
+ 
         return render_template("catalogo_cliente.html", 
                               categorias=categorias,
                               productos=productos,
@@ -2343,7 +2294,7 @@ def api_productos_catalogo():
         resultado = []
         for p in productos:
             try:
-                # Obtener nombre de categoría de forma segura
+
                 categoria_nombre = None
                 if hasattr(p, 'categoria_rel') and p.categoria_rel:
                     categoria_nombre = p.categoria_rel.nombre
@@ -2491,9 +2442,6 @@ def cliente_cambiar_contrasena():
     
     return render_template("cliente_cambiar_contrasena.html")
 
-# ===============================
-# RECUPERACIÓN DE CONTRASEÑA
-# ===============================
 
 @app.route("/recuperar-contrasena", methods=["GET", "POST"])
 def recuperar_contrasena():
@@ -2564,9 +2512,7 @@ def resetear_contrasena(token):
     
     return render_template("resetear_contrasena.html", token=token)
 
-# ===============================
-# PEDIDOS
-# ===============================
+
 
 @app.route("/carrito")
 def ver_carrito():
@@ -2575,10 +2521,7 @@ def ver_carrito():
 @app.route("/checkout")
 @login_required_cliente
 def checkout():
-    # Obtener el cliente actual
     cliente = Cliente.query.get(session.get("cliente_id"))
-    
-    # Pasar datos del cliente al template
     return render_template("checkout.html", 
                           cliente=cliente,
                           datetime=datetime)
@@ -2586,8 +2529,6 @@ def checkout():
 @app.route("/pago")
 @login_required_cliente
 def pago():
-    # Obtener datos del checkout desde localStorage (vía sesión o query params)
-    # Por ahora simplemente renderizamos la plantilla
     return render_template("pago.html", datetime=datetime)
 
 @app.route("/mis-pedidos")
@@ -2628,9 +2569,7 @@ def crear_pedido():
     print("=" * 60)
     
     try:
-        # ============================================
-        # 1. VALIDAR STOCK
-        # ============================================
+
         for item in data["items"]:
             producto = Producto.query.get(item["id"])
             if not producto:
@@ -2638,18 +2577,16 @@ def crear_pedido():
             if producto.cantidad < item["cantidad"]:
                 return jsonify({"success": False, "error": f'Stock insuficiente: {item["nombre"]}. Disponible: {producto.cantidad}'})
         
-        # ============================================
-        # 2. EXTRAER DATOS DEL CHECKOUT
-        # ============================================
+
         cliente_data = data.get("cliente", {})
         
-        # Datos personales
+
         cliente_nombres = cliente_data.get("nombres", "").strip()
         cliente_apellidos = cliente_data.get("apellidos", "").strip()
         cliente_email = cliente_data.get("email", "").strip()
         cliente_telefono = cliente_data.get("telefono", "").strip()
         
-        # Documento (DNI o RUC)
+
         cliente_documento = cliente_data.get("documento", "").strip()
         if not cliente_documento:
             cliente_documento = cliente_data.get("dni", "").strip()
@@ -2659,11 +2596,9 @@ def crear_pedido():
         # Datos de facturación (para RUC)
         cliente_razon_social = cliente_data.get("razon_social", "").strip()
         cliente_direccion_fiscal = cliente_data.get("direccion_fiscal", "").strip()  # ← AGREGAR
-        
-        # Dirección de entrega
+
         cliente_direccion = data.get("direccion", "").strip()
-        
-        # Fallback a sesión si es necesario
+
         if not cliente_nombres:
             cliente_nombres = session.get("cliente_nombres", "")
         if not cliente_apellidos:
@@ -2685,9 +2620,8 @@ def crear_pedido():
         print(f"   Dirección Fiscal: '{cliente_direccion_fiscal}'")
         print(f"   Dirección Entrega: '{cliente_direccion}'")
         
-        # ============================================
-        # 3. CREAR PEDIDO
-        # ============================================
+
+
         pedido = Pedido(
             cliente_id=session["cliente_id"],
             total=float(data["total"]),
@@ -2697,16 +2631,13 @@ def crear_pedido():
         db.session.add(pedido)
         db.session.flush()
         
-        # ============================================
-        # 4. CREAR DETALLES Y VENTAS
-        # ============================================
+
         productos_para_correo = []
         
         for item in data["items"]:
             producto = Producto.query.get(item["id"])
             subtotal = float(item["precio"]) * int(item["cantidad"])
-            
-            # Detalle del pedido
+
             detalle = DetallePedido(
                 pedido_id=pedido.id,
                 producto_id=item["id"],
@@ -2715,11 +2646,9 @@ def crear_pedido():
                 subtotal=subtotal,
             )
             db.session.add(detalle)
-            
-            # Actualizar stock
+
             producto.cantidad -= int(item["cantidad"])
-            
-            # Crear VENTA (guardar dirección fiscal en cliente_direccion o campo específico)
+
             venta = Venta(
                 producto_id=item["id"],
                 cantidad=int(item["cantidad"]),
@@ -2732,8 +2661,8 @@ def crear_pedido():
                 cliente_documento=cliente_documento,
                 cliente_email=cliente_email,
                 cliente_direccion=cliente_direccion,
-                cliente_direccion_fiscal=cliente_direccion_fiscal,  # ← NUEVO: dirección fiscal
-                cliente_razon_social=cliente_razon_social,          # ← NUEVO: razón social
+                cliente_direccion_fiscal=cliente_direccion_fiscal,  
+                cliente_razon_social=cliente_razon_social,          
             )
             db.session.add(venta)
             
@@ -2754,9 +2683,7 @@ def crear_pedido():
         if cliente_direccion_fiscal:
             print(f"   Dirección Fiscal: '{cliente_direccion_fiscal}'")
         
-        # ============================================
-        # 5. ENVIAR CORREO
-        # ============================================
+
         try:
             enviar_comprobante_email(
                 destinatario=cliente_email,
@@ -2784,18 +2711,13 @@ def crear_pedido():
 @login_required
 def ver_pedidos():
     es_admin = session.get("rol") == "administrador"
-    
-    # ============================================
-    # OBTENER PARÁMETROS DE FILTRO
-    # ============================================
+
     search = request.args.get('search', '').strip()
     estado_filter = request.args.get('estado', '').strip()
     fecha_desde = request.args.get('fecha_desde', '').strip()
     fecha_hasta = request.args.get('fecha_hasta', '').strip()
     
-    # ============================================
-    # CONTADORES CORRECTOS
-    # ============================================
+
     total_pedidos = db.session.execute(text(
         "SELECT COUNT(*) FROM pedidos WHERE estado != 'cancelado'"
     )).scalar() or 0
@@ -2811,10 +2733,7 @@ def ver_pedidos():
     pedidos_en_proceso = db.session.execute(text(
         "SELECT COUNT(*) FROM pedidos WHERE estado IN ('confirmado', 'preparando', 'enviado', 'listo_tienda')"
     )).scalar() or 0
-    
-    # ============================================
-    # CONSULTA CON FILTROS
-    # ============================================
+
     query = db.session.query(
         Pedido.id,
         Pedido.fecha_pedido,
@@ -2843,7 +2762,7 @@ def ver_pedidos():
     if estado_filter:
         query = query.filter(Pedido.estado == estado_filter)
     else:
-        # Si no hay filtro de estado, excluir cancelados
+
         query = query.filter(Pedido.estado != 'cancelado')
     
     if fecha_desde:
@@ -2903,20 +2822,19 @@ def detalle_pedido(pedido_id):
     pedido = Pedido.query.get_or_404(pedido_id)
     detalles = db.session.query(DetallePedido, Producto.nombre.label("producto_nombre")).join(Producto).filter(DetallePedido.pedido_id == pedido_id).all()
     cliente = Cliente.query.get(pedido.cliente_id)
-    # Buscar venta asociada (opcional, solo si existe)
+
     venta = Venta.query.filter_by(numero_comprobante=f"ONLINE-{pedido_id}").first()
     es_admin = session.get("rol") == "administrador"
     
     return render_template("pedido_detalle.html", 
                           pedido=pedido, 
                           detalles=detalles, 
-                          cliente=cliente,  # ← PASAR EL CLIENTE
-                          venta=venta,      # ← PASAR LA VENTA (opcional)
+                          cliente=cliente,  
+                          venta=venta,      
                           es_admin=es_admin)
 @app.route("/pedidos/cambiar-estado/<int:pedido_id>", methods=["POST"])
 @login_required
 def cambiar_estado_pedido(pedido_id):
-    # Verificar si es una petición AJAX
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     
     if session.get("rol") != "administrador":
@@ -2927,8 +2845,6 @@ def cambiar_estado_pedido(pedido_id):
     
     pedido = Pedido.query.get_or_404(pedido_id)
     nuevo_estado = request.form.get("estado")
-    
-    # Estados válidos
     estados_validos = [
         "pendiente", 
         "confirmado", 
@@ -2940,7 +2856,7 @@ def cambiar_estado_pedido(pedido_id):
         "cancelado"
     ]
     
-    # Mensajes descriptivos
+
     mensajes = {
         "pendiente": "⏳ Pedido marcado como pendiente",
         "confirmado": "✅ Pedido confirmado",
@@ -2953,13 +2869,11 @@ def cambiar_estado_pedido(pedido_id):
     }
     
     if nuevo_estado in estados_validos:
-        # Guardar el cambio
         pedido.estado = nuevo_estado
         db.session.commit()
         
         mensaje = mensajes.get(nuevo_estado, f"✅ Pedido #{pedido_id} actualizado a: {nuevo_estado}")
         
-        # Si es AJAX, devolver JSON
         if is_ajax:
             return jsonify({
                 "success": True,
@@ -2967,15 +2881,13 @@ def cambiar_estado_pedido(pedido_id):
                 "estado": nuevo_estado,
                 "pedido_id": pedido_id
             })
-        
-        # Si es normal, mostrar flash
+     
         flash(mensaje, "success")
         
-        # Enviar correo al cliente (opcional)
+     
         try:
             cliente = Cliente.query.get(pedido.cliente_id)
             if cliente and cliente.correo:
-                # Aquí puedes agregar el envío de correo
                 print(f"📧 Enviando correo a {cliente.correo} sobre el pedido #{pedido_id}")
         except Exception as e:
             print(f"Error enviando correo: {e}")
@@ -2987,9 +2899,6 @@ def cambiar_estado_pedido(pedido_id):
     
     return redirect(url_for("ver_pedidos"))
 
-# ===============================
-# API PARA CLIENTES
-# ===============================
 
 @app.route("/usuarios-sistema")
 @login_required
@@ -3000,9 +2909,6 @@ def usuarios_sistema():
         return redirect(url_for("dashboard"))
     
     try:
-        # ============================================
-        # OBTENER TODOS LOS USUARIOS DEL SISTEMA
-        # ============================================
         usuarios = db.session.execute(text("""
             SELECT 
                 u.id,
@@ -3024,9 +2930,6 @@ def usuarios_sistema():
             ORDER BY u.id ASC
         """)).mappings().all()
         
-        # ============================================
-        # VERIFICAR BLOQUEOS AUTOMÁTICOS (intentos_login)
-        # ============================================
         intentos_bloqueados = db.session.execute(text("""
             SELECT 
                 i.email,
@@ -3038,7 +2941,7 @@ def usuarios_sistema():
             WHERE i.email_bloqueado IS NOT NULL AND i.email_bloqueado > NOW()
         """)).mappings().all()
         
-        # Crear un diccionario para verificar bloqueos automáticos
+
         bloqueos_automaticos = {i['usuario_id']: i for i in intentos_bloqueados}
         usuarios_lista = []
         for u in usuarios:
@@ -3051,8 +2954,6 @@ def usuarios_sistema():
                 usuario_dict['bloqueo_automatico_id'] = auto['email']
             else:
                 usuario_dict['bloqueo_automatico'] = False
-            
-            # Estado del usuario
             if usuario_dict['bloqueo_id']:
                 usuario_dict['estado_texto'] = '🔒 Bloqueado'
                 usuario_dict['estado_badge'] = 'danger'
@@ -3091,13 +2992,15 @@ def api_cliente_direccion():
         return jsonify({"success": True, "direccion": direccion})
     except Exception as e:
         return jsonify({"success": False, "direccion": "", "error": str(e)})
+import requests
 
 @app.route("/api/consultar-dni/<dni>")
 @login_required_cliente
 def api_consultar_dni_cliente(dni):
+    """Consulta DNI usando ApisPerú (URL correcta)"""
     if not dni.isdigit() or len(dni) != 8:
         return jsonify({"success": False, "error": "DNI inválido"}), 400
-    
+ 
     cliente = Cliente.query.filter_by(dni=dni).first()
     if cliente:
         return jsonify({
@@ -3105,26 +3008,97 @@ def api_consultar_dni_cliente(dni):
             "nombres": cliente.nombres,
             "apellidos": cliente.apellidos,
             "dni": cliente.dni,
+            "origen": "base_datos"
         })
-    
-    venta = Venta.query.filter_by(cliente_documento=dni).first()
-    if venta and venta.cliente_nombres:
-        return jsonify({
-            "success": True,
-            "nombres": venta.cliente_nombres,
-            "apellidos": venta.cliente_apellidos or "",
-            "dni": dni,
-        })
-    
-    return jsonify({"success": False, "error": "DNI no encontrado"}), 404
+
+    try:
+        
+        url = f"https://dniruc.apisperu.com/api/v1/dni/{dni}"
+        
+        headers = {
+            "Authorization": f"Bearer {API_PERU_TOKEN}",
+            "Accept": "application/json"
+        }
+        
+        print(f"🔍 Consultando DNI {dni} en ApisPerú...")
+        print(f"📡 URL: {url}")
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        print(f"📡 Respuesta: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"📝 Datos recibidos: {data}")
+            
+          
+            if data.get("nombres"):
+                nombres = data.get("nombres", "")
+                apellido_paterno = data.get("apellidoPaterno", "")
+                apellido_materno = data.get("apellidoMaterno", "")
+                
+                return jsonify({
+                    "success": True,
+                    "nombres": nombres,
+                    "apellidos": f"{apellido_paterno} {apellido_materno}".strip(),
+                    "dni": dni,
+                    "origen": "apis_peru"
+                })
+            elif data.get("Nombre"):
+              
+                return jsonify({
+                    "success": True,
+                    "nombres": data.get("Nombre", ""),
+                    "apellidos": f"{data.get('ApellidoPaterno', '')} {data.get('ApellidoMaterno', '')}".strip(),
+                    "dni": dni,
+                    "origen": "apis_peru"
+                })
+            else:
+
+                return jsonify({
+                    "success": True,
+                    "nombres": request.args.get("nombres", ""),
+                    "apellidos": request.args.get("apellidos", ""),
+                    "dni": dni,
+                    "origen": "usuario",
+                    "mensaje": "DNI válido pero sin nombres completos"
+                })
+        elif response.status_code == 404:
+            return jsonify({
+                "success": False,
+                "error": "DNI no encontrado en RENIEC"
+            }), 404
+        else:
+            return jsonify({
+                "success": False,
+                "error": f"Error al consultar DNI: {response.status_code}"
+            }), 500
+            
+    except requests.exceptions.Timeout:
+        print("❌ Timeout al consultar ApisPerú")
+        return jsonify({"success": False, "error": "Tiempo de espera agotado"}), 500
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Error de conexión: {e}")
+        return jsonify({"success": False, "error": f"Error de conexión: {str(e)}"}), 500
+    except Exception as e:
+        print(f"❌ Error inesperado: {e}")
+        return jsonify({"success": False, "error": f"Error inesperado: {str(e)}"}), 500
+
+@app.route("/debug-token")
+def debug_token():
+    return jsonify({
+        "token_existe": bool(API_PERU_TOKEN),
+        "token_preview": API_PERU_TOKEN[:20] + "..." if API_PERU_TOKEN else None,
+        "db_host": db_host
+    })
 
 @app.route("/api/consultar-ruc/<ruc>")
 @login_required_cliente
 def api_consultar_ruc_cliente(ruc):
+    """Consulta RUC usando ApisPerú (URL correcta)"""
     if not ruc.isdigit() or len(ruc) != 11:
         return jsonify({"success": False, "error": "RUC inválido"}), 400
     
-    # Primero buscar en tabla de empresas
+
     empresa = RucEmpresa.query.filter_by(ruc=ruc).first()
     if empresa:
         return jsonify({
@@ -3132,26 +3106,73 @@ def api_consultar_ruc_cliente(ruc):
             "razon_social": empresa.razon_social,
             "direccion": empresa.direccion or "",
             "ruc": ruc,
+            "origen": "base_datos"
         })
-    
-    # Luego buscar en ventas anteriores
-    venta = Venta.query.filter_by(cliente_documento=ruc).first()
-    if venta and venta.cliente_nombres:
-        direccion = ""
-        if hasattr(venta, 'cliente_direccion_fiscal') and venta.cliente_direccion_fiscal:
-            direccion = venta.cliente_direccion_fiscal
-        return jsonify({
-            "success": True,
-            "razon_social": venta.cliente_nombres,
-            "direccion": direccion,
-            "ruc": ruc,
-        })
-    
-    return jsonify({"success": False, "error": "RUC no encontrado"}), 404
 
-# ===============================
-# PÁGINAS ESTÁTICAS
-# ===============================
+    try:
+   
+        url = f"https://dniruc.apisperu.com/api/v1/ruc/{ruc}"
+        
+        headers = {
+            "Authorization": f"Bearer {API_PERU_TOKEN}",
+            "Accept": "application/json"
+        }
+        
+        print(f"🔍 Consultando RUC {ruc} en ApisPerú...")
+        response = requests.get(url, headers=headers, timeout=10)
+        print(f"📡 Respuesta: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            if data.get("razonSocial"):
+                razon_social = data.get("razonSocial", "")
+                direccion = data.get("direccion", "")
+
+                nueva_empresa = RucEmpresa(
+                    ruc=ruc,
+                    razon_social=razon_social,
+                    direccion=direccion
+                )
+                db.session.add(nueva_empresa)
+                db.session.commit()
+                
+                return jsonify({
+                    "success": True,
+                    "razon_social": razon_social,
+                    "direccion": direccion,
+                    "ruc": ruc,
+                    "origen": "apis_peru"
+                })
+            elif data.get("RazonSocial"):
+
+                return jsonify({
+                    "success": True,
+                    "razon_social": data.get("RazonSocial", ""),
+                    "direccion": data.get("Direccion", ""),
+                    "ruc": ruc,
+                    "origen": "apis_peru"
+                })
+            else:
+                return jsonify({
+                    "success": False,
+                    "error": "RUC no encontrado en SUNAT"
+                }), 404
+        elif response.status_code == 404:
+            return jsonify({
+                "success": False,
+                "error": "RUC no encontrado en SUNAT"
+            }), 404
+        else:
+            return jsonify({
+                "success": False,
+                "error": f"Error al consultar RUC: {response.status_code}"
+            }), 500
+            
+    except requests.exceptions.Timeout:
+        return jsonify({"success": False, "error": "Tiempo de espera agotado"}), 500
+    except requests.exceptions.RequestException as e:
+        return jsonify({"success": False, "error": f"Error de conexión: {str(e)}"}), 500
 
 @app.route("/acerca-de")
 def acerca_de():
@@ -3161,9 +3182,7 @@ def acerca_de():
 def contacto():
     return render_template("contacto.html")
 
-# ===============================
-# INICIALIZAR BASE DE DATOS
-# ===============================
+
 
 with app.app_context():
     db.create_all()
@@ -3179,9 +3198,7 @@ with app.app_context():
         print(f"⚠️ Migración: {e}")
         db.session.rollback()
 
-# ===============================
-# DASHBOARD
-# ===============================
+
 
 @app.route("/dashboard")
 @login_required
@@ -3231,7 +3248,7 @@ def dashboard():
         total_dia = float(resultado[0]) if resultado and resultado[0] else 0
         ventas_por_dia.append({'fecha': fecha_str, 'total': total_dia})
     
-    # Top productos - CORREGIDO (SIN IMAGEN)
+
     top_productos = db.session.query(
         Producto.nombre,
         func.sum(Venta.cantidad).label('total_vendido')
@@ -3239,13 +3256,10 @@ def dashboard():
         func.date(Venta.fecha_venta) >= hace_30_dias.date()
     ).group_by(Producto.id).order_by(func.sum(Venta.cantidad).desc()).limit(5).all()
     
-    # Stock
+
     stock_bajo = Producto.query.filter(Producto.cantidad <= 10, Producto.cantidad > 0).order_by(Producto.cantidad.asc()).limit(10).all()
     stock_critico = Producto.query.filter(Producto.cantidad == 0).order_by(Producto.nombre.asc()).limit(10).all()
-    
-    # ========== 2. GRÁFICOS CON PLOTLY ==========
-    
-    # Gráfico 1: Ventas últimos 7 días
+
     fechas_7d = [datetime.now() - timedelta(days=i) for i in range(6, -1, -1)]
     ventas_7d = []
     for fecha in fechas_7d:
@@ -3278,7 +3292,7 @@ def dashboard():
         showlegend=False
     )
     
-    # Gráfico 2: Top productos
+
     fig_top = go.Figure()
     if top_productos:
         nombres = [p[0] for p in top_productos]   
@@ -3299,8 +3313,7 @@ def dashboard():
         height=350,
         showlegend=False
     )
-    
-    # Gráfico 3: Ventas por categoría
+
     ventas_categoria = db.session.execute(
         text("""
             SELECT c.nombre as categoria,
@@ -3332,7 +3345,7 @@ def dashboard():
         showlegend=True
     )
     
-    # Gráfico 4: Estado de pedidos
+
     estados_pedidos = db.session.execute(
         text("""
             SELECT estado, COUNT(*) as cantidad
@@ -3365,13 +3378,13 @@ def dashboard():
         showlegend=False
     )
     
-    # ========== 3. CONVERTIR GRÁFICOS A JSON ==========
+
     graph_ventas = json.dumps(fig_ventas, cls=plotly.utils.PlotlyJSONEncoder)
     graph_top = json.dumps(fig_top, cls=plotly.utils.PlotlyJSONEncoder)
     graph_cat = json.dumps(fig_cat, cls=plotly.utils.PlotlyJSONEncoder)
     graph_estados = json.dumps(fig_estados, cls=plotly.utils.PlotlyJSONEncoder)
     
-    # ========== 4. RENDERIZAR TEMPLATE ==========
+
     return render_template("dashboard.html",
                           total_ventas_hoy=total_ventas_hoy,
                           cantidad_ventas_hoy=cantidad_ventas_hoy,
@@ -3615,9 +3628,7 @@ def api_comercial_ventas():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# =============================================
-# MICROSERVICIO INVENTARIO - APIs
-# =============================================
+
 
 @app.route("/api/inventario/productos", methods=["GET"])
 @login_required
@@ -3797,7 +3808,41 @@ def microservicios_dashboard():
                           productos_bajo_stock=productos_bajo_stock,
                           productos_agotados=productos_agotados)
 
-
+with app.app_context():
+    try:
+        # Verificar si las columnas existen
+        from sqlalchemy import text
+        
+        columnas = ['cliente_nombres', 'cliente_apellidos', 'cliente_documento', 
+                   'cliente_email', 'cliente_direccion', 'cliente_direccion_fiscal', 
+                   'cliente_razon_social']
+        
+        for col in columnas:
+            result = db.session.execute(text(f"""
+                SELECT COUNT(*) FROM information_schema.COLUMNS 
+                WHERE TABLE_SCHEMA = 'librospe_db' 
+                AND TABLE_NAME = 'ventas' 
+                AND COLUMN_NAME = '{col}'
+            """))
+            existe = result.scalar()
+            
+            if existe == 0:
+                tipo = 'VARCHAR(100)' if col in ['cliente_nombres', 'cliente_apellidos', 'cliente_email'] else \
+                       'VARCHAR(20)' if col == 'cliente_documento' else \
+                       'VARCHAR(200)' if col == 'cliente_razon_social' else 'TEXT'
+                
+                db.session.execute(text(f"""
+                    ALTER TABLE ventas ADD COLUMN {col} {tipo} NULL
+                """))
+                print(f"✅ Columna {col} agregada")
+        
+        db.session.commit()
+        print("✅ Todas las columnas agregadas correctamente")
+        
+    except Exception as e:
+        print(f"⚠️ Error al agregar columnas: {e}")
+        db.session.rollback()
+        
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=False)
 application = app
