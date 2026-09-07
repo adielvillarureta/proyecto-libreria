@@ -19,9 +19,7 @@ db_password = os.getenv('DB_PASSWORD')
 db_name = os.getenv('DB_NAME')
 secret_key = os.getenv('SECRET_KEY')
 
-# Configurar la conexión
-app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}"
-app.config['SECRET_KEY'] = secret_key
+
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "clave_secreta_segura")
@@ -1027,11 +1025,6 @@ def login_cliente():
                 flash(f"⛔ {resultado['mensaje']}", "danger")
                 return redirect(url_for("login_cliente"))
             return render_template("login_cliente.html", **template_data)
-        
-        # ============================================
-        # VERIFICAR BLOQUEOS ACTIVOS DEL CLIENTE
-        # ============================================
-        # 1. Verificar bloqueo permanente
         bloqueo_permanente = db.session.execute(text("""
             SELECT id, motivo, permanente, fecha_bloqueo
             FROM bloqueos 
@@ -1089,9 +1082,7 @@ def login_cliente():
             flash(f"✅ ¡Bienvenido {cliente.nombres}!", "success")
             return redirect("/catalogo")
         else:
-            # ============================================
-            # REGISTRAR INTENTO FALLIDO
-            # ============================================
+   
             resultado = registrar_intento_fallido(email, ip_cliente, es_cliente=True)
             
             # Actualizar template_data con los intentos
@@ -1142,8 +1133,7 @@ def login_cliente():
                         flash(f"ℹ️ Intentos totales: {intentos_totales} de 5. Con 5 fallos, bloqueo PERMANENTE.", "info")
             
             return render_template("login_cliente.html", **template_data)
-    
-    # GET - Mostrar intentos actuales si existen
+
     email_cookie = request.cookies.get('email_actual')
     if email_cookie:
         registro = IntentosLogin.query.filter_by(email=email_cookie).first()
@@ -1162,9 +1152,7 @@ def ver_bloqueos_sistema():
         return redirect(url_for("dashboard"))
     
     try:
-        # ============================================
-        # 1. BLOQUEOS MANUALES DE USUARIOS SISTEMA
-        # ============================================
+
         bloqueos_sistema = db.session.execute(text("""
             SELECT 
                 b.id,
@@ -1184,10 +1172,7 @@ def ver_bloqueos_sistema():
             WHERE b.tipo_usuario = 'sistema' AND b.estado = 1
             ORDER BY b.fecha_bloqueo DESC
         """)).mappings().all()
-        
-        # ============================================
-        # 2. BLOQUEOS AUTOMÁTICOS DE USUARIOS SISTEMA
-        # ============================================
+
         intentos_sistema = db.session.execute(text("""
             SELECT 
                 i.id,
@@ -1205,9 +1190,7 @@ def ver_bloqueos_sistema():
             ORDER BY i.email_bloqueado DESC
         """)).mappings().all()
         
-        # ============================================
-        # 3. UNIFICAR
-        # ============================================
+
         bloqueos_lista = []
         
         # Manuales
@@ -1680,18 +1663,14 @@ def venta_nueva():
             if session.get("rol") == "administrador":
                 vendedor_id = int(request.form.get("vendedor_id", session.get("usuario_id")))
             else:
-                vendedor_id = session.get("usuario_id")
-            
-            # ============================================
-            # RECOLECTAR DATOS DEL CLIENTE (SOLO PARA EMAIL)
-            # ============================================
+                vendedor_id = session.get("usuario_id")       
             cliente_email = request.form.get("cliente_email", "")
             cliente_nombres = request.form.get("cliente_nombres", "")
             enviar_email = request.form.get("enviar_email", "0")
             
             print(f"\n📋 VENTA: Producto ID={producto_id}, Cantidad={cantidad}, Email={cliente_email}")
             
-            # Generar número de comprobante
+
             numero_comprobante = f"{datetime.now().strftime('%Y%m%d')}-{datetime.now().strftime('%H%M%S')}"
             
             producto = Producto.query.get(producto_id)
@@ -1706,9 +1685,7 @@ def venta_nueva():
             precio_unitario = float(producto.precio or 0)
             total_venta = precio_unitario * cantidad
             
-            # ============================================
-            # CREAR VENTA - SOLO COLUMNAS QUE EXISTEN
-            # ============================================
+
             nueva_venta = Venta(
                 producto_id=producto_id,
                 cantidad=cantidad,
@@ -1716,18 +1693,13 @@ def venta_nueva():
                 vendedor_id=vendedor_id,
                 tipo_comprobante=tipo_comprobante,
                 numero_comprobante=numero_comprobante,
-                # cliente_id se deja NULL (no tenemos el ID del cliente)
-                # estado = 1 (por defecto)
+
             )
             db.session.add(nueva_venta)
             producto.cantidad -= cantidad
             db.session.commit()
             
-            print(f"✅ Venta #{nueva_venta.id} registrada - Total: S/. {total_venta:.2f}")
-            
-            # ============================================
-            # ENVIAR CORREO (si se solicitó)
-            # ============================================
+            print(f"✅ Venta #{nueva_venta.id} registrada - Total: S/. {total_venta:.2f}")          
             if enviar_email == "1" and cliente_email and '@' in cliente_email:
                 try:
                     enviar_comprobante_email(
@@ -1758,20 +1730,14 @@ def venta_nueva():
     
     return render_template("ventas_form.html", productos=lista_productos, vendedores=vendedores, now=datetime.now())
 
-# ===============================
-# BLOQUEOS - VER Y DESBLOQUEAR
-# ===============================
 @app.route("/bloqueos")
 @login_required
 def ver_bloqueos():
     if session.get("rol") != "administrador":
         flash("❌ Solo administradores pueden ver bloqueos", "danger")
-        return redirect(url_for("dashboard"))
-    
+        return redirect(url_for("dashboard")) 
     try:
-        # ============================================
-        # 1. BLOQUEOS PERMANENTES DE CLIENTES
-        # ============================================
+
         bloqueos_permanentes = db.session.execute(text("""
             SELECT 
                 b.id,
@@ -1792,9 +1758,7 @@ def ver_bloqueos():
             ORDER BY b.fecha_bloqueo DESC
         """)).mappings().all()
         
-        # ============================================
-        # 2. BLOQUEOS TEMPORALES DE CLIENTES
-        # ============================================
+
         bloqueos_temporales = db.session.execute(text("""
             SELECT 
                 b.id,
@@ -1816,10 +1780,7 @@ def ver_bloqueos():
             WHERE b.tipo_usuario = 'cliente' AND b.estado = 1 AND b.permanente = 0
             ORDER BY b.fecha_bloqueo DESC
         """)).mappings().all()
-        
-        # ============================================
-        # 3. UNIFICAR RESULTADOS
-        # ============================================
+
         bloqueos_lista = []
         
         # Permanentes
@@ -1900,7 +1861,7 @@ def desbloquear_usuario_admin(bloqueo_id):
         return jsonify({"success": False, "error": "No autorizado"}), 403
     
     try:
-        # Obtener el bloqueo
+       
         bloqueo = db.session.execute(text("""
             SELECT * FROM bloqueos WHERE id = :id AND estado = 1
         """), {"id": bloqueo_id}).mappings().first()
@@ -1908,7 +1869,7 @@ def desbloquear_usuario_admin(bloqueo_id):
         if not bloqueo:
             return jsonify({"success": False, "error": "Bloqueo no encontrado"}), 404
         
-        # Desbloquear usando el procedimiento
+        
         db.session.execute(text("""
             CALL desbloquear_usuario(:bloqueo_id, :admin_id)
         """), {"bloqueo_id": bloqueo_id, "admin_id": session["usuario_id"]})
@@ -1956,12 +1917,10 @@ def desbloquear_usuario_form():
 def api_bloqueos():
     """API para obtener bloqueos activos de CLIENTES (para el contador)"""
     try:
-        # 🔥 PRIMERO: Limpiar bloqueos expirados
+
         limpiar_bloqueos_expirados()
         
-        # ============================================
-        # 1. BLOQUEOS DE LA TABLA 'bloqueos' (manuales y temporales)
-        # ============================================
+       
         bloqueos_bd = db.session.execute(text("""
             SELECT 
                 b.id,
@@ -1983,10 +1942,6 @@ def api_bloqueos():
             )
             ORDER BY b.fecha_bloqueo DESC
         """)).mappings().all()
-        
-        # ============================================
-        # 2. BLOQUEOS AUTOMÁTICOS (intentos_login)
-        # ============================================
         intentos_bloqueados = db.session.execute(text("""
             SELECT 
                 i.id,
@@ -2437,7 +2392,7 @@ def registro_cliente():
                 dni=request.form.get("dni"),
                 nombres=request.form["nombres"],
                 apellidos=request.form["apellidos"],
-                email=request.form["email"],
+                correo=request.form["email"],
                 telefono=request.form.get("telefono"),
                 direccion=request.form.get("direccion"),
                 clave=bcrypt.generate_password_hash(request.form["clave"]).decode("utf-8"),
@@ -2923,9 +2878,6 @@ def ver_pedidos():
             "cliente_telefono": p.cliente_telefono,
         })
     
-    # ============================================
-    # OBTENER LISTA DE ESTADOS PARA EL FILTRO
-    # ============================================
     estados_disponibles = db.session.execute(
         text("SELECT DISTINCT estado FROM pedidos ORDER BY estado")
     ).fetchall()
@@ -3088,15 +3040,9 @@ def usuarios_sistema():
         
         # Crear un diccionario para verificar bloqueos automáticos
         bloqueos_automaticos = {i['usuario_id']: i for i in intentos_bloqueados}
-        
-        # ============================================
-        # PROCESAR DATOS PARA LA VISTA
-        # ============================================
         usuarios_lista = []
         for u in usuarios:
             usuario_dict = dict(u)
-            
-            # Verificar si tiene bloqueo automático
             if u['id'] in bloqueos_automaticos:
                 auto = bloqueos_automaticos[u['id']]
                 usuario_dict['bloqueo_automatico'] = True
