@@ -1,0 +1,48 @@
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_bcrypt import Bcrypt
+from flask_migrate import Migrate
+from .config import Config
+
+db = SQLAlchemy()
+bcrypt = Bcrypt()
+migrate = Migrate()
+
+def create_app(config_class=Config):
+    app = Flask(__name__, template_folder='templates', static_folder='../static')
+    app.config.from_object(config_class)
+
+    db.init_app(app)
+    bcrypt.init_app(app)
+    migrate.init_app(app, db)
+
+    # Importar modelos dentro del contexto para crear tablas
+    with app.app_context():
+        from . import models 
+
+    # Registrar Blueprints
+    from .routes.main import main_bp
+    from .routes.auth import auth_bp
+    from .routes.productos import productos_bp
+    from .routes.ventas import ventas_bp
+    from .routes.pedidos import pedidos_bp
+    from .routes.clientes import clientes_bp
+    from .routes.bloqueos import bloqueos_bp
+    from .routes.api import api_bp
+
+    app.register_blueprint(main_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(productos_bp)
+    app.register_blueprint(ventas_bp)
+    app.register_blueprint(pedidos_bp)
+    app.register_blueprint(clientes_bp)
+    app.register_blueprint(bloqueos_bp)
+    app.register_blueprint(api_bp)
+
+    # Context processor
+    @app.context_processor
+    def inject_categorias():
+        categorias = models.Categoria.query.filter_by(activo=True).all()
+        return dict(categorias=categorias)
+
+    return app

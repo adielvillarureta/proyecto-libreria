@@ -1,0 +1,162 @@
+{% extends 'base_cliente.html' %}
+{% block titulito %}📖 Acerca de - Librería Salesiana{% endblock %}
+
+{% block contenido %}
+<div class="container px-2 px-sm-3 px-md-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow border-0 mb-4 rounded-3 overflow-hidden">
+                <!-- HEADER RESPONSIVE -->
+                <div class="card-header bg-primary text-white text-center py-3 py-sm-4 py-md-5">
+                    <i class="fas fa-book-open fa-3x fa-sm-4x mb-2 mb-sm-3"></i>
+                    <h2 class="mb-0 fs-2 fs-sm-1 fs-md-0">Librería Salesiana Don Bosco</h2>
+                    <p class="mt-2 mb-0 opacity-75 small px-2">"Formando buenos cristianos y honrados ciudadanos"</p>
+                </div>
+
+                <div class="card-body p-3 p-sm-4 p-md-5">
+                    <div class="row g-4">
+                        <!-- COLUMNA IZQUIERDA -->
+                        <div class="col-12 col-md-6">
+                            <div class="mb-4">
+                                <h4 class="fs-5 fs-md-4"><i class="fas fa-history me-2 text-primary"></i>Nuestra Historia</h4>
+                                <p class="text-muted small small-md">
+                                    Fundada en 1990, la Librería Salesiana Don Bosco nace con el propósito
+                                    de acercar la literatura y la educación a toda la comunidad. Inspirados
+                                    por el carisma de San Juan Bosco, ofrecemos una amplia variedad de libros,
+                                    útiles escolares y artículos de oficina.
+                                </p>
+                            </div>
+
+                            <div class="mb-4">
+                                <h4 class="fs-5 fs-md-4"><i class="fas fa-bullseye me-2 text-primary"></i>Misión</h4>
+                                <p class="text-muted small small-md">
+                                    Proveer materiales educativos y literarios de calidad, promoviendo la
+                                    lectura y el conocimiento, inspirados en los valores salesianos.
+                                </p>
+                            </div>
+
+                            <div class="mb-4">
+                                <h4 class="fs-5 fs-md-4"><i class="fas fa-eye me-2 text-primary"></i>Visión</h4>
+                                <p class="text-muted small small-md">
+                                    Ser la librería líder en el sector educativo, reconocida por su excelencia
+                                    y compromiso con la formación integral de las personas.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- COLUMNA DERECHA -->
+                        <div class="col-12 col-md-6">
+                            <div class="mb-4">
+                                <h4 class="fs-5 fs-md-4"><i class="fas fa-gem me-2 text-primary"></i>Valores</h4>
+                                <div class="row g-2">
+                                    <div class="col-12 col-sm-6">
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2 small"><i class="fas fa-check-circle text-success me-2"></i> Excelencia educativa</li>
+                                            <li class="mb-2 small"><i class="fas fa-check-circle text-success me-2"></i> Compromiso con la comunidad</li>
+                                            <li class="mb-2 small"><i class="fas fa-check-circle text-success me-2"></i> Honestidad y transparencia</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-12 col-sm-6">
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2 small"><i class="fas fa-check-circle text-success me-2"></i> Servicio al cliente</li>
+                                            <li class="mb-2 small"><i class="fas fa-check-circle text-success me-2"></i> Amor por la lectura</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card bg-light mt-3 mt-md-4 border-0 shadow-sm">
+                                <div class="card-body p-3 p-md-4">
+                                    <h5 class="fs-6 fs-md-5"><i class="fas fa-quote-left me-2 text-primary"></i>San Juan Bosco</h5>
+                                    <p class="mb-0 fst-italic small">"Basta que seáis jóvenes para que os ame"</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4 my-md-5">
+
+                    <!-- SECCIÓN CONTACTO RESPONSIVE -->
+                    <div class="text-center">
+                        <h4 class="fs-5 fs-md-4 mb-3"><i class="fas fa-envelope me-2 text-primary"></i>Contáctanos</h4>
+                        <div class="row g-2 justify-content-center">
+                            <div class="col-12 col-sm-6 col-md-3">
+                                <p class="mb-2 small"><i class="fas fa-map-marker-alt me-2 text-danger"></i> Av. Principal, Lima - Perú</p>
+                            </div>
+                            <div class="col-12 col-sm-6 col-md-3">
+                                <p class="mb-2 small"><i class="fas fa-phone me-2 text-success"></i> (01) 123-4567</p>
+                            </div>
+                            <div class="col-12 col-sm-6 col-md-3">
+                                <p class="mb-2 small"><i class="fas fa-envelope me-2 text-info"></i> info@libreriasalesiana.com</p>
+                            </div>
+                            <div class="col-12 col-sm-6 col-md-3">
+                                <p class="mb-2 small"><i class="fab fa-whatsapp me-2 text-success"></i> 987 654 321</p>
+                            </div>
+                        </div>
+                        <p class="mt-3 small text-muted">
+                            <i class="fas fa-clock me-2 text-warning"></i> Lunes a Viernes: 9:00am - 7:00pm | Sábados: 9:00am - 2:00pm
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos responsive adicionales */
+    @media (max-width: 576px) {
+        .card-header {
+            padding: 1rem !important;
+        }
+        .card-header i {
+            font-size: 2rem !important;
+        }
+        .card-header h2 {
+            font-size: 1.3rem !important;
+        }
+        .card-body {
+            padding: 1rem !important;
+        }
+        h4 {
+            font-size: 1.1rem !important;
+        }
+        .text-muted {
+            font-size: 0.8rem !important;
+        }
+        .list-unstyled li {
+            font-size: 0.8rem !important;
+        }
+        .contacto-item {
+            margin-bottom: 0.5rem;
+        }
+    }
+    
+    @media (min-width: 577px) and (max-width: 768px) {
+        .card-header {
+            padding: 1.5rem !important;
+        }
+        .card-header h2 {
+            font-size: 1.5rem !important;
+        }
+        .card-body {
+            padding: 1.5rem !important;
+        }
+    }
+    
+    @media (min-width: 769px) {
+        .small-md {
+            font-size: 0.95rem;
+        }
+    }
+    
+    /* Animación suave */
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
+    }
+</style>
+{% endblock %}
