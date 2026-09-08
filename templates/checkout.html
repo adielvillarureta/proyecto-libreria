@@ -233,32 +233,29 @@
         }
     }
 
-    .razon-social-display {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #1e3a8a;
-        padding: 0.5rem 0.75rem;
-        background: #f0fdf4;
-        border-radius: 8px;
-        border: 2px solid #86efac;
-        display: none;
+    /* SweetAlert personalizado */
+    .swal2-popup {
+        border-radius: 16px !important;
     }
-    .razon-social-display.show {
-        display: block;
+    .swal2-confirm {
+        background: #D4AF37 !important;
+        color: #1e3a8a !important;
+        font-weight: 700 !important;
+        border-radius: 50px !important;
     }
-    .nombre-completo-display {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #1e3a8a;
-        padding: 0.5rem 0.75rem;
-        background: #f0fdf4;
-        border-radius: 8px;
-        border: 2px solid #86efac;
-        display: none;
+    .swal2-confirm:hover {
+        background: #c8a82e !important;
     }
-    .nombre-completo-display.show {
-        display: block;
+    .swal2-title {
+        color: #1e3a8a !important;
     }
+    .swal2-icon.swal2-success .swal2-success-ring {
+        border-color: #D4AF37 !important;
+    }
+    .swal2-icon.swal2-success .swal2-success-line {
+        background-color: #D4AF37 !important;
+    }
+
     @media (max-width: 768px) {
         .radio-card {
             padding: 0.5rem 0.75rem;
@@ -287,25 +284,23 @@
                         <i class="fas fa-user-circle me-2 text-gold"></i>Datos de facturación
                     </h5>
 
-                    <!-- ===== NOMBRES Y APELLIDOS (SOLO LECTURA) ===== -->
+                    <!-- ===== NOMBRES Y APELLIDOS ===== -->
                     <div class="row g-3">
                         <div class="col-6">
                             <label class="field-label">Nombres <span class="text-danger">*</span></label>
-                            <div class="field-value readonly">
-                                <i class="fas fa-user me-2 text-muted"></i>
-                                <span id="nombresDisplay">{{ cliente.nombres if cliente else '' }}</span>
-                            </div>
+                            <input type="text" id="clienteNombres" class="field-value editable w-100" 
+                                   value="{{ cliente.nombres if cliente else '' }}"
+                                   placeholder="Tus nombres">
                         </div>
                         <div class="col-6">
                             <label class="field-label">Apellidos <span class="text-danger">*</span></label>
-                            <div class="field-value readonly">
-                                <i class="fas fa-user me-2 text-muted"></i>
-                                <span id="apellidosDisplay">{{ cliente.apellidos if cliente else '' }}</span>
-                            </div>
+                            <input type="text" id="clienteApellidos" class="field-value editable w-100" 
+                                   value="{{ cliente.apellidos if cliente else '' }}"
+                                   placeholder="Tus apellidos">
                         </div>
                     </div>
 
-                    <!-- ===== EMAIL Y TELÉFONO (EDITABLES) ===== -->
+                    <!-- ===== EMAIL Y TELÉFONO ===== -->
                     <div class="row g-3 mt-2">
                         <div class="col-12 col-md-6">
                             <label class="field-label">Email <span class="text-danger">*</span></label>
@@ -358,7 +353,7 @@
                         <div class="documento-error" id="documentoError">❌ El DNI debe tener exactamente 8 dígitos numéricos</div>
                     </div>
 
-                    <!-- ===== BLOQUE DE CONFIRMACIÓN DE DATOS ===== -->
+                    <!-- ===== BLOQUE DE CONFIRMACIÓN ===== -->
                     <div class="confirmacion-block" id="confirmacionBlock">
                         <div class="d-flex align-items-start">
                             <div class="confirm-icon">
@@ -372,26 +367,23 @@
                                     <span class="badge-verified" id="badgeEstado">✅ Confirmado</span>
                                 </div>
                                 
-                                <!-- Nombre Completo (para boleta) -->
                                 <div id="confirmNombreBlock">
                                     <div class="confirm-label mt-2">Nombre completo</div>
                                     <div class="confirm-data" id="confirmNombreCompleto">-</div>
                                 </div>
                                 
-                                <!-- Razón Social (para factura) -->
                                 <div id="confirmRazonBlock" style="display:none;">
                                     <div class="confirm-label mt-2">Razón Social</div>
                                     <div class="confirm-data" id="confirmRazonSocial">-</div>
                                 </div>
                                 
-                                <!-- Documento -->
                                 <div class="confirm-label mt-1">Documento</div>
                                 <div class="confirm-data" id="confirmDocumento">-</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- ===== DIRECCIÓN (EDITABLE) ===== -->
+                    <!-- ===== DIRECCIÓN ===== -->
                     <div class="mb-0 mt-3">
                         <label class="field-label">Dirección de entrega</label>
                         <textarea id="direccionEntrega" class="form-control" rows="2" 
@@ -411,7 +403,6 @@
                         <i class="fas fa-shopping-bag me-2 text-gold"></i>Tu pedido
                     </h5>
 
-                    <!-- PRODUCTOS DEL CARRITO -->
                     <div id="productosCarrito">
                         <div class="text-center py-4">
                             <div class="spinner-border text-gold" style="width:2rem;height:2rem;"></div>
@@ -421,7 +412,6 @@
 
                     <hr>
 
-                    <!-- RESUMEN DE TOTALES -->
                     <div id="resumenTotales">
                         <div class="total-line">
                             <span>Subtotal</span>
@@ -441,7 +431,6 @@
                         </div>
                     </div>
 
-                    <!-- BOTÓN PAGAR -->
                     <button class="btn-pagar mt-3" id="btnPagar" onclick="procesarPago()">
                         <i class="fas fa-credit-card me-2"></i>Continuar con el pago
                     </button>
@@ -450,6 +439,11 @@
         </div>
     </div>
 </div>
+
+<!-- ============================================ -->
+<!-- SWEETALERT2 CDN -->
+<!-- ============================================ -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
 // ============================================
@@ -464,16 +458,13 @@ var tipoComprobante = 'boleta';
 function seleccionarComprobante(tipo) {
     tipoComprobante = tipo;
     
-    // Actualizar clases activas
     document.getElementById('cardBoleta').classList.toggle('active', tipo === 'boleta');
     document.getElementById('cardFactura').classList.toggle('active', tipo === 'factura');
     
-    // Actualizar radios
     document.querySelectorAll('input[name="tipoComprobante"]').forEach(el => {
         el.checked = el.value === tipo;
     });
     
-    // Actualizar labels y placeholders
     var input = document.getElementById('documentoInput');
     var label = document.getElementById('documentoLabel');
     var info = document.getElementById('documentoInfo');
@@ -482,7 +473,6 @@ function seleccionarComprobante(tipo) {
     var confirmNombre = document.getElementById('confirmNombreBlock');
     var confirmRazon = document.getElementById('confirmRazonBlock');
     
-    // Ocultar confirmación
     confirmBlock.classList.remove('show');
     confirmNombre.style.display = 'none';
     confirmRazon.style.display = 'none';
@@ -513,13 +503,12 @@ function seleccionarComprobante(tipo) {
 }
 
 // ============================================
-// VALIDAR DOCUMENTO Y MOSTRAR CONFIRMACIÓN
+// VALIDAR DOCUMENTO
 // ============================================
 function validarDocumento(input) {
     var value = input.value.replace(/\D/g, '');
     var maxLength = tipoComprobante === 'boleta' ? 8 : 11;
     
-    // Limitar a dígitos
     input.value = value.slice(0, maxLength);
     
     var error = document.getElementById('documentoError');
@@ -529,7 +518,6 @@ function validarDocumento(input) {
     var confirmRazon = document.getElementById('confirmRazonBlock');
     var badge = document.getElementById('badgeEstado');
     
-    // Ocultar confirmación mientras escribe
     confirmBlock.classList.remove('show');
     confirmNombre.style.display = 'none';
     confirmRazon.style.display = 'none';
@@ -553,19 +541,16 @@ function validarDocumento(input) {
         info.style.display = 'block';
         info.textContent = '✅ Documento válido';
         info.style.color = '#16a34a';
-        
-        // Mostrar confirmación
         mostrarConfirmacion(value);
     } else {
         input.classList.add('is-invalid');
         error.classList.add('show');
         info.style.display = 'none';
-        info.style.color = '#6b7280';
     }
 }
 
 // ============================================
-// MOSTRAR BLOQUE DE CONFIRMACIÓN
+// MOSTRAR CONFIRMACIÓN
 // ============================================
 function mostrarConfirmacion(documento) {
     var confirmBlock = document.getElementById('confirmacionBlock');
@@ -576,20 +561,15 @@ function mostrarConfirmacion(documento) {
     var confirmDocumento = document.getElementById('confirmDocumento');
     var badge = document.getElementById('badgeEstado');
     
-    // Mostrar bloque
     confirmBlock.classList.add('show');
-    
-    // Actualizar documento
     confirmDocumento.textContent = documento;
     
     if (tipoComprobante === 'boleta') {
-        // Mostrar nombre completo
         confirmNombre.style.display = 'block';
         confirmRazon.style.display = 'none';
-        badge.textContent = '✅ DNI Verificado';
+        badge.textContent = '⏳ Verificando...';
         badge.className = 'badge-verified';
         
-        // Buscar nombre del cliente por DNI
         fetch('/api/consultar-dni/' + documento)
             .then(response => response.json())
             .then(data => {
@@ -599,11 +579,10 @@ function mostrarConfirmacion(documento) {
                     badge.textContent = '✅ DNI Verificado';
                     badge.className = 'badge-verified';
                     
-                    // Actualizar campos de nombre y apellido (solo visual)
-                    document.getElementById('nombresDisplay').textContent = data.nombres || '';
-                    document.getElementById('apellidosDisplay').textContent = data.apellidos || '';
+                    document.getElementById('clienteNombres').value = data.nombres || '';
+                    document.getElementById('clienteApellidos').value = data.apellidos || '';
                 } else {
-                    confirmNombreCompleto.textContent = '⚠️ DNI no encontrado en el sistema';
+                    confirmNombreCompleto.textContent = '⚠️ DNI no encontrado en RENIEC';
                     badge.textContent = '⚠️ No verificado';
                     badge.className = 'badge-error';
                 }
@@ -614,13 +593,11 @@ function mostrarConfirmacion(documento) {
                 badge.className = 'badge-error';
             });
     } else {
-        // Mostrar razón social
         confirmNombre.style.display = 'none';
         confirmRazon.style.display = 'block';
-        badge.textContent = '✅ RUC Verificado';
+        badge.textContent = '⏳ Verificando...';
         badge.className = 'badge-verified';
         
-        // Buscar razón social por RUC
         fetch('/api/consultar-ruc/' + documento)
             .then(response => response.json())
             .then(data => {
@@ -629,7 +606,7 @@ function mostrarConfirmacion(documento) {
                     badge.textContent = '✅ RUC Verificado';
                     badge.className = 'badge-verified';
                 } else {
-                    confirmRazonSocial.textContent = '⚠️ RUC no encontrado en el sistema';
+                    confirmRazonSocial.textContent = '⚠️ RUC no encontrado en SUNAT';
                     badge.textContent = '⚠️ No verificado';
                     badge.className = 'badge-error';
                 }
@@ -672,7 +649,6 @@ function cargarCarrito() {
             document.getElementById('btnPagar').disabled = true;
             return;
         }
-        
         renderizarCarrito();
     } catch (e) {
         document.getElementById('productosCarrito').innerHTML = `
@@ -705,7 +681,6 @@ function renderizarCarrito() {
     
     container.innerHTML = html;
     
-    // Actualizar totales
     document.getElementById('subtotal').textContent = 'S/. ' + subtotal.toFixed(2);
     document.getElementById('descuento').textContent = '-S/. 0.00';
     document.getElementById('envio').textContent = 'S/. 0.00';
@@ -715,24 +690,27 @@ function renderizarCarrito() {
 }
 
 // ============================================
-// PROCESAR PAGO
+// PROCESAR PAGO (VERSIÓN MEJORADA)
 // ============================================
 function procesarPago() {
     var btn = document.getElementById('btnPagar');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Procesando...';
     
-    // Validar campos
+    // ===== VALIDAR CAMPOS =====
+    var nombres = document.getElementById('clienteNombres').value.trim();
+    var apellidos = document.getElementById('clienteApellidos').value.trim();
     var email = document.getElementById('clienteEmail').value.trim();
     var telefono = document.getElementById('clienteTelefono').value.trim();
     var documento = document.getElementById('documentoInput').value.trim();
     var direccion = document.getElementById('direccionEntrega').value.trim();
     
-    if (!email || !telefono || !documento) {
+    // Solo validar campos obligatorios (email y documento)
+    if (!email || !documento) {
         Swal.fire({
             icon: 'warning',
             title: 'Campos incompletos',
-            text: 'Por favor completa todos los campos obligatorios.',
+            text: 'Por favor completa el Email y el Documento.',
             confirmButtonColor: '#D4AF37'
         });
         btn.disabled = false;
@@ -765,7 +743,7 @@ function procesarPago() {
         return;
     }
     
-    // Verificar que el documento esté verificado (confirmación mostrada)
+    // Verificar que el documento esté verificado
     var confirmBlock = document.getElementById('confirmacionBlock');
     if (!confirmBlock.classList.contains('show')) {
         Swal.fire({
@@ -779,17 +757,29 @@ function procesarPago() {
         return;
     }
     
-    // Preparar datos del pedido
+    var badge = document.getElementById('badgeEstado');
+    if (badge.textContent.includes('No verificado') || badge.textContent.includes('Error')) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Documento no verificado',
+            text: 'Por favor verifica que tu documento sea válido.',
+            confirmButtonColor: '#D4AF37'
+        });
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Continuar con el pago';
+        return;
+    }
+    
+    // ===== PREPARAR DATOS =====
     var cliente = {
-        nombres: document.getElementById('nombresDisplay').textContent || '',
-        apellidos: document.getElementById('apellidosDisplay').textContent || '',
+        nombres: nombres || document.getElementById('clienteNombres').value || '',
+        apellidos: apellidos || document.getElementById('clienteApellidos').value || '',
         email: email,
-        telefono: telefono,
+        telefono: telefono || '999999999',
         documento: documento,
-        direccion: direccion
+        direccion: direccion || ''
     };
     
-    // Para factura, incluir razón social
     if (tipoComprobante === 'factura') {
         cliente.razon_social = document.getElementById('confirmRazonSocial').textContent || '';
     }
@@ -797,14 +787,16 @@ function procesarPago() {
     var datosPedido = {
         cliente: cliente,
         items: carrito,
-        total: parseFloat(document.getElementById('total').textContent.replace('S/. ', '')),
-        tipo_entrega: 'delivery',
+        total: parseFloat(document.getElementById('total').textContent.replace('S/. ', '').trim()) || 0,
+        tipo_entrega: 'recojo',
         comprobante: {
             tipo: tipoComprobante
         }
     };
     
-    // Enviar al servidor
+    console.log('📦 Enviando pedido:', datosPedido);
+    
+    // ===== ENVIAR AL SERVIDOR =====
     fetch('/api/pedidos/crear', {
         method: 'POST',
         headers: {
@@ -812,10 +804,16 @@ function procesarPago() {
         },
         body: JSON.stringify(datosPedido)
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('📡 Respuesta:', response.status);
+        if (!response.ok) {
+            throw new Error('Error en el servidor: ' + response.status);
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('✅ Datos recibidos:', data);
         if (data.success) {
-            // Limpiar carrito
             localStorage.removeItem('carritoCliente');
             
             Swal.fire({
@@ -834,17 +832,18 @@ function procesarPago() {
                 text: data.error || 'Hubo un problema al procesar tu pedido.',
                 confirmButtonColor: '#D4AF37'
             });
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Continuar con el pago';
         }
     })
     .catch(error => {
+        console.error('❌ Error:', error);
         Swal.fire({
             icon: 'error',
             title: '❌ Error de conexión',
-            text: 'No se pudo conectar con el servidor. Intenta nuevamente.',
+            text: 'No se pudo conectar con el servidor. Intenta nuevamente.\n' + error.message,
             confirmButtonColor: '#D4AF37'
         });
-    })
-    .finally(() => {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Continuar con el pago';
     });
@@ -854,9 +853,9 @@ function procesarPago() {
 // INICIALIZAR
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ Checkout cargado correctamente');
     cargarCarrito();
     
-    // Actualizar contador del carrito
     var contador = document.getElementById('carritoContador');
     if (contador) {
         var carritoData = JSON.parse(localStorage.getItem('carritoCliente') || '[]');
@@ -868,12 +867,36 @@ document.addEventListener('DOMContentLoaded', function() {
             contador.style.display = 'none';
         }
     }
+    
+    var dniInput = document.getElementById('documentoInput');
+    var dniValue = '{{ cliente.dni if cliente else "" }}';
+    if (dniInput && dniValue) {
+        dniInput.value = dniValue;
+        if (dniValue.length === 8) {
+            validarDocumento(dniInput);
+        }
+    }
 });
 </script>
 
 <style>
 .text-gold { color: #D4AF37; }
 .bg-gold { background: #D4AF37; }
+.btn-gold {
+    background: #D4AF37;
+    color: #1e3a8a;
+    font-weight: 600;
+    border: none;
+    border-radius: 50px;
+    padding: 0.5rem 1.5rem;
+    transition: all 0.3s ease;
+}
+.btn-gold:hover {
+    background: #c8a82e;
+    color: #1e3a8a;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(212, 175, 55, 0.3);
+}
 </style>
 
 {% block extra_js %}{% endblock %}
