@@ -1,3 +1,4 @@
+# app/__init__.py
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
@@ -9,18 +10,17 @@ bcrypt = Bcrypt()
 migrate = Migrate()
 
 def create_app(config_class=Config):
-    app = Flask(__name__, template_folder='templates', static_folder='../static')
+    app = Flask(__name__, template_folder='templates', static_folder='static')
     app.config.from_object(config_class)
 
     db.init_app(app)
     bcrypt.init_app(app)
     migrate.init_app(app, db)
 
-    # Importar modelos dentro del contexto para crear tablas
-    with app.app_context():
-        from . import models 
+    # Importar modelos aquí para que SQLAlchemy los conozca
+    from . import models
 
-    # Registrar Blueprints
+    # Registrar blueprints
     from .routes.main import main_bp
     from .routes.auth import auth_bp
     from .routes.productos import productos_bp
@@ -31,18 +31,19 @@ def create_app(config_class=Config):
     from .routes.api import api_bp
 
     app.register_blueprint(main_bp)
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(productos_bp)
-    app.register_blueprint(ventas_bp)
-    app.register_blueprint(pedidos_bp)
-    app.register_blueprint(clientes_bp)
-    app.register_blueprint(bloqueos_bp)
-    app.register_blueprint(api_bp)
+    app.register_blueprint(auth_bp, url_prefix='/auth')   # Opcional
+    app.register_blueprint(productos_bp, url_prefix='/productos')
+    app.register_blueprint(ventas_bp, url_prefix='/ventas')
+    app.register_blueprint(pedidos_bp, url_prefix='/pedidos')
+    app.register_blueprint(clientes_bp, url_prefix='/clientes')
+    app.register_blueprint(bloqueos_bp, url_prefix='/bloqueos')
+    app.register_blueprint(api_bp, url_prefix='/api')
 
-    # Context processor
+    # Context processor global (inyectar categorías)
     @app.context_processor
     def inject_categorias():
-        categorias = models.Categoria.query.filter_by(activo=True).all()
+        from .models import Categoria
+        categorias = Categoria.query.filter_by(activo=True).all()
         return dict(categorias=categorias)
 
     return app
