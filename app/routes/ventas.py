@@ -4,8 +4,7 @@ from app import db
 from app.models import Venta, Producto, UsuarioSistema, Pedido, DetallePedido, Cliente
 from app.utils import (
     login_required, requerir_permisos_escritura,
-    enviar_comprobante_email, generar_comprobante_pedido,
-    login_required_cliente
+    enviar_comprobante_email, login_required_cliente
 )
 from datetime import datetime
 from sqlalchemy import func, text
