@@ -1,4 +1,5 @@
 # utils.py
+# app/utils.py
 import os
 import secrets
 import smtplib
@@ -8,9 +9,13 @@ from functools import wraps
 from datetime import datetime, timedelta
 from flask import session, request, flash, redirect, url_for, jsonify
 from sqlalchemy import text
-from models import db, Cliente, UsuarioSistema, IntentosLogin, Bloqueo, Producto, Venta
-from app.config import EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASSWORD
 
+# --- IMPORTACIONES CORREGIDAS ---
+from app import db
+from app.models import (Cliente, UsuarioSistema, IntentosLogin, Bloqueo,
+                        Producto, Venta, RucEmpresa)
+from app.config import Config
+# --------------------------------
 def obtener_ip_cliente():
     if request.headers.get('X-Forwarded-For'):
         return request.headers.get('X-Forwarded-For').split(',')[0]
