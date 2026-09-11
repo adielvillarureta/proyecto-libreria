@@ -1,0 +1,195 @@
+{% extends 'base_cliente.html' %}
+{% block titulito %}Crear Cuenta - Librería Salesiana{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center py-4">
+    <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+        
+        <!-- Tarjeta de Registro -->
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+            
+            <!-- Encabezado -->
+            <div class="card-header text-white text-center py-4" style="background: linear-gradient(135deg, #7B3252, #a34a6b);">
+                <i class="fas fa-user-plus fa-2x mb-2"></i>
+                <h4 class="mb-1 fw-bold">Registro de Cliente</h4>
+                <p class="mb-0 small opacity-75">Crea tu cuenta para comprar online</p>
+            </div>
+            
+            <div class="card-body p-4 p-md-5">
+                
+                <!-- Mensajes Flash -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show small" role="alert">
+                                <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' }} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Formulario -->
+                <!-- Nota: action vacío para que envíe a la misma URL (POST) -->
+                <form method="POST" action="{{ url_for('clientes.registro_cliente') }}" id="registroForm" novalidate>
+                    
+                    <div class="row g-3">
+                        <!-- Nombres -->
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold small text-muted">Nombres <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fas fa-user text-muted"></i></span>
+                                <input type="text" name="nombres" class="form-control bg-light border-start-0" placeholder="Ej. Juan" required>
+                            </div>
+                        </div>
+
+                        <!-- Apellidos -->
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold small text-muted">Apellidos <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fas fa-user-tag text-muted"></i></span>
+                                <input type="text" name="apellidos" class="form-control bg-light border-start-0" placeholder="Ej. Pérez" required>
+                            </div>
+                        </div>
+
+                        <!-- DNI -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold small text-muted">DNI (Opcional)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fas fa-id-card text-muted"></i></span>
+                                <input type="text" name="dni" class="form-control bg-light border-start-0" placeholder="12345678" maxlength="8" pattern="\d{8}" title="Ingresa 8 dígitos numéricos">
+                            </div>
+                            <small class="text-muted extra-small">Máximo 8 dígitos</small>
+                        </div>
+
+                        <!-- Correo -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold small text-muted">Correo Electrónico <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fas fa-envelope text-muted"></i></span>
+                                <!-- IMPORTANTE: El backend espera name="email" -->
+                                <input type="email" name="email" class="form-control bg-light border-start-0" placeholder="cliente@email.com" required>
+                            </div>
+                        </div>
+
+                        <!-- Teléfono -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold small text-muted">Teléfono</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fas fa-phone text-muted"></i></span>
+                                <input type="tel" name="telefono" class="form-control bg-light border-start-0" placeholder="987654321">
+                            </div>
+                        </div>
+
+                        <!-- Dirección -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold small text-muted">Dirección de Envío</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fas fa-map-marker-alt text-muted"></i></span>
+                                <textarea name="direccion" class="form-control bg-light border-start-0" rows="2" placeholder="Calle, número, referencia..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Contraseña -->
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold small text-muted">Contraseña <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fas fa-lock text-muted"></i></span>
+                                <input type="password" name="clave" id="clave" class="form-control bg-light border-start-0" placeholder="Mínimo 6 caracteres" required minlength="6">
+                                <button class="btn btn-outline-secondary border-start-0" type="button" onclick="togglePassword('clave', 'eyeIcon1')">
+                                    <i class="fas fa-eye" id="eyeIcon1"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Confirmar Contraseña -->
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold small text-muted">Confirmar Contraseña <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fas fa-lock text-muted"></i></span>
+                                <input type="password" name="confirmar_clave" id="confirmar_clave" class="form-control bg-light border-start-0" placeholder="Repite tu contraseña" required minlength="6">
+                                <button class="btn btn-outline-secondary border-start-0" type="button" onclick="togglePassword('confirmar_clave', 'eyeIcon2')">
+                                    <i class="fas fa-eye" id="eyeIcon2"></i>
+                                </button>
+                            </div>
+                            <small id="passwordError" class="text-danger extra-small d-none">Las contraseñas no coinciden</small>
+                        </div>
+                    </div>
+
+                    <!-- Botón de Registro -->
+                    <div class="mt-4 pt-2">
+                        <button type="submit" class="btn w-100 py-2 fw-bold text-white shadow-sm" style="background-color: #7B3252; border-radius: 8px;">
+                            <i class="fas fa-check-circle me-2"></i>Registrarme
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Pie de la tarjeta -->
+            <div class="card-footer bg-light text-center py-3 border-0">
+                <span class="small text-muted">¿Ya tienes cuenta? </span>
+                <a href="{{ url_for('clientes.login_cliente') }}" class="small fw-bold text-decoration-none" style="color: #7B3252;">Inicia sesión aquí</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .extra-small { font-size: 0.75rem; }
+    
+    /* Estilos para inputs con iconos */
+    .input-group-text {
+        border-radius: 8px 0 0 8px;
+    }
+    .form-control, .input-group-text {
+        border-color: #e0e0e0;
+    }
+    .form-control:focus {
+        border-color: #7B3252;
+        box-shadow: 0 0 0 0.2rem rgba(123, 50, 82, 0.15);
+    }
+    .input-group:focus-within .input-group-text {
+        border-color: #7B3252;
+        color: #7B3252 !important;
+    }
+    .input-group:focus-within .input-group-text i {
+        color: #7B3252 !important;
+    }
+    textarea.form-control {
+        border-radius: 0 8px 8px 0;
+    }
+</style>
+
+<script>
+    // Función para mostrar/ocultar contraseña
+    function togglePassword(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+        } else {
+            input.type = "password";
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+        }
+    }
+
+    // Validación en tiempo real de que las contraseñas coincidan
+    document.getElementById('registroForm').addEventListener('submit', function(e) {
+        const pass = document.getElementById('clave').value;
+        const confirm = document.getElementById('confirmar_clave').value;
+        const errorMsg = document.getElementById('passwordError');
+        
+        if (pass !== confirm) {
+            e.preventDefault(); // Detiene el envío
+            errorMsg.classList.remove('d-none');
+            document.getElementById('confirmar_clave').focus();
+        } else {
+            errorMsg.classList.add('d-none');
+        }
+    });
+</script>
+{% endblock %}

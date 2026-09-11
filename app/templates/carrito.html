@@ -1,0 +1,1043 @@
+{% extends "base_cliente.html" %}
+{% block titulito %}🛒 Mi Carrito - Librería Salesiana{% endblock %}
+
+{% block contenido %}
+<input type="hidden" id="usuarioLogueado" value="{{ 'true' if session.cliente_id else 'false' }}">
+<input type="hidden" id="clienteId" value="{{ session.cliente_id }}">
+
+<style>
+    /* ===== MEDIDAS RESPONSIVE GLOBALES ===== */
+    * {
+        box-sizing: border-box;
+    }
+    
+    /* Contenedor principal responsive */
+    .container {
+        width: 100%;
+        padding-right: 15px;
+        padding-left: 15px;
+        margin-right: auto;
+        margin-left: auto;
+    }
+    
+    /* Móviles pequeños (menos de 576px) */
+    @media (max-width: 576px) {
+        .container {
+            padding: 0 10px;
+        }
+        
+        .py-4 {
+            padding-top: 1rem !important;
+            padding-bottom: 1rem !important;
+        }
+        
+        h3 {
+            font-size: 1.25rem !important;
+        }
+        
+        .cart-item {
+            padding: 1rem !important;
+        }
+        
+        .cart-item .row {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .cart-item .col-6,
+        .cart-item .col-3,
+        .cart-item .col-2,
+        .cart-item .col-1 {
+            width: 100%;
+            text-align: center !important;
+        }
+        
+        .cart-item .d-flex.align-items-center {
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .cart-item .bg-light {
+            margin-bottom: 0.5rem;
+        }
+        
+        .cart-item .col-3 .d-flex {
+            justify-content: center !important;
+        }
+        
+        .cart-item .col-2.text-end,
+        .cart-item .col-1.text-end {
+            text-align: center !important;
+        }
+        
+        /* Productos en grid para móvil */
+        .card-header .row {
+            display: none;
+        }
+        
+        /* Resumen en móvil */
+        .summary-card {
+            position: static;
+            margin-top: 1rem;
+        }
+        
+        /* Botones más grandes para touch */
+        .btn {
+            padding: 0.625rem 0.75rem !important;
+            font-size: 0.9rem !important;
+            min-height: 44px;
+        }
+        
+        .quantity-btn {
+            width: 40px !important;
+            height: 40px !important;
+        }
+        
+        .delivery-option {
+            padding: 0.75rem !important;
+        }
+        
+        .delivery-option strong {
+            font-size: 0.85rem;
+        }
+        
+        .delivery-option small {
+            font-size: 0.7rem;
+        }
+        
+        /* Inputs touch-friendly */
+        .form-control,
+        textarea {
+            font-size: 16px !important;
+            min-height: 44px;
+        }
+        
+        .input-group .btn {
+            min-width: 50px;
+        }
+        
+        /* Alertas en móvil */
+        .alert {
+            font-size: 0.8rem;
+            padding: 0.75rem;
+        }
+        
+        /* Badge del carrito */
+        .badge {
+            font-size: 0.7rem;
+        }
+        
+        /* Botones de acción */
+        .d-flex.justify-content-between {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .d-flex.justify-content-between .btn {
+            flex: 1;
+        }
+    }
+    
+    /* Tablets (576px - 768px) */
+    @media (min-width: 576px) and (max-width: 768px) {
+        .container {
+            max-width: 540px;
+        }
+        
+        .cart-item .col-6 {
+            width: 50%;
+        }
+        
+        .cart-item .col-3 {
+            width: 25%;
+        }
+        
+        .cart-item .col-2 {
+            width: 16.66%;
+        }
+        
+        .cart-item .col-1 {
+            width: 8.33%;
+        }
+        
+        .btn {
+            min-height: 40px;
+        }
+        
+        .quantity-btn {
+            width: 36px !important;
+            height: 36px !important;
+        }
+    }
+    
+    /* Tablets grandes (768px - 992px) */
+    @media (min-width: 768px) and (max-width: 992px) {
+        .container {
+            max-width: 720px;
+        }
+        
+        .col-lg-8 {
+            width: 66.66%;
+        }
+        
+        .col-lg-4 {
+            width: 33.33%;
+        }
+        
+        .cart-item h6 {
+            font-size: 0.9rem;
+        }
+    }
+    
+    /* Laptops (992px - 1200px) */
+    @media (min-width: 992px) and (max-width: 1200px) {
+        .container {
+            max-width: 960px;
+        }
+    }
+    
+    /* Pantallas grandes (1200px+) */
+    @media (min-width: 1200px) {
+        .container {
+            max-width: 1140px;
+        }
+    }
+    
+    /* Orientación landscape en móviles */
+    @media (max-width: 768px) and (orientation: landscape) {
+        .cart-item .row {
+            flex-direction: row !important;
+            flex-wrap: wrap;
+        }
+        
+        .cart-item .col-6 {
+            width: 50%;
+        }
+        
+        .cart-item .col-3 {
+            width: 25%;
+        }
+        
+        .cart-item .col-2 {
+            width: 16.66%;
+        }
+        
+        .cart-item .col-1 {
+            width: 8.33%;
+        }
+        
+        .summary-card {
+            margin-top: 0;
+        }
+    }
+    
+    /* Estilos originales mejorados */
+    .cart-item {
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+    }
+
+    .cart-item:hover {
+        background-color: #f8f9fa;
+        border-left-color: #0d6efd;
+        transform: translateX(5px);
+    }
+
+    .quantity-btn {
+        transition: all 0.2s;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+
+    .quantity-btn:hover {
+        transform: scale(1.1);
+        background-color: #0d6efd;
+        color: white;
+    }
+    
+    /* Touch feedback para móviles */
+    @media (hover: none) and (pointer: coarse) {
+        .quantity-btn:active {
+            transform: scale(0.95);
+            background-color: #0d6efd;
+            color: white;
+        }
+        
+        .delivery-option:active {
+            transform: scale(0.98);
+        }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.5s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .delivery-option {
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 10px;
+        text-align: center;
+    }
+
+    .delivery-option:hover {
+        border-color: #0d6efd;
+        background-color: #f0f8ff;
+        transform: translateY(-2px);
+    }
+
+    .delivery-option.selected {
+        border-color: #28a745;
+        background-color: #e7f1ff;
+    }
+
+    .product-image {
+        width: 60px;
+        height: 60px;
+        object-fit: contain;
+    }
+
+    .summary-card {
+        position: sticky;
+        top: 20px;
+    }
+    
+    /* Móvil: quitar sticky */
+    @media (max-width: 768px) {
+        .summary-card {
+            position: static;
+        }
+    }
+    
+    .stock-warning {
+        font-size: 11px;
+        margin-top: 5px;
+    }
+    
+    /* Animación para mensajes */
+    .alert {
+        animation: slideDown 0.3s ease-out;
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Scroll suave */
+    html {
+        scroll-behavior: smooth;
+    }
+    
+    /* Evitar desbordamiento */
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    /* Mejora para tablas en móvil */
+    @media (max-width: 576px) {
+        .card-header .row {
+            display: none;
+        }
+        
+        /* Indicador visual de producto */
+        .cart-item {
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 0;
+        }
+        
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+    }
+</style>
+
+<div class="container py-4 fade-in">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
+                <h3 class="mb-0">
+                    <i class="fas fa-shopping-cart text-primary me-2"></i>
+                    Mi Carrito
+                    <span class="badge bg-secondary ms-2" id="cartCountBadge">0</span>
+                </h3>
+                <div class="text-muted small">
+                    <i class="fas fa-lock me-1"></i> Compra 100% segura
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- COLUMNA IZQUIERDA - PRODUCTOS -->
+        <div class="col-lg-8">
+            <div id="carritoVacio" class="text-center py-5 bg-light rounded">
+                <i class="fas fa-shopping-cart fa-5x text-muted mb-3"></i>
+                <h5>¡Tu carrito está vacío!</h5>
+                <p class="text-muted">Explora nuestro catálogo</p>
+                <a href="/catalogo" class="btn btn-primary btn-lg mt-3">
+                    <i class="fas fa-book me-2"></i>Ir a la tienda
+                </a>
+            </div>
+
+            <div id="carritoLleno" style="display:none;">
+                <div class="alert alert-info alert-dismissible fade show mb-3">
+                    <i class="fas fa-gift me-2"></i>
+                    🎉 ¡Llevas más de S/. 100! Usa <strong>LIBROS10</strong> y obtén 10% descuento
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-0 py-3 d-none d-sm-block">
+                        <div class="row fw-bold text-muted">
+                            <div class="col-6">Producto</div>
+                            <div class="col-3 text-center">Cantidad</div>
+                            <div class="col-2 text-end">Subtotal</div>
+                            <div class="col-1"></div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="carritoBody"></div>
+                    </div>
+                </div>
+
+                <div class="card mt-3 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-12 col-md-8 mb-3 mb-md-0">
+                                <label class="fw-bold mb-2">
+                                    <i class="fas fa-tag me-2"></i>¿Tienes cupón?
+                                </label>
+                                <div class="input-group">
+                                    <input type="text" id="cuponInput" class="form-control" placeholder="Código">
+                                    <button class="btn btn-outline-primary" id="btnAplicarCupon">Aplicar</button>
+                                </div>
+                                <small class="text-muted d-block mt-1">LIBROS10 (10%), BIENVENIDO5 (S/5), FREESHIP</small>
+                            </div>
+                            <div class="col-12 col-md-4 text-md-end">
+                                <div id="mensajeCupon" class="small"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-column flex-sm-row justify-content-between gap-2 mt-3">
+                    <a href="/catalogo" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Seguir comprando
+                    </a>
+                    <button class="btn btn-outline-danger" onclick="vaciarCarrito()">
+                        <i class="fas fa-trash-alt me-2"></i>Vaciar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA - RESUMEN -->
+        <div class="col-lg-4 mt-4 mt-lg-0">
+            <div class="card shadow-lg border-0 summary-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Resumen</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal (<span id="itemCount">0</span>):</span>
+                            <span id="subtotalCarrito">S/. 0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2" id="descuentoRow" style="display:none">
+                            <span class="text-success">Descuento:</span>
+                            <span class="text-success" id="descuentoMonto">-S/. 0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Envío:</span>
+                            <span id="envioTexto">Gratis</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between fs-5 fw-bold">
+                            <span>Total:</span>
+                            <span class="text-primary" id="totalFinal">S/. 0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- TIPO DE ENTREGA -->
+                    <div class="mb-3">
+                        <label class="fw-bold mb-2">
+                            <i class="fas fa-truck me-2"></i>Tipo de entrega
+                        </label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="delivery-option selected text-center" data-tipo="recojo"
+                                    onclick="seleccionarEntrega('recojo')">
+                                    <i class="fas fa-store fa-2x mb-2"></i>
+                                    <div><strong>Recojo en tienda</strong></div>
+                                    <small>Gratis</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="delivery-option text-center" data-tipo="delivery"
+                                    onclick="seleccionarEntrega('delivery')">
+                                    <i class="fas fa-truck fa-2x mb-2"></i>
+                                    <div><strong>Delivery</strong></div>
+                                    <small>S/. 5.00</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="direccionEntrega" class="mt-3" style="display: none;">
+                            <textarea id="direccion" class="form-control" rows="2"
+                                placeholder="📍 Calle, número, urbanización, referencia"></textarea>
+                            <small id="direccionAyuda" class="text-muted"></small>
+                            <small class="text-muted d-block mt-1">* Tiempo de entrega: 3-5 días hábiles</small>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-success w-100 mt-2 py-2 fw-bold" onclick="irACheckout()">
+                        <i class="fas fa-arrow-right me-2"></i>Continuar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // ===============================
+    // VARIABLES GLOBALES
+    // ===============================
+    let carrito = [];
+    let cuponAplicado = null;
+    let descuento = 0;
+    let tipoEntregaSeleccionado = 'recojo';
+    let direccionEntrega = '';
+
+    // ===============================
+    // FUNCIÓN PARA VALIDAR STOCK CON EL SERVIDOR
+    // ===============================
+    async function validarStockProducto(productoId, cantidadDeseada) {
+        try {
+            const response = await fetch(`/api/productos/${productoId}/stock`);
+            const data = await response.json();
+            
+            if (!response.ok) {
+                console.error("Error al consultar stock:", data.error);
+                return { valido: true, stockDisponible: 999, nombre: "Producto" };
+            }
+            
+            const stockDisponible = data.stock;
+            return { 
+                valido: cantidadDeseada <= stockDisponible, 
+                stockDisponible: stockDisponible,
+                nombre: data.nombre
+            };
+        } catch (error) {
+            console.error("Error validando stock:", error);
+            return { valido: true, stockDisponible: 999, nombre: "Producto" };
+        }
+    }
+
+    // ===============================
+    // CARGAR DIRECCIÓN DEL CLIENTE DESDE BASE DE DATOS
+    // ===============================
+    async function cargarDireccionCliente() {
+        const usuarioLogueado = document.getElementById('usuarioLogueado')?.value === 'true';
+        if (!usuarioLogueado) {
+            console.log("Usuario no logueado, no se carga dirección");
+            return;
+        }
+
+        try {
+            console.log("Solicitando dirección a /api/cliente/direccion");
+            const response = await fetch('/api/cliente/direccion');
+
+            if (!response.ok) {
+                console.error("Error HTTP:", response.status);
+                return;
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                console.error("La respuesta no es JSON:", contentType);
+                return;
+            }
+
+            const data = await response.json();
+            console.log("Respuesta de dirección:", data);
+
+            if (data.success && data.direccion) {
+                const direccionInput = document.getElementById('direccion');
+                const direccionAyuda = document.getElementById('direccionAyuda');
+                if (direccionInput) {
+                    direccionInput.value = data.direccion;
+                    if (direccionAyuda) {
+                        direccionAyuda.innerHTML = '<i class="fas fa-check-circle text-success"></i> Dirección cargada desde tu perfil. Puedes modificarla si lo deseas.';
+                        setTimeout(() => {
+                            if (direccionAyuda) direccionAyuda.innerHTML = '';
+                        }, 5000);
+                    }
+                    console.log("📍 Dirección cargada desde perfil:", data.direccion);
+                }
+            } else {
+                console.log("No hay dirección guardada en el perfil");
+            }
+        } catch (error) {
+            console.error("Error cargando dirección:", error);
+        }
+    }
+
+    // ===============================
+    // SELECCIONAR TIPO DE ENTREGA
+    // ===============================
+    function seleccionarEntrega(tipo) {
+        tipoEntregaSeleccionado = tipo;
+
+        document.querySelectorAll('.delivery-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        document.querySelector(`.delivery-option[data-tipo="${tipo}"]`).classList.add('selected');
+
+        const direccionDiv = document.getElementById('direccionEntrega');
+        const envioTexto = document.getElementById('envioTexto');
+        const direccionInput = document.getElementById('direccion');
+
+        if (tipo === 'delivery') {
+            direccionDiv.style.display = 'block';
+            envioTexto.innerHTML = 'S/. 5.00';
+            cargarDireccionCliente();
+        } else {
+            direccionDiv.style.display = 'none';
+            envioTexto.innerHTML = 'Gratis';
+            if (direccionInput) direccionInput.value = '';
+        }
+
+        actualizarTotales();
+    }
+
+    // ===============================
+    // IR A CHECKOUT
+    // ===============================
+    function irACheckout() {
+        let usuarioLogueado = document.getElementById('usuarioLogueado')?.value === 'true';
+
+        if (!usuarioLogueado) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Inicia sesión',
+                text: 'Debes iniciar sesión para comprar',
+                confirmButtonText: 'Iniciar',
+                showCancelButton: true
+            }).then((result) => {
+                if (result.isConfirmed) window.location.href = '/login-cliente';
+            });
+            return;
+        }
+
+        if (carrito.length === 0) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Carrito vacío',
+                text: 'Agrega productos'
+            });
+            return;
+        }
+
+        if (tipoEntregaSeleccionado === 'delivery') {
+            let direccion = document.getElementById('direccion')?.value.trim();
+            if (!direccion) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Dirección requerida',
+                    text: 'Ingresa tu dirección de entrega'
+                });
+                return;
+            }
+            direccionEntrega = direccion;
+        } else {
+            direccionEntrega = '';
+        }
+
+        localStorage.setItem('carritoCliente', JSON.stringify(carrito));
+        if (cuponAplicado) {
+            localStorage.setItem('cuponAplicado', JSON.stringify(cuponAplicado));
+            localStorage.setItem('descuento', descuento);
+        }
+        localStorage.setItem('tipoEntrega', tipoEntregaSeleccionado);
+        localStorage.setItem('direccionEntrega', direccionEntrega);
+
+        window.location.href = '/checkout';
+    }
+
+    // ===============================
+    // APLICAR CUPÓN
+    // ===============================
+    function aplicarCupon() {
+        let codigo = document.getElementById('cuponInput')?.value.toUpperCase();
+        let mensajeDiv = document.getElementById('mensajeCupon');
+        let descuentoRow = document.getElementById('descuentoRow');
+
+        const cupones = {
+            'LIBROS10': { descuento: 10, tipo: 'porcentaje', nombre: '10% off' },
+            'BIENVENIDO5': { descuento: 5, tipo: 'fijo', nombre: 'S/5 off' },
+            'FREESHIP': { descuento: 5, tipo: 'envio', nombre: 'Envío gratis' }
+        };
+
+        if (cupones[codigo]) {
+            cuponAplicado = cupones[codigo];
+            let subtotal = calcularSubtotal();
+
+            if (cuponAplicado.tipo === 'envio') {
+                descuento = 5;
+                mensajeDiv.innerHTML = '<span class="text-success">✅ Envío gratis</span>';
+            } else if (cuponAplicado.tipo === 'porcentaje') {
+                descuento = subtotal * 0.1;
+                mensajeDiv.innerHTML = '<span class="text-success">✅ 10% descuento</span>';
+            } else {
+                descuento = 5;
+                mensajeDiv.innerHTML = '<span class="text-success">✅ S/5 descuento</span>';
+            }
+            descuentoRow.style.display = 'flex';
+            actualizarTotales();
+            Swal.fire({ icon: 'success', title: '¡Cupón aplicado!', timer: 1500, showConfirmButton: false });
+        } else {
+            mensajeDiv.innerHTML = '<span class="text-danger">❌ Inválido</span>';
+        }
+    }
+
+    // ===============================
+    // CALCULAR SUBTOTAL
+    // ===============================
+    function calcularSubtotal() {
+        return carrito.reduce((s, i) => s + (i.precio * i.cantidad), 0);
+    }
+
+    // ===============================
+    // ACTUALIZAR TOTALES
+    // ===============================
+    function actualizarTotales() {
+        let subtotal = calcularSubtotal();
+        let costoEnvio = 0;
+
+        if (tipoEntregaSeleccionado === 'delivery' && cuponAplicado?.tipo !== 'envio') {
+            costoEnvio = 5;
+            document.getElementById('envioTexto').innerHTML = 'S/. 5.00';
+        } else if (tipoEntregaSeleccionado === 'delivery' && cuponAplicado?.tipo === 'envio') {
+            document.getElementById('envioTexto').innerHTML = 'Gratis (Cupón)';
+        } else {
+            document.getElementById('envioTexto').innerHTML = 'Gratis';
+        }
+
+        let descuentoAplicado = (cuponAplicado?.tipo === 'envio' && tipoEntregaSeleccionado === 'delivery') ? 0 : Math.min(descuento, subtotal);
+        let total = subtotal - descuentoAplicado + costoEnvio;
+
+        document.getElementById('subtotalCarrito').innerHTML = 'S/. ' + subtotal.toFixed(2);
+        document.getElementById('totalFinal').innerHTML = 'S/. ' + total.toFixed(2);
+        document.getElementById('descuentoMonto').innerHTML = '-S/. ' + descuentoAplicado.toFixed(2);
+        document.getElementById('itemCount').innerHTML = carrito.reduce((sum, item) => sum + parseInt(item.cantidad || 1), 0);
+    }
+
+    // ===============================
+    // VACIAR CARRITO
+    // ===============================
+    function vaciarCarrito() {
+        Swal.fire({
+            title: '¿Vaciar carrito?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Sí'
+        }).then((r) => {
+            if (r.isConfirmed) {
+                carrito = [];
+                localStorage.removeItem('carritoCliente');
+                localStorage.removeItem('cuponAplicado');
+                localStorage.removeItem('descuento');
+                localStorage.removeItem('tipoEntrega');
+                localStorage.removeItem('direccionEntrega');
+                cuponAplicado = null;
+                descuento = 0;
+                tipoEntregaSeleccionado = 'recojo';
+                renderizarCarrito();
+                Swal.fire('¡Vaciado!', '', 'success');
+            }
+        });
+    }
+
+    // ===============================
+    // CAMBIAR CANTIDAD (CON VALIDACIÓN DE STOCK)
+    // ===============================
+    async function cambiarCantidad(idx, delta) {
+        let nueva = carrito[idx].cantidad + delta;
+        if (nueva < 1) return;
+        
+        let producto = carrito[idx];
+        
+        // Validar stock SOLO si estamos aumentando la cantidad
+        if (delta > 0) {
+            const stockInfo = await validarStockProducto(producto.id, nueva);
+            
+            if (!stockInfo.valido) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Stock insuficiente',
+                    text: `Solo hay ${stockInfo.stockDisponible} unidades disponibles de "${producto.nombre}"`,
+                    confirmButtonColor: '#3085d6'
+                });
+                return;
+            }
+            
+            // Actualizar el stock guardado en el carrito
+            carrito[idx].stock = stockInfo.stockDisponible;
+        }
+        
+        carrito[idx].cantidad = nueva;
+        localStorage.setItem('carritoCliente', JSON.stringify(carrito));
+        
+        // Si hay cupón aplicado, eliminarlo al cambiar cantidades
+        if (cuponAplicado) {
+            cuponAplicado = null;
+            descuento = 0;
+            localStorage.removeItem('cuponAplicado');
+            localStorage.removeItem('descuento');
+            document.getElementById('descuentoRow').style.display = 'none';
+            document.getElementById('mensajeCupon').innerHTML = '';
+        }
+        
+        renderizarCarrito();
+    }
+
+    // ===============================
+    // ELIMINAR PRODUCTO
+    // ===============================
+    function eliminarProducto(idx) {
+        carrito.splice(idx, 1);
+        localStorage.setItem('carritoCliente', JSON.stringify(carrito));
+        
+        if (cuponAplicado) {
+            cuponAplicado = null;
+            descuento = 0;
+            localStorage.removeItem('cuponAplicado');
+            localStorage.removeItem('descuento');
+        }
+        
+        renderizarCarrito();
+    }
+
+    // ===============================
+    // RENDERIZAR CARRITO
+    // ===============================
+    function renderizarCarrito() {
+        let vacio = document.getElementById('carritoVacio');
+        let lleno = document.getElementById('carritoLleno');
+        let body = document.getElementById('carritoBody');
+        let badge = document.getElementById('cartCountBadge');
+
+        if (carrito.length === 0) {
+            if (vacio) vacio.style.display = 'block';
+            if (lleno) lleno.style.display = 'none';
+            if (badge) badge.textContent = '0';
+            return;
+        }
+
+        if (vacio) vacio.style.display = 'none';
+        if (lleno) lleno.style.display = 'block';
+        if (body) body.innerHTML = '';
+
+        let totalItems = 0;
+        
+        for (let i = 0; i < carrito.length; i++) {
+            let item = carrito[i];
+            let cant = item.cantidad;
+            let precio = item.precio;
+            totalItems += cant;
+            
+            // Determinar advertencia de stock
+            let stockWarning = '';
+            if (item.stock && cant >= item.stock) {
+                stockWarning = '<small class="text-danger stock-warning"><i class="fas fa-exclamation-triangle"></i> Stock máximo alcanzado</small>';
+            } else if (item.stock && cant >= item.stock - 2) {
+                stockWarning = '<small class="text-warning stock-warning"><i class="fas fa-info-circle"></i> Quedan pocas unidades</small>';
+            }
+
+            body.innerHTML += `
+            <div class="cart-item p-3 border-bottom">
+                <div class="row align-items-center">
+                    <div class="col-12 col-sm-6 mb-3 mb-sm-0">
+                        <div class="d-flex align-items-center flex-column flex-sm-row text-center text-sm-start">
+                            <div class="bg-light rounded me-sm-3 p-2 d-flex align-items-center justify-content-center mb-2 mb-sm-0" style="width: 70px; height: 70px;">
+                                ${item.imagen_url ? `<img src="${item.imagen_url}" style="max-width:60px; max-height:60px; object-fit:contain;">` : '<i class="fas fa-book fa-2x text-primary"></i>'}
+                            </div>
+                            <div>
+                                <h6 class="mb-1 fw-bold">${escapeHtml(item.nombre)}</h6>
+                                <small>S/. ${precio.toFixed(2)}</small>
+                                ${stockWarning}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-3 mb-2 mb-sm-0">
+                        <div class="d-flex justify-content-center gap-2">
+                            <button class="btn btn-sm btn-outline-secondary quantity-btn" onclick="cambiarCantidad(${i}, -1)">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <span class="fw-bold" style="min-width: 30px; text-align: center;">${cant}</span>
+                            <button class="btn btn-sm btn-outline-secondary quantity-btn" onclick="cambiarCantidad(${i}, 1)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-4 col-sm-2 text-start text-sm-end">
+                        <span class="fw-bold text-primary">S/. ${(precio * cant).toFixed(2)}</span>
+                    </div>
+                    <div class="col-2 col-sm-1 text-end">
+                        <button class="btn btn-sm btn-link text-danger" onclick="eliminarProducto(${i})">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+        }
+        
+        if (badge) badge.textContent = totalItems;
+        actualizarTotales();
+    }
+
+    // ===============================
+    // CARGAR CARRITO (CON VALIDACIÓN DE STOCK)
+    // ===============================
+    async function cargarCarrito() {
+        // Cargar datos guardados
+        let g = localStorage.getItem('carritoCliente');
+        carrito = g ? JSON.parse(g) : [];
+        
+        // Cargar cupón guardado
+        let cuponGuardado = localStorage.getItem('cuponAplicado');
+        if (cuponGuardado) {
+            cuponAplicado = JSON.parse(cuponGuardado);
+            descuento = parseFloat(localStorage.getItem('descuento') || 0);
+            let descuentoRow = document.getElementById('descuentoRow');
+            let mensajeCupon = document.getElementById('mensajeCupon');
+            if (descuentoRow) descuentoRow.style.display = 'flex';
+            if (mensajeCupon) mensajeCupon.innerHTML = '<span class="text-success">✅ Cupón aplicado</span>';
+        }
+        
+        // Cargar tipo de entrega guardado
+        let tipoGuardado = localStorage.getItem('tipoEntrega');
+        if (tipoGuardado) {
+            tipoEntregaSeleccionado = tipoGuardado;
+            seleccionarEntrega(tipoEntregaSeleccionado);
+        }
+        
+        // Cargar dirección guardada
+        let direccionGuardada = localStorage.getItem('direccionEntrega');
+        let direccionInput = document.getElementById('direccion');
+        if (direccionGuardada && direccionInput) {
+            direccionInput.value = direccionGuardada;
+        }
+        
+        // VALIDAR STOCK DE CADA PRODUCTO
+        let carritoActualizado = [];
+        let huboCambios = false;
+        
+        for (let item of carrito) {
+            const stockInfo = await validarStockProducto(item.id, item.cantidad);
+            
+            if (!stockInfo.valido) {
+                huboCambios = true;
+                
+                if (stockInfo.stockDisponible === 0) {
+                    // Producto agotado - eliminarlo
+                    await Swal.fire({
+                        icon: 'warning',
+                        title: 'Producto agotado',
+                        text: `"${item.nombre}" ya no tiene stock. Se eliminó de tu carrito.`,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    continue; // No agregar al carrito actualizado
+                } else {
+                    // Ajustar cantidad al stock disponible
+                    item.cantidad = stockInfo.stockDisponible;
+                    item.stock = stockInfo.stockDisponible;
+                    carritoActualizado.push(item);
+                    await Swal.fire({
+                        icon: 'warning',
+                        title: 'Stock reducido',
+                        text: `"${item.nombre}" ahora solo tiene ${stockInfo.stockDisponible} unidades. Se ajustó tu carrito.`,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            } else {
+                // Stock suficiente, mantener el item
+                item.stock = stockInfo.stockDisponible;
+                carritoActualizado.push(item);
+            }
+        }
+        
+        // Si hubo cambios, actualizar localStorage y carrito
+        if (huboCambios) {
+            carrito = carritoActualizado;
+            localStorage.setItem('carritoCliente', JSON.stringify(carrito));
+        }
+        
+        // Renderizar el carrito
+        renderizarCarrito();
+    }
+
+    // ===============================
+    // ESCAPE HTML
+    // ===============================
+    function escapeHtml(t) {
+        if (!t) return '';
+        return t.replace(/[&<>]/g, function (m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // ===============================
+    // INICIALIZACIÓN
+    // ===============================
+    document.addEventListener('DOMContentLoaded', function () {
+        // Cargar carrito con validación
+        cargarCarrito();
+        
+        // Configurar eventos
+        const btnCupon = document.getElementById('btnAplicarCupon');
+        const cuponInput = document.getElementById('cuponInput');
+        
+        if (btnCupon) btnCupon.addEventListener('click', aplicarCupon);
+        if (cuponInput) {
+            cuponInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') aplicarCupon();
+            });
+        }
+    });
+</script>
+{% endblock %}

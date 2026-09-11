@@ -1,0 +1,628 @@
+{% extends 'base_cliente.html' %}
+{% block titulito %}📞 Contacto - Librería Salesiana{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== RESET DE APPEARANCE PARA TODOS LOS INPUTS ===== */
+    /* Eliminar estilos nativos problemáticos en todos los navegadores */
+    input,
+    textarea,
+    select,
+    button {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
+    
+    /* Excepciones para elementos que deben mantener su apariencia nativa */
+    input[type="checkbox"],
+    input[type="radio"],
+    input[type="range"] {
+        -webkit-appearance: auto;
+        -moz-appearance: auto;
+        appearance: auto;
+    }
+    
+    /* Para inputs de número - quitar flechas */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    
+    input[type="number"] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+    
+    /* Prevenir zoom automático en iOS (mantener font-size: 16px) */
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    textarea,
+    select {
+        font-size: 16px;
+    }
+    
+    /* Reset de border-radius para inputs */
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    textarea,
+    select {
+        border-radius: 0;
+    }
+    
+    /* ===== MEDIDAS RESPONSIVE GLOBALES ===== */
+    * {
+        box-sizing: border-box;
+    }
+    
+    /* Móviles pequeños (menos de 576px) */
+    @media (max-width: 576px) {
+        .container {
+            padding: 0 12px;
+        }
+        
+        .card-header {
+            padding: 1rem !important;
+        }
+        
+        .card-header i.fa-3x {
+            font-size: 2rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .card-header h4 {
+            font-size: 1.25rem !important;
+        }
+        
+        .card-body {
+            padding: 1.25rem !important;
+        }
+        
+        .form-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        
+        .form-control {
+            font-size: 16px !important;
+            padding: 0.5rem 0.75rem !important;
+            min-height: 44px;
+        }
+        
+        textarea.form-control {
+            min-height: 100px;
+        }
+        
+        .btn {
+            padding: 0.625rem 0.75rem !important;
+            font-size: 0.95rem !important;
+            min-height: 44px;
+        }
+        
+        h5 {
+            font-size: 1rem !important;
+        }
+        
+        .text-muted {
+            font-size: 0.85rem;
+        }
+        
+        .gap-3 {
+            gap: 0.75rem !important;
+        }
+        
+        .btn-sm {
+            min-width: 40px;
+            min-height: 40px;
+            padding: 0.5rem !important;
+        }
+        
+        iframe {
+            height: 200px !important;
+        }
+        
+        .mb-4 {
+            margin-bottom: 1.25rem !important;
+        }
+    }
+    
+    /* Tablets (576px - 768px) */
+    @media (min-width: 576px) and (max-width: 768px) {
+        .card-body {
+            padding: 1.5rem !important;
+        }
+        
+        .form-control {
+            min-height: 42px;
+        }
+        
+        .btn {
+            min-height: 42px;
+        }
+        
+        iframe {
+            height: 220px !important;
+        }
+    }
+    
+    /* Tablets grandes (768px - 992px) */
+    @media (min-width: 768px) and (max-width: 992px) {
+        .col-md-6 {
+            width: 50% !important;
+        }
+        
+        iframe {
+            height: 230px !important;
+        }
+    }
+    
+    /* Laptops (992px - 1200px) */
+    @media (min-width: 992px) and (max-width: 1200px) {
+        .container {
+            max-width: 960px;
+        }
+    }
+    
+    /* Pantallas grandes (1200px+) */
+    @media (min-width: 1200px) {
+        .container {
+            max-width: 1140px;
+        }
+        
+        .card-body {
+            padding: 2rem !important;
+        }
+    }
+    
+    /* Orientación landscape en móviles */
+    @media (max-width: 768px) and (orientation: landscape) {
+        .row {
+            flex-direction: row !important;
+        }
+        
+        .col-md-6 {
+            width: 50%;
+        }
+        
+        .card-body {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        textarea.form-control {
+            min-height: 80px;
+        }
+        
+        iframe {
+            height: 180px !important;
+        }
+    }
+    
+    /* Touch-friendly para móviles */
+    @media (hover: none) and (pointer: coarse) {
+        button, 
+        .btn,
+        a {
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        button:active,
+        .btn:active {
+            transform: scale(0.97);
+            transition: transform 0.1s;
+        }
+        
+        .card:hover {
+            transform: none;
+        }
+    }
+    
+    /* ===== ESTILOS ADICIONALES MEJORADOS ===== */
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    @media (min-width: 768px) {
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+        }
+    }
+    
+    .form-control {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        border-radius: 8px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .form-control:focus {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        outline: none;
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .btn {
+        transition: all 0.3s ease;
+        border-radius: 8px;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #0b5ed7 0%, #0a58ca 100%);
+        transform: translateY(-2px);
+    }
+    
+    @media (max-width: 576px) {
+        .btn-primary:hover {
+            transform: translateY(-1px);
+        }
+    }
+    
+    .btn-outline-primary,
+    .btn-outline-info,
+    .btn-outline-danger,
+    .btn-outline-success {
+        transition: all 0.2s ease;
+    }
+    
+    .btn-outline-primary:hover,
+    .btn-outline-info:hover,
+    .btn-outline-danger:hover,
+    .btn-outline-success:hover {
+        transform: translateY(-2px);
+    }
+    
+    /* Iconos de redes sociales */
+    .fab {
+        font-size: 1.1rem;
+    }
+    
+    /* Animación de entrada */
+    .card {
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .row.mt-4 .card {
+        animation-delay: 0.1s;
+    }
+    
+    /* Mejora para iframe responsivo */
+    .map-container {
+        position: relative;
+        width: 100%;
+        height: 250px;
+    }
+    
+    @media (max-width: 576px) {
+        .map-container {
+            height: 200px;
+        }
+    }
+    
+    iframe {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+    
+    /* Espaciado optimizado */
+    .mb-4 {
+        margin-bottom: 1.5rem !important;
+    }
+    
+    @media (max-width: 576px) {
+        .mb-4 {
+            margin-bottom: 1rem !important;
+        }
+    }
+    
+    /* Scroll suave */
+    html {
+        scroll-behavior: smooth;
+    }
+</style>
+{% endblock %}
+
+{% block contenido %}
+<div class="container py-3 py-md-4">
+    <div class="row g-3 g-md-4">
+        <!-- COLUMNA IZQUIERDA - FORMULARIO -->
+        <div class="col-12 col-md-6 mb-3 mb-md-0">
+            <div class="card shadow border-0 h-100">
+                <div class="card-header bg-primary text-white text-center py-3 py-md-4">
+                    <i class="fas fa-envelope fa-2x fa-md-3x mb-2"></i>
+                    <h4 class="mb-0">Envíanos un mensaje</h4>
+                    <p class="mb-0 mt-1 small opacity-75">Respondemos en menos de 24 horas</p>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <form id="contactoForm" class="needs-validation" novalidate>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-user me-2 text-primary"></i>Nombre completo
+                            </label>
+                            <input type="text" class="form-control" id="nombre" 
+                                   placeholder="Tu nombre" required 
+                                   style="-webkit-appearance: none; -moz-appearance: none; appearance: none;">
+                            <div class="invalid-feedback">
+                                Por favor ingresa tu nombre
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-envelope me-2 text-primary"></i>Correo electrónico
+                            </label>
+                            <input type="email" class="form-control" id="email" 
+                                   placeholder="tu@email.com" required
+                                   style="-webkit-appearance: none; -moz-appearance: none; appearance: none;">
+                            <div class="invalid-feedback">
+                                Ingresa un correo válido
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-tag me-2 text-primary"></i>Asunto
+                            </label>
+                            <input type="text" class="form-control" id="asunto" 
+                                   placeholder="Motivo de contacto" required
+                                   style="-webkit-appearance: none; -moz-appearance: none; appearance: none;">
+                            <div class="invalid-feedback">
+                                Especifica el asunto de tu mensaje
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-comment me-2 text-primary"></i>Mensaje
+                            </label>
+                            <textarea class="form-control" id="mensaje" rows="5" 
+                                      placeholder="Escribe tu mensaje aquí..." required
+                                      style="-webkit-appearance: none; -moz-appearance: none; appearance: none;"></textarea>
+                            <div class="invalid-feedback">
+                                Escribe tu mensaje
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                            <i class="fas fa-paper-plane me-2"></i>Enviar mensaje
+                        </button>
+                    </form>
+                    
+                    <div id="mensajeExito" class="alert alert-success mt-3" style="display: none;">
+                        <i class="fas fa-check-circle me-2"></i>
+                        ¡Mensaje enviado con éxito! Te responderemos pronto.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA - INFORMACIÓN -->
+        <div class="col-12 col-md-6">
+            <div class="card shadow border-0 h-100">
+                <div class="card-header bg-success text-white text-center py-3 py-md-4">
+                    <i class="fas fa-store fa-2x fa-md-3x mb-2"></i>
+                    <h4 class="mb-0">Visítanos</h4>
+                    <p class="mb-0 mt-1 small opacity-75">Tu librería de confianza</p>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <div class="mb-4">
+                        <h5 class="fw-bold">
+                            <i class="fas fa-map-marker-alt text-danger me-2"></i>Dirección
+                        </h5>
+                        <p class="text-muted mb-0">
+                            Av. Don Bosco 123, Centro Comercial Salesiano<br>
+                            Lima - Perú
+                        </p>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5 class="fw-bold">
+                            <i class="fas fa-clock text-warning me-2"></i>Horario de atención
+                        </h5>
+                        <p class="text-muted mb-1">
+                            <i class="far fa-calendar-alt me-2"></i>
+                            Lunes a Viernes: 9:00am - 7:00pm
+                        </p>
+                        <p class="text-muted mb-1">
+                            <i class="fas fa-calendar-week me-2"></i>
+                            Sábados: 9:00am - 2:00pm
+                        </p>
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-calendar-day me-2"></i>
+                            Domingos: Cerrado
+                        </p>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5 class="fw-bold">
+                            <i class="fas fa-phone text-success me-2"></i>Contacto rápido
+                        </h5>
+                        <p class="text-muted mb-1">
+                            <i class="fas fa-phone-alt me-2"></i>
+                            Teléfono: (01) 123-4567
+                        </p>
+                        <p class="text-muted mb-1">
+                            <i class="fab fa-whatsapp me-2 text-success"></i>
+                            WhatsApp: 987 654 321
+                        </p>
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-envelope me-2"></i>
+                            Email: ventas@libreriasalesiana.com
+                        </p>
+                    </div>
+
+                    <div>
+                        <h5 class="fw-bold">
+                            <i class="fas fa-share-alt text-primary me-2"></i>Síguenos
+                        </h5>
+                        <div class="d-flex gap-3 mt-3">
+                            <a href="#" class="btn btn-outline-primary btn-sm" aria-label="Facebook">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            <a href="#" class="btn btn-outline-info btn-sm" aria-label="Twitter">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            <a href="#" class="btn btn-outline-danger btn-sm" aria-label="Instagram">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                            <a href="#" class="btn btn-outline-success btn-sm" aria-label="WhatsApp">
+                                <i class="fab fa-whatsapp"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAPA -->
+    <div class="row mt-3 mt-md-4">
+        <div class="col-12">
+            <div class="card shadow border-0">
+                <div class="card-header bg-secondary text-white text-center py-2 py-md-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-map me-2"></i>Ubicación
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="map-container">
+                        <iframe
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3901.123456!2d-77.0428545!3d-12.0463741!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9105c5f5f5f5f5f5%3A0x5f5f5f5f5f5f5f5f!2sLima!5e0!3m2!1ses!2spe!4v1234567890"
+                            width="100%" height="250" style="border:0;" allowfullscreen="" loading="lazy"
+                            title="Ubicación de la Librería Salesiana"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (() => {
+        'use strict';
+        
+        // Validación del formulario
+        const forms = document.querySelectorAll('.needs-validation');
+        
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+                
+                // Simular envío (aquí iría la llamada AJAX real)
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
+                
+                // Simular envío (reemplazar con fetch real)
+                setTimeout(() => {
+                    // Ocultar formulario y mostrar éxito
+                    document.getElementById('mensajeExito').style.display = 'block';
+                    form.reset();
+                    form.classList.remove('was-validated');
+                    
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                    
+                    // Ocultar mensaje después de 5 segundos
+                    setTimeout(() => {
+                        const mensajeExito = document.getElementById('mensajeExito');
+                        if (mensajeExito) {
+                            mensajeExito.style.display = 'none';
+                        }
+                    }, 5000);
+                }, 1500);
+                
+                // Para envío real, usar este código:
+                /*
+                const formData = new FormData(form);
+                fetch('/api/contacto', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('mensajeExito').style.display = 'block';
+                        form.reset();
+                        form.classList.remove('was-validated');
+                    }
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                });
+                */
+            });
+        });
+        
+        // Validación en tiempo real para inputs
+        const inputs = document.querySelectorAll('input, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('input', function() {
+                if (this.checkValidity()) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                }
+            });
+        });
+    })();
+    
+    // Mejorar experiencia táctil en móviles
+    if ('ontouchstart' in window) {
+        document.querySelectorAll('.btn, .card').forEach(element => {
+            element.addEventListener('touchstart', function() {
+                // Solo para botones
+                if (this.classList && this.classList.contains('btn')) {
+                    this.style.transform = 'scale(0.97)';
+                }
+            });
+            element.addEventListener('touchend', function() {
+                if (this.classList && this.classList.contains('btn')) {
+                    this.style.transform = '';
+                }
+            });
+        });
+    }
+</script>
+{% endblock %}
