@@ -27,6 +27,12 @@
             margin-bottom: 15px; display: flex; align-items: center; gap: 10px;
         }
         .bloqueo-temporal i { font-size: 1.5rem; }
+        
+        /* Estilos para los botones sociales */
+        .btn-google { background-color: #db4437; color: white; }
+        .btn-google:hover { background-color: #c23321; color: white; }
+        .btn-facebook { background-color: #4267B2; color: white; }
+        .btn-facebook:hover { background-color: #365899; color: white; }
     </style>
 </head>
 
@@ -90,7 +96,8 @@
                                     placeholder="Ingresa tu contraseña" required {% if bloqueo_temporal %}disabled{% endif %}>
                             </div>
                             <div class="text-center mt-3">
-                                <a href="{{ url_for('recuperar_contrasena') }}" class="text-muted small">
+                                <!-- CORREGIDO: Se agregó 'clientes.' -->
+                                <a href="{{ url_for('clientes.recuperar_contrasena') }}" class="text-muted small">
                                     <i class="fas fa-key me-1"></i> ¿Olvidaste tu contraseña?
                                 </a>
                             </div>
@@ -98,6 +105,21 @@
                                 <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
                             </button>
                         </form>
+
+                        <!-- NUEVO: BOTONES DE REDES SOCIALES -->
+                        <div class="text-center my-4">
+                            <span class="text-muted small bg-white px-2 position-relative" style="z-index: 1;">O inicia sesión con:</span>
+                            <hr class="mt-2 mb-3">
+                        </div>
+                        <div class="d-flex gap-2 mb-2">
+                            <a href="{{ url_for('clientes.auth_google') }}" class="btn btn-google w-50 py-2 fw-bold">
+                                <i class="fab fa-google me-2"></i> Google
+                            </a>
+                            <a href="{{ url_for('clientes.auth_facebook') }}" class="btn btn-facebook w-50 py-2 fw-bold">
+                                <i class="fab fa-facebook-f me-2"></i> Facebook
+                            </a>
+                        </div>
+
                         {% else %}
                         <div class="text-center p-3">
                             <button class="btn btn-secondary w-100 py-2 fw-bold" disabled>
@@ -112,9 +134,10 @@
 
                     </div>
                     <div class="card-footer text-center bg-light p-3">
-                        <small>¿No tienes cuenta? <a href="/registro-cliente">Regístrate aquí</a></small>
+                        <!-- CORREGIDO: Usando url_for en lugar de rutas hardcodeadas -->
+                        <small>¿No tienes cuenta? <a href="{{ url_for('clientes.registro_cliente') }}">Regístrate aquí</a></small>
                         <br>
-                        <small><a href="/catalogo">← Seguir comprando como invitado</a></small>
+                        <small><a href="{{ url_for('pedidos.catalogo_cliente') }}">← Seguir comprando como invitado</a></small>
                     </div>
                 </div>
             </div>

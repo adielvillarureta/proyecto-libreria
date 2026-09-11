@@ -221,7 +221,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark navbar-salesiana sticky-top" id="mainNavbar">
         <div class="container">
             <!-- LOGO -->
-            <a class="navbar-brand fw-bold" href="/catalogo">
+            <a class="navbar-brand fw-bold" href="{{ url_for('pedidos.catalogo_cliente') }}">
                 <i class="fas fa-book-open me-1 me-sm-2"></i>Librería Salesiana
             </a>
 
@@ -275,7 +275,7 @@
             <div class="collapse navbar-collapse" id="navbarCliente">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item d-lg-none">
-                        <a class="nav-link" href="/catalogo">
+                        <a class="nav-link" href="{{ url_for('pedidos.catalogo_cliente') }}">
                             <i class="fas fa-store me-1"></i>Tienda
                         </a>
                     </li>
@@ -314,29 +314,31 @@
                             <i class="fas fa-user-circle me-1"></i>{{ session.cliente_nombres }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="/cliente/perfil">
+                            <!-- CORREGIDO: Usando url_for -->
+                            <li><a class="dropdown-item" href="{{ url_for('clientes.cliente_perfil') }}">
                                     <i class="fas fa-id-card me-2"></i>Mi Perfil
                                 </a></li>
-                            <li><a class="dropdown-item" href="/mis-pedidos">
+                            <li><a class="dropdown-item" href="{{ url_for('pedidos.mis_pedidos') }}">
                                     <i class="fas fa-truck me-2"></i>Mis Pedidos
                                 </a></li>
-                            <li><a class="dropdown-item" href="/cliente/cambiar-contrasena">
+                            <li><a class="dropdown-item" href="{{ url_for('clientes.cliente_cambiar_contrasena') }}">
                                     <i class="fas fa-key me-2"></i>Cambiar Contraseña
                                 </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="/logout-cliente">
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('clientes.logout_cliente') }}">
                                     <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
                                 </a></li>
                         </ul>
                     </li>
                     {% else %}
+                    <!-- CORREGIDO: Aquí estaba el error de sintaxis. Se eliminó la línea rota -->
                     <li class="nav-item">
-                        <a class="nav-link" href="/login-cliente">
+                        <a class="nav-link" href="{{ url_for('clientes.login_cliente') }}">
                             <i class="fas fa-sign-in-alt me-1"></i>Iniciar Sesión
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="btn btn-outline-light btn-sm ms-0 ms-sm-2 mt-2 mt-sm-0" href="/registro-cliente">
+                        <a class="btn btn-outline-light btn-sm ms-0 ms-sm-2 mt-2 mt-sm-0" href="{{ url_for('clientes.registro_cliente') }}">
                             <i class="fas fa-user-plus me-1"></i>Registrarse
                         </a>
                     </li>
@@ -344,7 +346,8 @@
 
                     <!-- CARRITO -->
                     <li class="nav-item ms-0 ms-sm-2 mt-2 mt-sm-0 position-relative">
-                        <a class="btn btn-gold btn-sm" href="/carrito" id="carritoBtn">
+                        <!-- Nota: Asumo que 'carrito' está en el blueprint 'pedidos'. Si no, cámbialo a 'ventas.carrito' o similar -->
+                        <a class="btn btn-gold btn-sm" href="{{ url_for('pedidos.carrito') }}" id="carritoBtn">
                             <i class="fas fa-shopping-cart"></i>
                             <span class="d-none d-sm-inline">Carrito</span>
                             <span id="carritoContador" class="carrito-badge" style="display:none;">0</span>
@@ -412,22 +415,17 @@
         // FILTRAR POR CATEGORÍA DESDE EL MENÚ
         // ============================================
         function filtrarPorCategoria(categoriaId) {
-            // Buscar el select de categorías en la página
             var select = document.getElementById('filtroCategoria');
             if (select) {
-                // Actualizar el valor del select
                 select.value = categoriaId || '';
-                // Disparar evento change para que se apliquen los filtros
                 var event = new Event('change');
                 select.dispatchEvent(event);
             }
             
-            // Si existe la función aplicarFiltros en la página, ejecutarla
             if (typeof aplicarFiltros === 'function') {
                 aplicarFiltros();
             }
             
-            // Cerrar el dropdown automáticamente
             var dropdownMenu = document.querySelector('.dropdown-categorias .dropdown-menu');
             if (dropdownMenu) {
                 var dropdown = dropdownMenu.closest('.dropdown-categorias');
@@ -439,7 +437,6 @@
                 }
             }
             
-            // Scroll suave al inicio de los productos
             var grid = document.getElementById('productosGrid');
             if (grid) {
                 grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -463,15 +460,16 @@
                 <div class="col-6 col-md-3 mb-4 mb-md-0">
                     <h5 class="text-center text-md-start">Enlaces rápidos</h5>
                     <ul class="list-unstyled text-center text-md-start">
-                        <li><a href="/catalogo" class="text-secondary text-decoration-none small">🏪 Tienda</a></li>
-                        <li><a href="/acerca-de" class="text-secondary text-decoration-none small">📖 Acerca de</a></li>
-                        <li><a href="/contacto" class="text-secondary text-decoration-none small">📞 Contacto</a></li>
+                        <!-- CORREGIDO: Todos los enlaces del footer ahora usan url_for -->
+                        <li><a href="{{ url_for('pedidos.catalogo_cliente') }}" class="text-secondary text-decoration-none small">🏪 Tienda</a></li>
+                        <li><a href="{{ url_for('main.acerca_de') }}" class="text-secondary text-decoration-none small">📖 Acerca de</a></li>
+                        <li><a href="{{ url_for('main.contacto') }}" class="text-secondary text-decoration-none small">📞 Contacto</a></li>
                         {% if not session.cliente_id %}
-                        <li><a href="/login-cliente" class="text-secondary text-decoration-none small">🔐 Iniciar sesión</a></li>
-                        <li><a href="/registro-cliente" class="text-secondary text-decoration-none small">📝 Registrarse</a></li>
+                        <li><a href="{{ url_for('clientes.login_cliente') }}" class="text-secondary text-decoration-none small">🔐 Iniciar sesión</a></li>
+                        <li><a href="{{ url_for('clientes.registro_cliente') }}" class="text-secondary text-decoration-none small">📝 Registrarse</a></li>
                         {% else %}
-                        <li><a href="/mis-pedidos" class="text-secondary text-decoration-none small">📦 Mis pedidos</a></li>
-                        <li><a href="/cliente/perfil" class="text-secondary text-decoration-none small">👤 Mi perfil</a></li>
+                        <li><a href="{{ url_for('pedidos.mis_pedidos') }}" class="text-secondary text-decoration-none small">📦 Mis pedidos</a></li>
+                        <li><a href="{{ url_for('clientes.cliente_perfil') }}" class="text-secondary text-decoration-none small">👤 Mi perfil</a></li>
                         {% endif %}
                     </ul>
                 </div>

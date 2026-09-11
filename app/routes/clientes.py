@@ -12,7 +12,6 @@ from datetime import datetime, timedelta
 
 clientes_bp = Blueprint('clientes', __name__)
 
-
 @clientes_bp.route('/login-cliente', methods=['GET', 'POST'])
 def login_cliente():
     ip_cliente = obtener_ip_cliente()
@@ -218,6 +217,12 @@ def registro_cliente():
         except Exception as e:
             db.session.rollback()
             flash(f"❌ Error: {str(e)}", "danger")
+            clave = request.form.get("clave")
+        confirmar = request.form.get("confirmar_clave")
+
+        if clave != confirmar:
+            flash("❌ Las contraseñas no coinciden", "danger")
+    return redirect(url_for("clientes.registro_cliente"))
     return render_template("registro_cliente.html")
 
 
@@ -237,42 +242,47 @@ def cliente_perfil():
         return redirect(url_for("clientes.logout_cliente"))
     return render_template("cliente_perfil.html", cliente=cliente)
 
-
 @clientes_bp.route('/cliente/actualizar-perfil', methods=['POST'])
 @login_required_cliente
 def cliente_actualizar_perfil():
+    # 1. Verificar que el cliente existe
+    cliente = Cliente.query.get(session["cliente_id"])
+    if not cliente:
+        flash("❌ Sesión inválida. Inicia sesión de nuevo.", "danger")
+        return redirect(url_for("clientes.login_cliente"))
+
     try:
-        cliente = Cliente.query.get(session["cliente_id"])
+        # 2. Actualizar datos básicos
         cliente.nombres = request.form.get("nombres")
         cliente.apellidos = request.form.get("apellidos")
         cliente.telefono = request.form.get("telefono")
         cliente.direccion = request.form.get("direccion")
+        cliente.dni = request.form.get("dni")
 
-        nuevo_email = request.form.get("email")
-        if nuevo_email != cliente.correo:
-            existe = Cliente.query.filter_by(correo=nuevo_email).first()
+        # 3. Actualizar correo (validando que no exista en otro usuario)
+        nuevo_correo = request.form.get("correo") # Cambiado a 'correo' para que coincida con el modelo
+        if nuevo_correo and nuevo_correo != cliente.correo:
+            existe = Cliente.query.filter_by(correo=nuevo_correo).first()
             if existe:
-                flash("❌ El correo ya está registrado", "danger")
+                flash("❌ El correo ya está registrado por otro usuario", "danger")
                 return redirect(url_for("clientes.cliente_perfil"))
-            cliente.correo = nuevo_email
-            session["cliente_correo"] = nuevo_email
+            cliente.correo = nuevo_correo
+            session["cliente_correo"] = nuevo_correo
 
-        nuevo_dni = request.form.get("dni")
-        if nuevo_dni and nuevo_dni != cliente.dni:
-            cliente.dni = nuevo_dni
-            session["cliente_dni"] = nuevo_dni
-
+        # 4. Guardar en Base de Datos
         db.session.commit()
 
+        # 5. Actualizar la sesión para que el navbar muestre los datos nuevos
         session["cliente_nombres"] = cliente.nombres
         session["cliente_apellidos"] = cliente.apellidos
         session["cliente_telefono"] = cliente.telefono
         session["cliente_direccion"] = cliente.direccion
+        session["cliente_dni"] = cliente.dni
 
-        flash("✅ Perfil actualizado", "success")
+        flash("✅ Perfil actualizado correctamente", "success")
     except Exception as e:
         db.session.rollback()
-        flash(f"❌ Error: {str(e)}", "danger")
+        flash(f"❌ Error al actualizar: {str(e)}", "danger")
 
     return redirect(url_for("clientes.cliente_perfil"))
 
@@ -385,3 +395,15 @@ def resetear_contrasena(token):
             flash(f"❌ Error: {str(e)}", "danger")
 
     return render_template("resetear_contrasena.html", token=token)
+
+@clientes_bp.route('/auth/google')
+def auth_google():
+    # Aquí irá la lógica real de Google OAuth en el futuro
+    flash("🚧 El inicio de sesión con Google estará disponible muy pronto.", "info")
+    return redirect(url_for('clientes.login_cliente'))
+
+@clientes_bp.route('/auth/facebook')
+def auth_facebook():
+    # Aquí irá la lógica real de Facebook OAuth en el futuro
+    flash("🚧 El inicio de sesión con Facebook estará disponible muy pronto.", "info")
+    return redirect(url_for('clientes.login_cliente'))
