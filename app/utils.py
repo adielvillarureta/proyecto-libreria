@@ -25,7 +25,8 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if "usuario_id" not in session:
-            return redirect(url_for("login"))
+            # ✅ CORREGIDO: Se agregó el prefijo 'auth.'
+            return redirect(url_for("auth.login"))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -50,7 +51,8 @@ def login_required_cliente(f):
     def decorated_function(*args, **kwargs):
         if "cliente_id" not in session:
             flash("Debes iniciar sesión para continuar", "warning")
-            return redirect(url_for("login_cliente"))
+            # ✅ CORREGIDO: Se agregó el prefijo 'clientes.'
+            return redirect(url_for("clientes.login_cliente"))
         return f(*args, **kwargs)
     return decorated_function
 

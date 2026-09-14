@@ -195,12 +195,21 @@ def login_cliente():
 @clientes_bp.route('/registro-cliente', methods=['GET', 'POST'])
 def registro_cliente():
     if request.method == "POST":
+        # 1. Validar que las contraseñas coincidan
+        clave = request.form.get("clave")
+        confirmar = request.form.get("confirmar_clave")
+        if clave != confirmar:
+            flash("❌ Las contraseñas no coinciden", "danger")
+            return redirect(url_for("clientes.registro_cliente"))
+
         try:
+            # 2. Validar que el correo no esté registrado
             existe = Cliente.query.filter_by(correo=request.form["email"]).first()
             if existe:
                 flash("❌ El correo ya está registrado", "danger")
                 return redirect(url_for("clientes.registro_cliente"))
 
+            # 3. Crear el nuevo cliente
             cliente = Cliente(
                 dni=request.form.get("dni"),
                 nombres=request.form["nombres"],
@@ -217,12 +226,9 @@ def registro_cliente():
         except Exception as e:
             db.session.rollback()
             flash(f"❌ Error: {str(e)}", "danger")
-            clave = request.form.get("clave")
-        confirmar = request.form.get("confirmar_clave")
+            return render_template("registro_cliente.html")
 
-        if clave != confirmar:
-            flash("❌ Las contraseñas no coinciden", "danger")
-    return redirect(url_for("clientes.registro_cliente"))
+    # ✅ CORREGIDO: Petición GET simplemente muestra el formulario (sin redirigir)
     return render_template("registro_cliente.html")
 
 
@@ -242,25 +248,23 @@ def cliente_perfil():
         return redirect(url_for("clientes.logout_cliente"))
     return render_template("cliente_perfil.html", cliente=cliente)
 
+
 @clientes_bp.route('/cliente/actualizar-perfil', methods=['POST'])
 @login_required_cliente
 def cliente_actualizar_perfil():
-    # 1. Verificar que el cliente existe
     cliente = Cliente.query.get(session["cliente_id"])
     if not cliente:
         flash("❌ Sesión inválida. Inicia sesión de nuevo.", "danger")
         return redirect(url_for("clientes.login_cliente"))
 
     try:
-        # 2. Actualizar datos básicos
         cliente.nombres = request.form.get("nombres")
         cliente.apellidos = request.form.get("apellidos")
         cliente.telefono = request.form.get("telefono")
         cliente.direccion = request.form.get("direccion")
         cliente.dni = request.form.get("dni")
 
-        # 3. Actualizar correo (validando que no exista en otro usuario)
-        nuevo_correo = request.form.get("correo") # Cambiado a 'correo' para que coincida con el modelo
+        nuevo_correo = request.form.get("correo")
         if nuevo_correo and nuevo_correo != cliente.correo:
             existe = Cliente.query.filter_by(correo=nuevo_correo).first()
             if existe:
@@ -269,10 +273,8 @@ def cliente_actualizar_perfil():
             cliente.correo = nuevo_correo
             session["cliente_correo"] = nuevo_correo
 
-        # 4. Guardar en Base de Datos
         db.session.commit()
 
-        # 5. Actualizar la sesión para que el navbar muestre los datos nuevos
         session["cliente_nombres"] = cliente.nombres
         session["cliente_apellidos"] = cliente.apellidos
         session["cliente_telefono"] = cliente.telefono
@@ -396,14 +398,14 @@ def resetear_contrasena(token):
 
     return render_template("resetear_contrasena.html", token=token)
 
+
 @clientes_bp.route('/auth/google')
 def auth_google():
-    # Aquí irá la lógica real de Google OAuth en el futuro
     flash("🚧 El inicio de sesión con Google estará disponible muy pronto.", "info")
     return redirect(url_for('clientes.login_cliente'))
 
+
 @clientes_bp.route('/auth/facebook')
 def auth_facebook():
-    # Aquí irá la lógica real de Facebook OAuth en el futuro
     flash("🚧 El inicio de sesión con Facebook estará disponible muy pronto.", "info")
     return redirect(url_for('clientes.login_cliente'))

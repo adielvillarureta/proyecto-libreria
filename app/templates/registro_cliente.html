@@ -5,10 +5,8 @@
 <div class="row justify-content-center py-4">
     <div class="col-12 col-md-8 col-lg-6 col-xl-5">
         
-        <!-- Tarjeta de Registro -->
         <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
             
-            <!-- Encabezado -->
             <div class="card-header text-white text-center py-4" style="background: linear-gradient(135deg, #7B3252, #a34a6b);">
                 <i class="fas fa-user-plus fa-2x mb-2"></i>
                 <h4 class="mb-1 fw-bold">Registro de Cliente</h4>
@@ -17,7 +15,6 @@
             
             <div class="card-body p-4 p-md-5">
                 
-                <!-- Mensajes Flash -->
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
@@ -30,12 +27,9 @@
                     {% endif %}
                 {% endwith %}
 
-                <!-- Formulario -->
-                <!-- Nota: action vacío para que envíe a la misma URL (POST) -->
                 <form method="POST" action="{{ url_for('clientes.registro_cliente') }}" id="registroForm" novalidate>
                     
                     <div class="row g-3">
-                        <!-- Nombres -->
                         <div class="col-12 col-md-6">
                             <label class="form-label fw-bold small text-muted">Nombres <span class="text-danger">*</span></label>
                             <div class="input-group">
@@ -44,7 +38,6 @@
                             </div>
                         </div>
 
-                        <!-- Apellidos -->
                         <div class="col-12 col-md-6">
                             <label class="form-label fw-bold small text-muted">Apellidos <span class="text-danger">*</span></label>
                             <div class="input-group">
@@ -53,27 +46,23 @@
                             </div>
                         </div>
 
-                        <!-- DNI -->
                         <div class="col-12">
                             <label class="form-label fw-bold small text-muted">DNI (Opcional)</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0"><i class="fas fa-id-card text-muted"></i></span>
-                                <input type="text" name="dni" class="form-control bg-light border-start-0" placeholder="12345678" maxlength="8" pattern="\d{8}" title="Ingresa 8 dígitos numéricos">
+                                <input type="text" name="dni" class="form-control bg-light border-start-0" placeholder="12345678" maxlength="8" pattern="\d{8}">
                             </div>
                             <small class="text-muted extra-small">Máximo 8 dígitos</small>
                         </div>
 
-                        <!-- Correo -->
                         <div class="col-12">
                             <label class="form-label fw-bold small text-muted">Correo Electrónico <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0"><i class="fas fa-envelope text-muted"></i></span>
-                                <!-- IMPORTANTE: El backend espera name="email" -->
                                 <input type="email" name="email" class="form-control bg-light border-start-0" placeholder="cliente@email.com" required>
                             </div>
                         </div>
 
-                        <!-- Teléfono -->
                         <div class="col-12">
                             <label class="form-label fw-bold small text-muted">Teléfono</label>
                             <div class="input-group">
@@ -82,7 +71,6 @@
                             </div>
                         </div>
 
-                        <!-- Dirección -->
                         <div class="col-12">
                             <label class="form-label fw-bold small text-muted">Dirección de Envío</label>
                             <div class="input-group">
@@ -91,7 +79,6 @@
                             </div>
                         </div>
 
-                        <!-- Contraseña -->
                         <div class="col-12 col-md-6">
                             <label class="form-label fw-bold small text-muted">Contraseña <span class="text-danger">*</span></label>
                             <div class="input-group">
@@ -103,7 +90,6 @@
                             </div>
                         </div>
 
-                        <!-- Confirmar Contraseña -->
                         <div class="col-12 col-md-6">
                             <label class="form-label fw-bold small text-muted">Confirmar Contraseña <span class="text-danger">*</span></label>
                             <div class="input-group">
@@ -117,7 +103,6 @@
                         </div>
                     </div>
 
-                    <!-- Botón de Registro -->
                     <div class="mt-4 pt-2">
                         <button type="submit" class="btn w-100 py-2 fw-bold text-white shadow-sm" style="background-color: #7B3252; border-radius: 8px;">
                             <i class="fas fa-check-circle me-2"></i>Registrarme
@@ -126,7 +111,6 @@
                 </form>
             </div>
 
-            <!-- Pie de la tarjeta -->
             <div class="card-footer bg-light text-center py-3 border-0">
                 <span class="small text-muted">¿Ya tienes cuenta? </span>
                 <a href="{{ url_for('clientes.login_cliente') }}" class="small fw-bold text-decoration-none" style="color: #7B3252;">Inicia sesión aquí</a>
@@ -137,32 +121,15 @@
 
 <style>
     .extra-small { font-size: 0.75rem; }
-    
-    /* Estilos para inputs con iconos */
-    .input-group-text {
-        border-radius: 8px 0 0 8px;
-    }
-    .form-control, .input-group-text {
-        border-color: #e0e0e0;
-    }
-    .form-control:focus {
-        border-color: #7B3252;
-        box-shadow: 0 0 0 0.2rem rgba(123, 50, 82, 0.15);
-    }
-    .input-group:focus-within .input-group-text {
-        border-color: #7B3252;
-        color: #7B3252 !important;
-    }
-    .input-group:focus-within .input-group-text i {
-        color: #7B3252 !important;
-    }
-    textarea.form-control {
-        border-radius: 0 8px 8px 0;
-    }
+    .input-group-text { border-radius: 8px 0 0 8px; }
+    .form-control, .input-group-text { border-color: #e0e0e0; }
+    .form-control:focus { border-color: #7B3252; box-shadow: 0 0 0 0.2rem rgba(123, 50, 82, 0.15); }
+    .input-group:focus-within .input-group-text { border-color: #7B3252; color: #7B3252 !important; }
+    .input-group:focus-within .input-group-text i { color: #7B3252 !important; }
+    textarea.form-control { border-radius: 0 8px 8px 0; }
 </style>
 
 <script>
-    // Función para mostrar/ocultar contraseña
     function togglePassword(inputId, iconId) {
         const input = document.getElementById(inputId);
         const icon = document.getElementById(iconId);
@@ -177,14 +144,13 @@
         }
     }
 
-    // Validación en tiempo real de que las contraseñas coincidan
     document.getElementById('registroForm').addEventListener('submit', function(e) {
         const pass = document.getElementById('clave').value;
         const confirm = document.getElementById('confirmar_clave').value;
         const errorMsg = document.getElementById('passwordError');
         
         if (pass !== confirm) {
-            e.preventDefault(); // Detiene el envío
+            e.preventDefault();
             errorMsg.classList.remove('d-none');
             document.getElementById('confirmar_clave').focus();
         } else {
