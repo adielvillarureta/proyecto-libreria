@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block titulito %}📦 Productos por Proveedor{% endblock %}
+{% block contenido %}
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="bg-primary p-5 mb-4 text-white position-relative overflow-hidden hover-lift rounded-4 shadow-sm">
+        <div class="position-relative z-3">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+              <h1 class="h2 fw-extrabold mb-2 d-flex align-items-center text-shadow-primary">
+                <i class="fas fa-boxes-stacked me-3 text-warning"></i>
+                Productos por Proveedor
+              </h1>
+              <p class="h5 mb-0 opacity-90">
+                {% if proveedor_seleccionado %}
+                {{ productos|length }} productos • {{ proveedor_seleccionado.nombre }}
+                {% else %}
+                Selecciona un proveedor para ver sus productos asignados
+                {% endif %}
+              </p>
+            </div>
+            <a href="/proveedores" class="btn btn-warning btn-lg shadow hover-lift text-dark fw-bold">
+              <i class="fas fa-arrow-left me-2"></i>Volver
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm p-4 mb-4 border-0 rounded-4">
+        <form method="GET">
+          <div class="row align-items-center g-3">
+            <div class="col-md-8">
+              <label class="form-label fw-bold text-dark mb-2 fs-5">
+                <i class="fas fa-search me-2 text-info"></i>Selecciona un Proveedor
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted">
+                  <i class="fas fa-users"></i>
+                </span>
+                <select name="proveedor_id" class="form-select form-select-lg border-start-0 shadow-sm" onchange="this.form.submit()">
+                  <option value="">🔍 Buscar y seleccionar un Proveedor...</option>
+                  {% for p in proveedores %}
+                  <option value="{{ p.id }}" {% if proveedor_id == p.id %}selected{% endif %}>
+                    👤 {{ p.nombre }} {% if p.empresa %}• {{ p.empresa }}{% endif %}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="col-md-4 text-md-end text-center pt-md-4">
+              {% if proveedor_seleccionado %}
+              <div class="badge bg-success-subtle text-success border border-success-subtle px-4 py-3 fs-6 fw-bold rounded-3">
+                <i class="fas fa-check-circle me-2"></i>{{ productos|length }} Productos Encontrados
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </form>
+      </div>
+
+      {% if proveedor_seleccionado %}
+      {% if productos %}
+      <div class="card shadow-sm mb-4 border-0 overflow-hidden rounded-4">
+        <div class="card-header bg-dark text-white p-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold fs-6 text-uppercase tracking-wider">
+              <i class="fas fa-list me-2 text-warning"></i>Lista de Catálogo
+            </h5>
+            <span class="badge bg-primary px-3 py-2">
+              {{ productos|length }} registros activos
+            </span>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light text-uppercase fs-7 fw-bold">
+              <tr>
+                <th class="ps-4" style="width: 70px;">#</th>
+                <th>Producto / Artículo</th>
+                <th class="text-center" style="width: 280px;">Stock Restante</th>
+                <th>Representante</th>
+                <th class="text-center pe-4">Empresa</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in productos %}
+              <tr class="hover-row">
+                <td class="ps-4 fw-bold text-secondary">{{ loop.index }}</td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="bg-light p-2 rounded me-3 text-primary">
+                      <i class="fas fa-tag"></i>
+                    </div>
+                    <div>
+                      <span class="fw-bold text-dark d-block mb-1">{{ p.nombre }}</span>
+                      {% if p.total_ventas and p.total_ventas > 0 %}
+                      <span class="badge bg-success-subtle text-success border border-success-subtle fs-7">
+                        <i class="fas fa-shopping-cart me-1"></i>{{ p.total_ventas }} venta(s)
+                      </span>
+                      {% else %}
+                      <span class="badge bg-light text-muted border fs-7">
+                        <i class="fas fa-box me-1"></i>Sin rotación
+                      </span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </td>
+                <td class="text-center">
+                  {% if p.cantidad == 0 %}
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle w-100 py-2 fs-7 fw-bold">
+                    <i class="fas fa-times-circle me-1"></i> AGOTADO (0 unidades)
+                  </span>
+                  {% elif p.cantidad <= 5 %}
+                  <span class="badge bg-warning-subtle text-warning-dark border border-warning-subtle w-100 py-2 fs-7 fw-bold">
+                    <i class="fas fa-exclamation-triangle me-1"></i> STOCK CRÍTICO ({{ p.cantidad }} un.)
+                  </span>
+                  {% else %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle w-100 py-2 fs-7 fw-bold">
+                    <i class="fas fa-check-circle me-1"></i> {{ p.cantidad }} unidades disponibles
+                  </span>
+                  {% endif %}
+                </td>
+                <td class="fw-semibold text-secondary">
+                  <i class="fas fa-user-tie text-muted me-1 small"></i>{{ proveedor_seleccionado.nombre }}
+                </td>
+                <td class="text-center pe-4">
+                  <span class="badge bg-light text-dark border px-3 py-2 fw-medium">
+                    {{ proveedor_seleccionado.empresa or '—' }}
+                  </span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% else %}
+      <div class="text-center py-5 my-4">
+        <div class="bg-warning-subtle text-warning rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center border border-warning-subtle shadow-sm"
+          style="width: 120px; height: 120px;">
+          <i class="fas fa-box-open fa-3x"></i>
+        </div>
+        <h3 class="fw-extrabold text-dark mb-2">{{ proveedor_seleccionado.nombre }} no posee productos</h3>
+        <p class="text-muted mb-4 max-w-md mx-auto">Este proveedor se encuentra registrado pero no cuenta con inventario asociado en la base de datos actual.</p>
+        <a href="/productos/nuevo" class="btn btn-success btn-lg px-4 shadow hover-lift">
+          <i class="fas fa-plus me-2"></i>Asignar Primer Producto
+        </a>
+      </div>
+      {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<style>
+  .hover-row {
+    transition: background-color 0.2s ease-in-out;
+  }
+  .hover-row:hover {
+    background-color: rgba(0, 123, 255, 0.01) !important;
+  }
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.12) !important;
+  }
+  .text-shadow-primary {
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+  }
+  .fs-7 {
+    font-size: 0.785rem;
+  }
+  .text-warning-dark {
+    color: #664d03;
+  }
+  .tracking-wider {
+    letter-spacing: 0.05em;
+  }
+  @media (max-width: 768px) {
+    .table-responsive {
+      font-size: 0.85rem;
+    }
+  }
+</style>
+{% endblock %}

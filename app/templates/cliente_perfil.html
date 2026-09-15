@@ -1,0 +1,211 @@
+{% extends 'base_cliente.html' %}
+{% block titulito %}Tu Perfil{% endblock %}
+
+{% block contenido %}
+<div class="container-fluid py-3 px-md-4">
+    
+    <!-- MENSAJES FLASH (NUEVO: Para que veas si guardó o hubo error) -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Migas de pan (Breadcrumb) -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb custom-breadcrumb small">
+            <li class="breadcrumb-item"><a href="{{ url_for('pedidos.catalogo_cliente') }}">Inicio</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Tu perfil</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <!-- MENÚ LATERAL (Sidebar) -->
+        <div class="col-12 col-md-4 col-lg-3">
+            <div class="account-sidebar p-2">
+                <ul class="nav flex-column account-menu">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-box me-2"></i> Tus pedidos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="far fa-star me-2"></i> Tus reseñas</a>
+                    </li>
+                    <!-- CORREGIDO: Ahora apunta a cliente_perfil (GET) y no a actualizar (POST) -->
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('clientes.cliente_perfil') }}">
+                            <i class="far fa-user me-2"></i> Tu perfil
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-ticket-alt me-2"></i> Cupones y ofertas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-wallet me-2"></i> Saldo de crédito</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-store me-2"></i> Tiendas que sigues</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="far fa-clock me-2"></i> Historial de navegación</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-map-marker-alt me-2"></i> Direcciones</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-credit-card me-2"></i> Métodos de pago</a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#securitySubmenu" role="button" aria-expanded="true">
+                            <span><i class="fas fa-shield-alt me-2"></i> Seguridad de la cuenta</span>
+                            <i class="fas fa-chevron-down small"></i>
+                        </a>
+                        <div class="collapse show ms-3" id="securitySubmenu">
+                            <ul class="nav flex-column sub-menu">
+                                <li class="nav-item">
+                                    <a class="nav-link small py-1" href="{{ url_for('clientes.cliente_cambiar_contrasena') }}">
+                                        Cambiar contraseña
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link small text-danger py-1" href="#">Elimina tu cuenta</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-user-shield me-2"></i> Permisos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="far fa-bell me-2"></i> Notificaciones</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <div class="col-12 col-md-8 col-lg-9">
+            <div class="profile-main-content">
+                
+                <!-- Encabezado del Perfil -->
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="avatar-container">
+                        <img src="https://ui-avatars.com/api/?name={{ cliente.nombres }}+{{ cliente.apellidos }}&background=7B3252&color=fff&size=128" alt="Avatar" class="profile-avatar">
+                    </div>
+                    <div>
+                        <h4 class="mb-1 fw-bold text-dark fs-5">
+                            {{ cliente.nombres }} {{ cliente.apellidos }} 
+                            <i class="far fa-edit text-muted fs-6 ms-1 pointer" title="Editar foto"></i>
+                        </h4>
+                        <div class="d-flex gap-4 text-center text-muted small">
+                            <div>
+                                <span class="fw-bold text-dark d-block">0</span>
+                                Total de pedidos
+                            </div>
+                            <div class="border-start ps-4">
+                                <span class="fw-bold text-dark d-block">0</span>
+                                Reseñas
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aviso de Seguridad -->
+                <div class="security-banner mb-4 p-2 px-3 rounded d-flex align-items-center gap-2">
+                    <i class="fas fa-lock text-success fs-6"></i>
+                    <span class="text-success small fw-500">Su información y privacidad se mantendrán seguras y fuera de riesgo.</span>
+                </div>
+
+                <!-- Formulario de Configuración del Perfil -->
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3 fs-6">Información personal</h5>
+                        
+                        <form method="POST" action="{{ url_for('clientes.cliente_actualizar_perfil') }}">
+                            <div class="row g-3 mb-3">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label small fw-bold">Nombres</label>
+                                    <input type="text" name="nombres" class="form-control custom-input" value="{{ cliente.nombres }}" required>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label small fw-bold">Apellidos</label>
+                                    <input type="text" name="apellidos" class="form-control custom-input" value="{{ cliente.apellidos }}" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Correo Electrónico</label>
+                                <!-- CORREGIDO: name="correo" y value="{{ cliente.correo }}" -->
+                                <input type="email" name="correo" class="form-control custom-input" value="{{ cliente.correo }}" required>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label small fw-bold">DNI</label>
+                                    <input type="text" name="dni" class="form-control custom-input" value="{{ cliente.dni or '' }}" maxlength="8">
+                                    <span class="text-muted extra-small">Opcional, máximo 8 dígitos</span>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label small fw-bold">Teléfono</label>
+                                    <input type="text" name="telefono" class="form-control custom-input" value="{{ cliente.telefono or '' }}">
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label small fw-bold">Dirección de Envío</label>
+                                <textarea name="direccion" class="form-control custom-input" rows="2">{{ cliente.direccion or '' }}</textarea>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="submit" class="btn btn-orange px-4 py-2 fw-bold">
+                                    Guardar Cambios
+                                </button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tus estilos CSS se mantienen exactamente igual -->
+<style>
+    :root {
+        --brand-color: #7B3252;
+        --orange-btn: #fb7701;
+        --orange-hover: #e06900;
+        --text-dark: #222222;
+        --text-muted: #666666;
+        --bg-active: #f6f6f6;
+        --border-color: #eeeeee;
+    }
+    body { background-color: #ffffff; color: var(--text-dark); }
+    .custom-breadcrumb a { color: var(--text-muted); text-decoration: none; }
+    .custom-breadcrumb a:hover { color: var(--text-dark); }
+    .account-sidebar { background: #fff; }
+    .account-menu .nav-link { color: var(--text-dark); font-size: 0.875rem; padding: 0.55rem 0.8rem; border-radius: 6px; transition: background 0.15s ease; }
+    .account-menu .nav-link:hover { background-color: #f5f5f5; color: var(--text-dark); }
+    .account-menu .nav-link.active { background-color: #fff4ed; color: var(--orange-btn); font-weight: 600; }
+    .account-menu .nav-link i { width: 20px; color: #555; }
+    .account-menu .nav-link.active i { color: var(--orange-btn); }
+    .sub-menu .nav-link { color: var(--text-muted); }
+    .sub-menu .nav-link:hover { color: var(--text-dark); background: transparent; }
+    .profile-avatar { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; }
+    .security-banner { background-color: #f0fdf4; border: 1px solid #dcfce7; }
+    .custom-input { background-color: #ffffff; border: 1px solid #ccc; border-radius: 6px; font-size: 0.875rem; padding: 0.5rem 0.75rem; }
+    .custom-input:focus { border-color: var(--text-dark); box-shadow: none; }
+    .btn-orange { background-color: var(--orange-btn); color: #ffffff; border: none; border-radius: 20px; font-size: 0.875rem; transition: background 0.2s; }
+    .btn-orange:hover { background-color: var(--orange-hover); color: #ffffff; }
+    .pointer { cursor: pointer; }
+    .extra-small { font-size: 0.75rem; }
+</style>
+{% endblock %}

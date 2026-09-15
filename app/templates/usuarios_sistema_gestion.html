@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block contenido %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-users-cog text-primary"></i> Gestión de Usuarios del Sistema</h2>
+        <a href="/usuarios/nuevo" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i> Nuevo Usuario
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped" id="tabla-usuarios">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Motivo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in usuarios %}
+                        <tr>
+                            <td>{{ usuario.id }}</td>
+                            <td><strong>{{ usuario.nombres }} {{ usuario.apellidos }}</strong></td>
+                            <td>{{ usuario.correo }}</td>
+                            <td>
+                                <span class="badge {% if usuario.rol == 'administrador' %}bg-danger{% else %}bg-primary{% endif %}">
+                                    {{ usuario.rol }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ usuario.estado_badge }}">
+                                    {{ usuario.estado_texto }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if usuario.bloqueo_id %}
+                                    <span class="text-muted small">{{ usuario.bloqueo_motivo or 'Sin motivo' }}</span>
+                                {% elif usuario.bloqueo_automatico %}
+                                    <span class="text-muted small">{{ usuario.bloqueo_automatico_motivo }}</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if usuario.bloqueado %}
+                                    <form action="{{ url_for('desbloquear_usuario_sistema', usuario_id=usuario.id) }}" method="POST" 
+                                          style="display:inline-block;"
+                                          onsubmit="return confirm('¿Estás seguro de desbloquear a {{ usuario.nombres }}?')">
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="fas fa-unlock"></i> Desbloquear
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <button type="button" class="btn btn-danger btn-sm" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#modalBloquear{{ usuario.id }}">
+                                        <i class="fas fa-lock"></i> Bloquear
+                                    </button>
+                                    
+                                    <!-- Modal para bloquear -->
+                                    <div class="modal fade" id="modalBloquear{{ usuario.id }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <form action="{{ url_for('bloquear_usuario_sistema', usuario_id=usuario.id) }}" method="POST">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Bloquear Usuario</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p><strong>Usuario:</strong> {{ usuario.nombres }} {{ usuario.apellidos }}</p>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Motivo del bloqueo</label>
+                                                            <input type="text" name="motivo" class="form-control" 
+                                                                   value="Bloqueo manual por administrador" required>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                        <button type="submit" class="btn btn-danger">Bloquear</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#tabla-usuarios').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+            },
+            order: [[0, 'asc']],
+            pageLength: 25
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>{% block titulito %}Inventario Librería Salesiana{% endblock %}</title>
+    <!-- BOOTSTRAP 5 CSS + ICONOS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- GOOGLE FONTS -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<style>
+    :root {
+        --salesiano-gold: #D4AF37;
+        --salesiano-gold-dark: #B8942F;
+        --salesiano-blue: #1E3A8A;
+        --salesiano-emerald: #10B981;
+        --salesiano-purple: #8B5CF6;
+        --salesiano-cyan: #06B6D4;
+        --salesiano-rose: #EC4899;
+        --salesiano-light: #F8F9FA;
+        --salesiano-silver: #6B7280;
+        --shadow-sagrado: 0 8px 32px rgba(30, 58, 138, 0.12);
+        --shadow-gold: 0 12px 40px rgba(212, 175, 55, 0.3);
+        --shadow-3xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        line-height: 1.6;
+        overflow-x: hidden;
+        padding-top: 0;
+    }
+
+    .navbar {
+        background: linear-gradient(135deg, var(--salesiano-blue) 0%, #3B82F6 100%) !important;
+        box-shadow: var(--shadow-sagrado) !important;
+        position: sticky;
+        top: 0;
+        z-index: 1050;
+    }
+
+    .navbar-brand {
+        font-family: 'Crimson Text', Georgia, serif !important;
+        font-weight: 700 !important;
+        font-size: 1.5rem !important;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        color: #fff !important;
+        letter-spacing: -0.5px;
+    }
+
+    .navbar-brand::before {
+        content: "📚 ";
+        font-size: 1.4em;
+        margin-right: 0.2em;
+    }
+
+    /* ============================================ */
+    /* ===== CONTENEDOR PRINCIPAL ===== */
+    /* ============================================ */
+    .container {
+        background: rgba(255, 255, 255, 0.97);
+        border-radius: 24px;
+        box-shadow: var(--shadow-3xl);
+        padding: 1.5rem !important;
+        margin-top: 1rem !important;
+        margin-bottom: 1.5rem !important;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* ============================================ */
+    /* ===== PANEL SALESIANO - STICKY ===== */
+    /* ============================================ */
+    .panel-salesiano-wrapper {
+        position: sticky;
+        top: 0;
+        z-index: 1040;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        background: rgba(248, 249, 252, 0.95);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        margin-bottom: 0.5rem;
+        border-radius: 0 0 16px 16px;
+        transition: all 0.3s ease;
+    }
+
+    /* Efecto de sombra al hacer scroll */
+    .panel-salesiano-wrapper.scrolled {
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.12);
+        background: rgba(255, 255, 255, 0.98);
+    }
+
+    .dashboard-header {
+        background: linear-gradient(135deg, #f8f9fc 0%, #ffffff 100%);
+        border: 1px solid #e9ecef;
+        border-radius: 16px;
+        padding: 0.75rem 1.5rem !important;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    @media (min-width: 768px) {
+        .dashboard-header:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.1rem !important;
+    }
+
+    .dashboard-header p {
+        font-size: 0.7rem !important;
+        margin-bottom: 0;
+    }
+
+    /* ============================================ */
+    /* ===== CONTENEDOR DE BOTONES ===== */
+    /* ============================================ */
+    .admin-dashboard-grid {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 0.4rem !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .btn-card {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.4rem !important;
+        padding: 0.35rem 0.8rem !important;
+        background: #f8f9fa !important;
+        border-radius: 20px !important;
+        font-size: 0.7rem !important;
+        font-weight: 600 !important;
+        color: #1f2937 !important;
+        text-decoration: none !important;
+        transition: all 0.2s ease !important;
+        border: 2px solid #e5e7eb !important;
+        cursor: pointer !important;
+        white-space: nowrap !important;
+        min-height: 34px !important;
+        line-height: 1.2 !important;
+        flex-shrink: 0 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+    }
+
+    .btn-card i {
+        font-size: 0.8rem !important;
+        margin: 0 !important;
+    }
+
+    .btn-card:hover {
+        transform: translateY(-2px) scale(1.02) !important;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18) !important;
+        text-decoration: none !important;
+    }
+
+    /* ===== COLORES DE BOTONES ===== */
+    .btn-card-purple { background: #f3e8ff !important; border-color: #d8b4fe !important; color: #6b21a5 !important; }
+    .btn-card-purple:hover { background: #e9d5ff !important; }
+    .btn-card-orange { background: #ffedd5 !important; border-color: #fed7aa !important; color: #c2410c !important; }
+    .btn-card-orange:hover { background: #fed7aa !important; }
+    .btn-card-gold { background: #fef3c7 !important; border-color: #fde68a !important; color: #b45309 !important; }
+    .btn-card-gold:hover { background: #fde68a !important; }
+    .btn-card-blue { background: #dbeafe !important; border-color: #bfdbfe !important; color: #1e40af !important; }
+    .btn-card-blue:hover { background: #bfdbfe !important; }
+    .btn-card-pink { background: #fce7f3 !important; border-color: #fbcfe8 !important; color: #be185d !important; }
+    .btn-card-pink:hover { background: #fbcfe8 !important; }
+    .btn-card-emerald { background: #d1fae5 !important; border-color: #a7f3d0 !important; color: #065f46 !important; }
+    .btn-card-emerald:hover { background: #a7f3d0 !important; }
+    .btn-card-indigo { background: #e0e7ff !important; border-color: #c7d2fe !important; color: #3730a3 !important; }
+    .btn-card-indigo:hover { background: #c7d2fe !important; }
+
+    .bg-gradient-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border-radius: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .bg-gradient-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%);
+    }
+
+    .text-shadow-primary {
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .text-gold-primary {
+        color: var(--salesiano-gold) !important;
+    }
+
+    .text-silver {
+        color: var(--salesiano-silver) !important;
+    }
+
+    .card-divina {
+        border-radius: 24px !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    }
+
+    .bg-gradient-divino {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .bg-overlay {
+        background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%);
+    }
+
+    .btn-xl,
+    .btn-xxl {
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
+    }
+
+    .btn-xl {
+        padding: 0.75rem 2rem !important;
+    }
+
+    .btn-xxl {
+        padding: 1rem 2.5rem !important;
+    }
+
+    .btn-gold-gradient {
+        background: linear-gradient(45deg, var(--salesiano-gold), #FBBF24) !important;
+        border: none !important;
+        color: var(--salesiano-blue) !important;
+        box-shadow: var(--shadow-gold) !important;
+    }
+
+    .btn-emerald-gradient {
+        background: linear-gradient(45deg, var(--salesiano-emerald), #059669) !important;
+        border: none !important;
+        color: white !important;
+        box-shadow: 0 12px 40px rgba(16, 185, 129, 0.4) !important;
+    }
+
+    .btn-blue-gradient {
+        background: linear-gradient(45deg, #3B82F6, #1D4ED8) !important;
+        border: none !important;
+        color: white !important;
+        box-shadow: 0 12px 40px rgba(59, 130, 246, 0.4) !important;
+    }
+
+    .btn-purple-gradient {
+        background: linear-gradient(45deg, var(--salesiano-purple), #7C3AED) !important;
+        color: white !important;
+        box-shadow: 0 12px 40px rgba(139, 92, 246, 0.4) !important;
+    }
+
+    .btn-cyan-gradient {
+        background: linear-gradient(45deg, var(--salesiano-cyan), #0891B2) !important;
+        color: white !important;
+        box-shadow: 0 12px 40px rgba(6, 182, 212, 0.4) !important;
+    }
+
+    .btn-rose-gradient {
+        background: linear-gradient(45deg, var(--salesiano-rose), #DB2777) !important;
+        color: white !important;
+        box-shadow: 0 12px 40px rgba(236, 72, 153, 0.4) !important;
+    }
+
+    .btn-warning-gradient {
+        background: linear-gradient(45deg, #F59E0B, #D97706) !important;
+        border: none !important;
+        color: white !important;
+    }
+
+    .btn-danger-gradient {
+        background: linear-gradient(45deg, #EF4444, #DC2626) !important;
+        border: none !important;
+        color: white !important;
+    }
+
+    .bg-silver-gradient {
+        background: linear-gradient(45deg, #D1D5DB, #9CA3AF) !important;
+    }
+
+    .bg-secondary-gradient {
+        background: linear-gradient(45deg, #6B7280, #4B5563) !important;
+        color: white !important;
+    }
+
+    .hover-lift,
+    .hover-scale {
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-8px) !important;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    .hover-scale:hover {
+        transform: scale(1.1) !important;
+    }
+
+    .table-modern {
+        border-radius: 20px !important;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.9);
+    }
+
+    .table-head-gold th {
+        background: linear-gradient(45deg, var(--salesiano-blue), #3B82F6) !important;
+        color: white !important;
+        font-weight: 600 !important;
+        border: none !important;
+        position: relative;
+    }
+
+    .table-head-gold th::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--salesiano-gold), transparent);
+    }
+
+    .table-divider-gold>tbody>tr:not(:last-child) {
+        border-bottom: 2px solid rgba(212, 175, 55, 0.1);
+    }
+
+    .hover-row-gold:hover {
+        background: linear-gradient(90deg, rgba(212, 175, 55, 0.05), transparent) !important;
+        transform: scale(1.01);
+    }
+
+    .badge-stock {
+        font-weight: 700 !important;
+        min-width: 50px;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+
+        0%,
+        100% {
+            transform: translateY(0px);
+        }
+
+        50% {
+            transform: translateY(-3px);
+        }
+    }
+
+    .price-glow {
+        text-shadow: 0 0 10px rgba(16, 185, 129, 0.6), 0 0 20px rgba(16, 185, 129, 0.3);
+    }
+    .btn-card-rose { background: #fce4ec !important; border-color: #f8bbd0 !important; color: #880e4f !important; }
+    .btn-card-rose:hover { background: #f8bbd0 !important; }
+
+    .bg-success-gradient {
+        background: linear-gradient(45deg, var(--salesiano-emerald), #059669) !important;
+    }
+
+    .bg-info-gradient {
+        background: linear-gradient(45deg, var(--salesiano-cyan), #0891B2) !important;
+    }
+
+    .bg-warning-gradient {
+        background: linear-gradient(45deg, #F59E0B, #D97706) !important;
+    }
+
+    .bg-danger-gradient {
+        background: linear-gradient(45deg, #EF4444, #DC2626) !important;
+    }
+
+    .fw-extrabold {
+        font-weight: 800 !important;
+    }
+
+    .display-6 {
+        font-size: clamp(1.5rem, 4vw, 2.5rem) !important;
+        font-weight: 700 !important;
+    }
+
+    .fade-in {
+        animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .shadow-gold-lg {
+        box-shadow: 0 10px 30px rgba(212, 175, 55, 0.25) !important;
+    }
+
+    .shadow-emerald-lg {
+        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.25) !important;
+    }
+
+    .shadow-purple-lg {
+        box-shadow: 0 10px 30px rgba(139, 92, 246, 0.25) !important;
+    }
+
+    .shadow-cyan-lg {
+        box-shadow: 0 10px 30px rgba(6, 182, 212, 0.25) !important;
+    }
+
+    .pointer-events {
+        pointer-events: auto !important;
+        z-index: 10 !important;
+        position: relative !important;
+    }
+
+    .z-3 {
+        z-index: 3 !important;
+    }
+
+    /* ============================================ */
+    /* ===== RESPONSIVE ===== */
+    /* ============================================ */
+
+    @media (max-width: 992px) {
+        .container {
+            padding: 1.5rem !important;
+            margin: 1rem !important;
+            border-radius: 20px;
+        }
+        .navbar-brand {
+            font-size: 1.2rem !important;
+        }
+        .btn-xl,
+        .btn-xxl {
+            font-size: 1rem !important;
+            padding: 0.6rem 1.2rem !important;
+        }
+        .admin-dashboard-grid {
+            justify-content: flex-end !important;
+        }
+        .panel-salesiano-wrapper {
+            padding-top: 0.3rem;
+            padding-bottom: 0.3rem;
+        }
+        .dashboard-header {
+            padding: 0.6rem 1rem !important;
+        }
+        .dashboard-header h1 {
+            font-size: 1rem !important;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .container {
+            padding: 1rem !important;
+            margin: 0.75rem !important;
+            border-radius: 16px;
+        }
+        .navbar-brand {
+            font-size: 1rem !important;
+        }
+        .navbar-brand::before {
+            font-size: 1.2em;
+        }
+        .navbar .d-flex {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+        .btn-sm {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.6rem;
+        }
+        .btn-xl,
+        .btn-xxl {
+            font-size: 0.9rem !important;
+            padding: 0.5rem 1rem !important;
+        }
+        .d-none.d-md-block {
+            display: none !important;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .table {
+            min-width: 600px;
+        }
+        .table td,
+        .table th {
+            padding: 0.5rem 0.3rem;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+        .card-body {
+            padding: 1rem !important;
+        }
+        .card-header {
+            padding: 0.75rem !important;
+        }
+        .form-control,
+        .form-select {
+            font-size: 14px;
+            padding: 0.5rem 0.75rem;
+        }
+        .input-group-lg .form-control,
+        .form-control-lg {
+            font-size: 0.85rem;
+            padding: 0.4rem 0.6rem;
+        }
+        .modal-dialog {
+            margin: 0.5rem;
+        }
+        .modal-content {
+            border-radius: 12px;
+        }
+        .badge {
+            font-size: 0.65rem;
+            padding: 0.3rem 0.5rem;
+        }
+        .btn-card span {
+            display: inline !important;
+        }
+        .btn-card i {
+            font-size: 0.75rem !important;
+        }
+        .btn-card {
+            padding: 0.3rem 0.6rem !important;
+            font-size: 0.65rem !important;
+            min-height: 30px !important;
+        }
+        .admin-dashboard-grid {
+            gap: 0.3rem !important;
+            justify-content: center !important;
+        }
+        .dashboard-header {
+            padding: 0.5rem 0.75rem !important;
+        }
+        .dashboard-header h1 {
+            font-size: 0.9rem !important;
+        }
+        .dashboard-header p {
+            font-size: 0.6rem !important;
+        }
+        .panel-salesiano-wrapper {
+            padding-top: 0.2rem;
+            padding-bottom: 0.2rem;
+            margin-bottom: 0.3rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .container {
+            padding: 0.75rem !important;
+            margin: 0.5rem !important;
+        }
+        h1,
+        .h1 {
+            font-size: 1.3rem !important;
+        }
+        h2,
+        .h2 {
+            font-size: 1.1rem !important;
+        }
+        .display-6,
+        .h2.text-warning {
+            font-size: 1.2rem !important;
+        }
+        .btn-card span {
+            display: inline !important;
+        }
+        .btn-card i {
+            margin: 0 0.2rem 0 0 !important;
+            font-size: 0.7rem !important;
+        }
+        .btn-card {
+            padding: 0.25rem 0.5rem !important;
+            font-size: 0.55rem !important;
+            min-height: 26px !important;
+            gap: 0.2rem !important;
+            border-radius: 14px !important;
+        }
+        .admin-dashboard-grid {
+            gap: 0.25rem !important;
+            justify-content: center !important;
+        }
+        .d-flex.justify-content-between {
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: stretch !important;
+        }
+        .text-center-xs {
+            text-align: center !important;
+        }
+        .card-footer .row {
+            text-align: center;
+        }
+        .card-footer .col-md-3 {
+            margin-bottom: 1rem;
+        }
+        .dashboard-header {
+            padding: 0.4rem 0.5rem !important;
+        }
+        .dashboard-header h1 {
+            font-size: 0.8rem !important;
+        }
+        .dashboard-header p {
+            display: none;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .btn-card {
+            padding: 0.15rem 0.35rem !important;
+            font-size: 0.5rem !important;
+            min-height: 22px !important;
+            gap: 0.15rem !important;
+            border-radius: 10px !important;
+        }
+        .btn-card i {
+            font-size: 0.55rem !important;
+        }
+        .admin-dashboard-grid {
+            gap: 0.2rem !important;
+        }
+        .dashboard-header h1 {
+            font-size: 0.7rem !important;
+        }
+    }
+</style>
+
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/">Librería Salesiana</a>
+            {% if session.usuario_id %}
+            <div class="d-flex align-items-center text-white gap-2 gap-sm-3">
+                <div class="d-none d-md-block">
+                    <i class="fas fa-user-circle me-2"></i>
+                    {{ session.nombre }}
+                    <span class="badge bg-warning text-dark px-2 py-1 ms-1">{{ session.rol }}</span>
+                </div>
+                <div class="d-flex gap-1 gap-sm-2">
+                    <a class="btn btn-outline-light btn-sm px-2 px-sm-3" href="/cambiar_clave">
+                        <i class="fas fa-key me-1"></i><span class="d-none d-sm-inline">Clave</span>
+                    </a>
+                    <a class="btn btn-outline-light btn-sm px-2 px-sm-3" href="/logout">
+                        <i class="fas fa-sign-out-alt me-1"></i><span class="d-none d-sm-inline">Salir</span>
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- ========================================================= -->
+    <!-- ===== PANEL SALESIANO CON BOTONES - STICKY ===== -->
+    <!-- ========================================================= -->
+    {% if session.usuario_id %}
+    <div class="panel-salesiano-wrapper" id="panelSalesiano">
+        <div class="container">
+            <div class="dashboard-header">
+                <div class="row align-items-center g-1 g-md-2">
+                    <div class="col-12 col-lg-4">
+                        <h1 class="fw-bold mb-0 text-dark">
+                            <i class="fas fa-cube me-2 text-primary"></i>Panel Salesiano
+                        </h1>
+                        <p class="mb-0 text-secondary small">
+                            <i class="fas fa-warehouse me-1"></i>Sistema de gestión completa
+                        </p>
+                    </div>
+
+                    <!-- BOTONES EN HORIZONTAL SEGÚN ROL -->
+                    <div class="col-12 col-lg-8">
+                        <div class="admin-dashboard-grid">
+                            <!-- ===== BOTONES PARA ADMINISTRADOR ===== -->
+                            {% if session.rol == 'administrador' %}
+                            <a href="/usuarios/nuevo" class="btn-card btn-card-purple" title="Nuevo Vendedor">
+                                <i class="fas fa-user-plus"></i>
+                                <span>Nuevo Vendedor</span>
+                            </a>
+                            <a href="/ver_ventas" class="btn-card btn-card-orange" title="Reporte Ventas">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Reporte Ventas</span>
+                            </a>
+                            <a href="/bloqueos" class="btn-card btn-card-rose" title="Usuarios Bloqueados" id="btn-bloqueos">
+                                <i class="fas fa-lock"></i>
+                                <span>Bloqueados</span>
+                                <span class="badge bg-danger ms-1" id="contador-bloqueos" style="display:none;font-size:0.6rem;">0</span>
+                            </a>
+                            <a href="/bloqueos-sistema" class="btn-card btn-card-purple" title="Bloqueos Sistema">
+                                <i class="fas fa-user-lock"></i>
+                                <span>Bloq. Sistema</span>
+                            </a>
+                            <a href="/usuarios-sistema" class="btn-card btn-card-indigo" title="Gestionar Usuarios">
+                                <i class="fas fa-users-cog"></i>
+                                <span>Usuarios Sistema</span>
+                            </a>
+                            {% endif %}
+
+                            <!-- ===== BOTONES PARA ADMIN Y VENDEDOR (no vendedor) ===== -->
+                            {% if session.rol != 'vendedor' %}
+                            <a href="/productos/nuevo" class="btn-card btn-card-gold" title="Nuevo Producto">
+                                <i class="fas fa-box-open"></i>
+                                <span>Nuevo Producto</span>
+                            </a>
+                            <a href="/proveedores" class="btn-card btn-card-blue" title="Proveedores">
+                                <i class="fas fa-handshake"></i>
+                                <span>Proveedores</span>
+                            </a>
+                            <a href="/dashboard" class="btn-card btn-card-indigo" title="Dashboard">
+                                <i class="fas fa-chart-pie"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            {% endif %}
+
+                            <!-- ===== BOTONES PARA TODOS (admin y vendedor) ===== -->
+                            <a href="/pedidos" class="btn-card btn-card-pink" title="Ver Pedidos">
+                                <i class="fas fa-truck"></i>
+                                <span>Pedidos</span>
+                            </a>
+                            <a href="/ventas/nueva" class="btn-card btn-card-emerald" title="Nueva Venta">
+                                <i class="fas fa-cash-register"></i>
+                                <span>Nueva Venta</span>
+                            </a>
+
+                            <!-- ===== BOTONES SOLO PARA ADMIN ===== -->
+                            {% if session.rol == 'administrador' %}
+                            <a href="/ventas" class="btn-card btn-card-purple" title="Reportes Vendedores">
+                                <i class="fas fa-chart-bar"></i>
+                                <span>Reportes</span>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ========================================================= -->
+    <!-- ===== CONTENIDO DE CADA PÁGINA ===== -->
+    <!-- ========================================================= -->
+    <div class="container fade-in">
+        {% block contenido %}
+        {% endblock %}
+    </div>
+
+    <!-- BOOTSTRAP JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    // ============================================
+    // ACTUALIZAR CONTADOR DE USUARIOS BLOQUEADOS
+    // ============================================
+    function actualizarContadorBloqueos() {
+        const contador = document.getElementById('contador-bloqueos');
+        if (!contador) return;
+        
+        fetch('/api/bloqueos')
+            .then(response => response.json())
+            .then(data => {
+                const cantidad = data.length || 0;
+                contador.textContent = cantidad;
+                if (cantidad > 0) {
+                    contador.style.display = 'inline';
+                } else {
+                    contador.style.display = 'none';
+                }
+            })
+            .catch(error => console.error('Error al obtener bloqueos:', error));
+    }
+
+    // Actualizar al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        actualizarContadorBloqueos();
+    });
+
+    // Actualizar cada 30 segundos
+    setInterval(actualizarContadorBloqueos, 30000);
+</script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // EFECTO DE SOMBRA AL HACER SCROLL
+            // ============================================
+            const panel = document.getElementById('panelSalesiano');
+            if (panel) {
+                window.addEventListener('scroll', function() {
+                    if (window.scrollY > 10) {
+                        panel.classList.add('scrolled');
+                    } else {
+                        panel.classList.remove('scrolled');
+                    }
+                });
+            }
+
+            // ============================================
+            // FECHA Y HORA ACTUAL
+            // ============================================
+            const now = new Date();
+
+            function pad(n) {
+                return n.toString().padStart(2, '0');
+            }
+
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const day = now.getDate();
+            const hour = now.getHours();
+            const min = now.getMinutes();
+
+            const datetimeLocal = `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(min)}`;
+
+            const fechaHoraInput = document.getElementById('fecha_hora');
+            if (fechaHoraInput) {
+                fechaHoraInput.value = datetimeLocal;
+            }
+
+            const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+            const maxDate = `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}T23:59`;
+            if (fechaHoraInput) {
+                fechaHoraInput.max = maxDate;
+            }
+
+            // ============================================
+            // DROP ZONE PARA IMÁGENES
+            // ============================================
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('imagenInput');
+
+            if (dropZone && fileInput) {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => {
+                    dropZone.addEventListener(e, e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    });
+                });
+
+                ['dragenter', 'dragover'].forEach(e => {
+                    dropZone.addEventListener(e, () => dropZone.classList.add('drag-over'));
+                });
+
+                ['dragleave', 'drop'].forEach(e => {
+                    dropZone.addEventListener(e, () => dropZone.classList.remove('drag-over'));
+                });
+
+                dropZone.addEventListener('drop', e => {
+                    const files = e.dataTransfer.files;
+                    handleFile(files[0]);
+                });
+
+                fileInput.addEventListener('change', e => {
+                    handleFile(e.target.files[0]);
+                });
+
+                function handleFile(file) {
+                    if (!file) return;
+
+                    if (!file.type.startsWith('image/')) {
+                        alert('❌ Solo imágenes');
+                        return;
+                    }
+
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('❌ Máximo 5MB');
+                        return;
+                    }
+
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    fileInput.files = dt.files;
+
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        const preview = document.querySelector('.dropzone-preview');
+                        if (preview) {
+                            preview.innerHTML = `
+                                <div style="text-align:center;padding:15px;background:#d4edda;border-radius:8px;">
+                                    <img src="${e.target.result}" style="max-height:150px;border-radius:8px;">
+                                    <br><strong style="color:#155724;">${file.name}</strong>
+                                    <br><small>${(file.size / 1024 / 1024).toFixed(1)}MB ✅</small>
+                                    <br><button type="button" 
+                                        onclick="document.getElementById('imagenInput').value='';this.parentElement.parentElement.innerHTML='';"
+                                        style="background:#dc3545;color:white;border:none;border-radius:4px;padding:5px 10px;margin-top:10px;cursor:pointer;">
+                                        🗑️ Limpiar
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
