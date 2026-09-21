@@ -1,0 +1,10 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+instance/
+.vscode/
+dist/
+build/
+app/static/img/productos/*
+!app/static/img/productos/.gitkeep

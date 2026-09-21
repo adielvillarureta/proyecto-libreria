@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% block titulito %}Cambiar Contraseña{% endblock %}
 
 {% block contenido %}
@@ -293,7 +293,7 @@
               <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
                 <i class="fas fa-save me-2"></i> Actualizar Contraseña
               </button>
-              <a href="{{ url_for('productos') }}" class="btn btn-outline-secondary">
+              <a href="{{ url_for('productos.listar_productos') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-2"></i> Volver al inicio
               </a>
             </div>

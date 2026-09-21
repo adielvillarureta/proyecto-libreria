@@ -1,5 +1,5 @@
-# app/routes/productos.py
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
+﻿# app/routes/productos.py
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, current_app
 from app import db
 from app.models import Producto, Proveedor, Categoria, Venta
 from app.utils import login_required, requerir_permisos_escritura, allowed_file
@@ -72,12 +72,12 @@ def guardar_producto():
         db.session.add(nuevo)
         db.session.flush()
 
-        os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
+        os.makedirs(current_app.config["UPLOAD_FOLDER"], exist_ok=True)
         if "imagen" in request.files:
             file = request.files["imagen"]
             if file and file.filename and allowed_file(file.filename):
                 filename = f"{nuevo.id}_{int(time.time())}_{secure_filename(file.filename)}"
-                filepath = os.path.join(Config.UPLOAD_FOLDER, filename)
+                filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
                 file.save(filepath)
                 nuevo.imagen = filename
 
@@ -137,11 +137,11 @@ def actualizar_producto(id):
         file = request.files.get("imagen")
         if file and file.filename and allowed_file(file.filename):
             if producto_obj.imagen:
-                old_path = os.path.join(Config.UPLOAD_FOLDER, producto_obj.imagen)
+                old_path = os.path.join(current_app.config["UPLOAD_FOLDER"], producto_obj.imagen)
                 if os.path.exists(old_path):
                     os.remove(old_path)
             filename = f"{id}_{int(time.time())}_{secure_filename(file.filename)}"
-            filepath = os.path.join(Config.UPLOAD_FOLDER, filename)
+            filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
             file.save(filepath)
             producto_obj.imagen = filename
 
@@ -166,7 +166,7 @@ def eliminar_producto(id):
 
     try:
         if producto_obj.imagen:
-            img_path = os.path.join(Config.UPLOAD_FOLDER, producto_obj.imagen)
+            img_path = os.path.join(current_app.config["UPLOAD_FOLDER"], producto_obj.imagen)
             if os.path.exists(img_path):
                 os.remove(img_path)
 
@@ -300,3 +300,4 @@ def ver_productos_proveedor():
                            productos=productos,
                            proveedor_id=int(proveedor_id) if proveedor_id else None,
                            proveedor_seleccionado=proveedor_seleccionado)
+

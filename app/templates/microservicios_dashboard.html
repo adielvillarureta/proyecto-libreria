@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -131,9 +131,10 @@
         </div>
         
         <div class="mt-4">
-            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">← Volver al Dashboard Principal</a>
-            <a href="{{ url_for('api_health') }}" class="btn btn-info" target="_blank">🔍 Ver Health Check</a>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">← Volver al Dashboard Principal</a>
+            <a href="{{ url_for('api.api_health') }}" class="btn btn-info" target="_blank">🔍 Ver Health Check</a>
         </div>
     </div>
 </body>
 </html>
+

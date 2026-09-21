@@ -7,7 +7,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from functools import wraps
 from datetime import datetime, timedelta
-from flask import session, request, flash, redirect, url_for, jsonify
+from flask import session, request, flash, redirect, url_for, jsonify, current_app
 from sqlalchemy import text
 
 # --- IMPORTACIONES CORREGIDAS ---
@@ -57,8 +57,8 @@ def login_required_cliente(f):
     return decorated_function
 
 def allowed_file(filename):
-    from app.config import ALLOWED_EXTENSIONS
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+    allowed = current_app.config.get("ALLOWED_EXTENSIONS", {"png", "jpg", "jpeg", "gif"})
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed
 
 def generar_token_recuperacion():
     return secrets.token_urlsafe(32)
@@ -327,8 +327,19 @@ def generar_comprobante_html(venta, producto, precio, cantidad, total, vendedor_
 
 def enviar_comprobante_email(destinatario, cliente_nombre, tipo_comprobante, numero_comprobante, fecha, productos, total_venta):
     try:
+        if not destinatario or "@" not in str(destinatario):
+            print("Email destinatario inválido")
+            return False
+        cfg = current_app.config
+        smtp_host = cfg.get("EMAIL_HOST", "")
+        smtp_port = int(cfg.get("EMAIL_PORT", 587))
+        smtp_user = cfg.get("EMAIL_USER", "")
+        smtp_pass = cfg.get("EMAIL_PASSWORD", "")
+        if not smtp_host or not smtp_user or not smtp_pass:
+            print("SMTP no configurado (EMAIL_HOST/USER/PASSWORD vacíos)")
+            return False
         msg = MIMEMultipart()
-        msg['From'] = EMAIL_USER
+        msg['From'] = smtp_user
         msg['To'] = destinatario
         msg['Subject'] = f"{tipo_comprobante.upper()} ELECTRÓNICA N° {numero_comprobante}"
         html = f"""
@@ -366,9 +377,9 @@ def enviar_comprobante_email(destinatario, cliente_nombre, tipo_comprobante, num
         </html>
         """
         msg.attach(MIMEText(html, 'html'))
-        server = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT)
+        server = smtplib.SMTP(smtp_host, smtp_port, timeout=15)
         server.starttls()
-        server.login(EMAIL_USER, EMAIL_PASSWORD)
+        server.login(smtp_user, smtp_pass)
         server.send_message(msg)
         server.quit()
         return True

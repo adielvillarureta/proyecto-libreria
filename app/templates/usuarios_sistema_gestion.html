@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block contenido %}
 <div class="container mt-4">
@@ -51,7 +51,7 @@
                             </td>
                             <td>
                                 {% if usuario.bloqueado %}
-                                    <form action="{{ url_for('desbloquear_usuario_sistema', usuario_id=usuario.id) }}" method="POST" 
+                                    <form action="{{ url_for('auth.desbloquear_usuario_sistema', usuario_id=usuario.id) }}" method="POST" 
                                           style="display:inline-block;"
                                           onsubmit="return confirm('¿Estás seguro de desbloquear a {{ usuario.nombres }}?')">
                                         <button type="submit" class="btn btn-success btn-sm">
@@ -69,7 +69,7 @@
                                     <div class="modal fade" id="modalBloquear{{ usuario.id }}" tabindex="-1">
                                         <div class="modal-dialog">
                                             <div class="modal-content">
-                                                <form action="{{ url_for('bloquear_usuario_sistema', usuario_id=usuario.id) }}" method="POST">
+                                                <form action="{{ url_for('auth.bloquear_usuario_sistema', usuario_id=usuario.id) }}" method="POST">
                                                     <div class="modal-header">
                                                         <h5 class="modal-title">Bloquear Usuario</h5>
                                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>

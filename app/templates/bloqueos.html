@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block contenido %}
 <div class="container mt-4">
@@ -52,7 +52,7 @@
                             <td><span class="badge bg-secondary">{{ bloqueo.bloqueado_por or 'Sistema' }}</span></td>
                             <td>
                                 {% if bloqueo.tipo_origen == 'bloqueos' %}
-                                    <form action="{{ url_for('desbloquear_usuario_form') }}" method="POST" 
+                                    <form action="{{ url_for('bloqueos.desbloquear_usuario_form') }}" method="POST" 
                                           onsubmit="return confirm('¿Estás seguro de desbloquear a {{ bloqueo.nombre_completo }}?')">
                                         <input type="hidden" name="bloqueo_id" value="{{ bloqueo.id_bloqueo }}">
                                         <input type="hidden" name="tipo_origen" value="bloqueos">
@@ -61,7 +61,7 @@
                                         </button>
                                     </form>
                                 {% else %}
-                                    <form action="{{ url_for('desbloquear_intento_login') }}" method="POST" 
+                                    <form action="{{ url_for('bloqueos.desbloquear_intento_login') }}" method="POST" 
                                           onsubmit="return confirm('¿Estás seguro de desbloquear a {{ bloqueo.nombre_completo }}?')">
                                         <input type="hidden" name="email" value="{{ bloqueo.email }}">
                                         <button type="submit" class="btn btn-success btn-sm">

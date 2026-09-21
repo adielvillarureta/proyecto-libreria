@@ -1,4 +1,4 @@
-{% extends 'base_cliente.html' %}
+﻿{% extends 'base_cliente.html' %}
 {% block titulito %}🔐 Recuperar Contraseña - Librería Salesiana{% endblock %}
 
 {% block extra_css %}
@@ -371,7 +371,7 @@
                                 <i class="fas fa-paper-plane me-2"></i> 
                                 Enviar Enlace de Recuperación
                             </button>
-                            <a href="{{ url_for('login_cliente') }}" class="btn btn-outline-secondary btn-lg py-2 fw-semibold">
+                            <a href="{{ url_for('clientes.login_cliente') }}" class="btn btn-outline-secondary btn-lg py-2 fw-semibold">
                                 <i class="fas fa-arrow-left me-2"></i> 
                                 Volver al Login
                             </a>
@@ -384,7 +384,7 @@
                         <small class="text-muted">
                             <i class="fas fa-question-circle me-1"></i>
                             ¿Necesitas ayuda? 
-                            <a href="{{ url_for('contacto') }}" class="text-decoration-none">Contáctanos</a>
+                            <a href="{{ url_for('main.contacto') }}" class="text-decoration-none">Contáctanos</a>
                         </small>
                     </div>
                 </div>
