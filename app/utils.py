@@ -21,6 +21,25 @@ def obtener_ip_cliente():
         return request.headers.get('X-Forwarded-For').split(',')[0]
     return request.remote_addr
 
+
+def tabla_existe(nombre_tabla):
+    try:
+        return db.session.execute(text("""
+            SELECT COUNT(*) FROM information_schema.tables
+            WHERE table_schema = DATABASE() AND table_name = :t
+        """), {"t": nombre_tabla}).scalar() > 0
+    except Exception:
+        return False
+
+
+def no_configurado():
+    return jsonify({
+        "error": "Microservicio no configurado",
+        "detalle": "La tabla requerida no existe en esta base de datos",
+        "status": "not_configured"
+    }), 503
+
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):

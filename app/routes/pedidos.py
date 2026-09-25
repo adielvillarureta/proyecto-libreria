@@ -2,7 +2,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from app import db
 from app.models import Pedido, DetallePedido, Producto, Cliente, Venta, Categoria, UsuarioSistema
-from app.utils import login_required, login_required_cliente, enviar_comprobante_email
+from app.utils import login_required, login_required_cliente, enviar_comprobante_email, tabla_existe, no_configurado
 from datetime import datetime
 from sqlalchemy import func, text
 
@@ -455,6 +455,8 @@ def cambiar_estado_pedido(pedido_id):
 @pedidos_bp.route('/api/comercial/pedidos', methods=['GET'])
 @login_required
 def api_comercial_pedidos():
+    if not tabla_existe("comercial_pedidos"):
+        return no_configurado()
     try:
         pedidos = db.session.execute(text("SELECT * FROM comercial_pedidos ORDER BY fecha_pedido DESC")).mappings().all()
         return jsonify([dict(p) for p in pedidos])
@@ -465,6 +467,8 @@ def api_comercial_pedidos():
 @pedidos_bp.route('/api/comercial/pedidos/<int:id>', methods=['GET'])
 @login_required
 def api_comercial_pedido(id):
+    if not tabla_existe("comercial_pedidos") or not tabla_existe("comercial_detalle_pedido"):
+        return no_configurado()
     try:
         pedido = db.session.execute(text("SELECT * FROM comercial_pedidos WHERE id = :id"), {"id": id}).mappings().first()
         if not pedido:
@@ -483,6 +487,9 @@ def api_comercial_pedido(id):
 def api_comercial_actualizar_estado(id):
     if session.get("rol") != "administrador":
         return jsonify({"error": "No autorizado"}), 403
+
+    if not tabla_existe("comercial_pedidos"):
+        return no_configurado()
 
     try:
         data = request.get_json()
@@ -508,6 +515,8 @@ def api_comercial_actualizar_estado(id):
 @pedidos_bp.route('/api/comercial/ventas', methods=['GET'])
 @login_required
 def api_comercial_ventas():
+    if not tabla_existe("comercial_ventas"):
+        return no_configurado()
     try:
         ventas = db.session.execute(text("SELECT * FROM comercial_ventas ORDER BY fecha_venta DESC")).mappings().all()
         return jsonify([dict(v) for v in ventas])

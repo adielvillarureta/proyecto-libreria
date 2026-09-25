@@ -57,8 +57,12 @@
                         </div>
                     </div>
                     <div class="card-footer">
+                        {% if comercial_ok %}
                         <span class="badge bg-success">✅ Activo</span>
-                        <span class="badge bg-info">Última sincronización: {{ now().strftime('%H:%M:%S') }}</span>
+                        {% else %}
+                        <span class="badge bg-danger">⚠ No configurado</span>
+                        {% endif %}
+                        <span class="badge bg-info">Última sincronización: {{ hora_sync }}</span>
                     </div>
                 </div>
             </div>
@@ -92,8 +96,12 @@
                         </div>
                     </div>
                     <div class="card-footer">
+                        {% if inventario_ok %}
                         <span class="badge bg-success">✅ Activo</span>
-                        <span class="badge bg-info">Última sincronización: {{ now().strftime('%H:%M:%S') }}</span>
+                        {% else %}
+                        <span class="badge bg-danger">⚠ No configurado</span>
+                        {% endif %}
+                        <span class="badge bg-info">Última sincronización: {{ hora_sync }}</span>
                     </div>
                 </div>
             </div>

@@ -2,7 +2,7 @@
 from flask import Blueprint, request, jsonify, url_for, session, flash, redirect, render_template
 from app import db
 from app.models import Producto, Venta, Cliente, RucEmpresa, Categoria, Pedido
-from app.utils import login_required, login_required_cliente
+from app.utils import login_required, login_required_cliente, tabla_existe, no_configurado
 from app.config import Config
 from sqlalchemy import func, text, or_
 from datetime import datetime, timedelta
@@ -350,6 +350,8 @@ def api_consultar_ruc_cliente(ruc):
 @api_bp.route('/api/inventario/productos', methods=["GET"])
 @login_required
 def api_inventario_productos():
+    if not tabla_existe("inventario_productos"):
+        return no_configurado()
     try:
         productos = db.session.execute(text("SELECT * FROM inventario_productos ORDER BY nombre")).mappings().all()
         return jsonify([dict(p) for p in productos])
@@ -360,6 +362,8 @@ def api_inventario_productos():
 @api_bp.route('/api/inventario/productos/<int:id>', methods=["GET"])
 @login_required
 def api_inventario_producto(id):
+    if not tabla_existe("inventario_productos"):
+        return no_configurado()
     try:
         producto = db.session.execute(
             text("SELECT * FROM inventario_productos WHERE id = :id"),
@@ -384,6 +388,9 @@ def api_inventario_actualizar_stock(id):
         if cantidad is None:
             return jsonify({"error": "Cantidad requerida"}), 400
 
+        if not tabla_existe("inventario_productos"):
+            return no_configurado()
+
         result = db.session.execute(
             text("UPDATE inventario_productos SET cantidad = :cantidad WHERE id = :id"),
             {"cantidad": cantidad, "id": id}
@@ -402,6 +409,8 @@ def api_inventario_actualizar_stock(id):
 @api_bp.route('/api/inventario/stock/bajo/<int:minimo>', methods=["GET"])
 @login_required
 def api_inventario_bajo_stock(minimo):
+    if not tabla_existe("inventario_productos"):
+        return no_configurado()
     try:
         productos = db.session.execute(
             text("SELECT * FROM inventario_productos WHERE cantidad < :minimo ORDER BY cantidad"),
@@ -415,6 +424,8 @@ def api_inventario_bajo_stock(minimo):
 @api_bp.route('/api/inventario/verificar-stock/<int:id>/<int:cantidad>', methods=["GET"])
 @login_required
 def api_inventario_verificar_stock(id, cantidad):
+    if not tabla_existe("inventario_productos"):
+        return no_configurado()
     try:
         producto = db.session.execute(
             text("SELECT cantidad FROM inventario_productos WHERE id = :id"),
@@ -478,13 +489,19 @@ def microservicios_dashboard():
         flash("❌ Solo administradores pueden ver este panel", "danger")
         return redirect(url_for("main.dashboard"))
 
-    total_pedidos = db.session.execute(text("SELECT COUNT(*) FROM comercial_pedidos")).scalar() or 0
-    pedidos_pendientes = db.session.execute(text("SELECT COUNT(*) FROM comercial_pedidos WHERE estado = 'pendiente'")).scalar() or 0
-    pedidos_confirmados = db.session.execute(text("SELECT COUNT(*) FROM comercial_pedidos WHERE estado = 'confirmado'")).scalar() or 0
+    def _cuenta(sql):
+        try:
+            return db.session.execute(text(sql)).scalar() or 0
+        except Exception:
+            return 0
 
-    total_productos = db.session.execute(text("SELECT COUNT(*) FROM inventario_productos")).scalar() or 0
-    productos_bajo_stock = db.session.execute(text("SELECT COUNT(*) FROM inventario_productos WHERE cantidad < 10")).scalar() or 0
-    productos_agotados = db.session.execute(text("SELECT COUNT(*) FROM inventario_productos WHERE cantidad = 0")).scalar() or 0
+    total_pedidos = _cuenta("SELECT COUNT(*) FROM comercial_pedidos")
+    pedidos_pendientes = _cuenta("SELECT COUNT(*) FROM comercial_pedidos WHERE estado = 'pendiente'")
+    pedidos_confirmados = _cuenta("SELECT COUNT(*) FROM comercial_pedidos WHERE estado = 'confirmado'")
+
+    total_productos = _cuenta("SELECT COUNT(*) FROM inventario_productos")
+    productos_bajo_stock = _cuenta("SELECT COUNT(*) FROM inventario_productos WHERE cantidad < 10")
+    productos_agotados = _cuenta("SELECT COUNT(*) FROM inventario_productos WHERE cantidad = 0")
 
     return render_template("microservicios_dashboard.html",
                            total_pedidos=total_pedidos,
@@ -492,7 +509,10 @@ def microservicios_dashboard():
                            pedidos_confirmados=pedidos_confirmados,
                            total_productos=total_productos,
                            productos_bajo_stock=productos_bajo_stock,
-                           productos_agotados=productos_agotados)
+                           productos_agotados=productos_agotados,
+                           comercial_ok=tabla_existe("comercial_pedidos"),
+                           inventario_ok=tabla_existe("inventario_productos"),
+                           hora_sync=datetime.now().strftime('%H:%M:%S'))
 
 
 def _solo_fecha(valor):
