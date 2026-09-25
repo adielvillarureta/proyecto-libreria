@@ -1,531 +1,190 @@
 {% extends "base_cliente.html" %}
-{% block titulito %}🛒 Mi Carrito - Librería Salesiana{% endblock %}
+{% block titulito %}🛒 Mi Carrito — Librería Salesiana{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    .leaflet-container { border-radius: 14px; z-index: 1; }
+</style>
+{% endblock %}
 
 {% block contenido %}
 <input type="hidden" id="usuarioLogueado" value="{{ 'true' if session.cliente_id else 'false' }}">
 <input type="hidden" id="clienteId" value="{{ session.cliente_id }}">
+<input type="hidden" id="direccionCoords">
 
-<style>
-    /* ===== MEDIDAS RESPONSIVE GLOBALES ===== */
-    * {
-        box-sizing: border-box;
-    }
-    
-    /* Contenedor principal responsive */
-    .container {
-        width: 100%;
-        padding-right: 15px;
-        padding-left: 15px;
-        margin-right: auto;
-        margin-left: auto;
-    }
-    
-    /* Móviles pequeños (menos de 576px) */
-    @media (max-width: 576px) {
-        .container {
-            padding: 0 10px;
-        }
-        
-        .py-4 {
-            padding-top: 1rem !important;
-            padding-bottom: 1rem !important;
-        }
-        
-        h3 {
-            font-size: 1.25rem !important;
-        }
-        
-        .cart-item {
-            padding: 1rem !important;
-        }
-        
-        .cart-item .row {
-            flex-direction: column;
-            gap: 1rem;
-        }
-        
-        .cart-item .col-6,
-        .cart-item .col-3,
-        .cart-item .col-2,
-        .cart-item .col-1 {
-            width: 100%;
-            text-align: center !important;
-        }
-        
-        .cart-item .d-flex.align-items-center {
-            justify-content: center;
-            flex-direction: column;
-            text-align: center;
-        }
-        
-        .cart-item .bg-light {
-            margin-bottom: 0.5rem;
-        }
-        
-        .cart-item .col-3 .d-flex {
-            justify-content: center !important;
-        }
-        
-        .cart-item .col-2.text-end,
-        .cart-item .col-1.text-end {
-            text-align: center !important;
-        }
-        
-        /* Productos en grid para móvil */
-        .card-header .row {
-            display: none;
-        }
-        
-        /* Resumen en móvil */
-        .summary-card {
-            position: static;
-            margin-top: 1rem;
-        }
-        
-        /* Botones más grandes para touch */
-        .btn {
-            padding: 0.625rem 0.75rem !important;
-            font-size: 0.9rem !important;
-            min-height: 44px;
-        }
-        
-        .quantity-btn {
-            width: 40px !important;
-            height: 40px !important;
-        }
-        
-        .delivery-option {
-            padding: 0.75rem !important;
-        }
-        
-        .delivery-option strong {
-            font-size: 0.85rem;
-        }
-        
-        .delivery-option small {
-            font-size: 0.7rem;
-        }
-        
-        /* Inputs touch-friendly */
-        .form-control,
-        textarea {
-            font-size: 16px !important;
-            min-height: 44px;
-        }
-        
-        .input-group .btn {
-            min-width: 50px;
-        }
-        
-        /* Alertas en móvil */
-        .alert {
-            font-size: 0.8rem;
-            padding: 0.75rem;
-        }
-        
-        /* Badge del carrito */
-        .badge {
-            font-size: 0.7rem;
-        }
-        
-        /* Botones de acción */
-        .d-flex.justify-content-between {
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-        
-        .d-flex.justify-content-between .btn {
-            flex: 1;
-        }
-    }
-    
-    /* Tablets (576px - 768px) */
-    @media (min-width: 576px) and (max-width: 768px) {
-        .container {
-            max-width: 540px;
-        }
-        
-        .cart-item .col-6 {
-            width: 50%;
-        }
-        
-        .cart-item .col-3 {
-            width: 25%;
-        }
-        
-        .cart-item .col-2 {
-            width: 16.66%;
-        }
-        
-        .cart-item .col-1 {
-            width: 8.33%;
-        }
-        
-        .btn {
-            min-height: 40px;
-        }
-        
-        .quantity-btn {
-            width: 36px !important;
-            height: 36px !important;
-        }
-    }
-    
-    /* Tablets grandes (768px - 992px) */
-    @media (min-width: 768px) and (max-width: 992px) {
-        .container {
-            max-width: 720px;
-        }
-        
-        .col-lg-8 {
-            width: 66.66%;
-        }
-        
-        .col-lg-4 {
-            width: 33.33%;
-        }
-        
-        .cart-item h6 {
-            font-size: 0.9rem;
-        }
-    }
-    
-    /* Laptops (992px - 1200px) */
-    @media (min-width: 992px) and (max-width: 1200px) {
-        .container {
-            max-width: 960px;
-        }
-    }
-    
-    /* Pantallas grandes (1200px+) */
-    @media (min-width: 1200px) {
-        .container {
-            max-width: 1140px;
-        }
-    }
-    
-    /* Orientación landscape en móviles */
-    @media (max-width: 768px) and (orientation: landscape) {
-        .cart-item .row {
-            flex-direction: row !important;
-            flex-wrap: wrap;
-        }
-        
-        .cart-item .col-6 {
-            width: 50%;
-        }
-        
-        .cart-item .col-3 {
-            width: 25%;
-        }
-        
-        .cart-item .col-2 {
-            width: 16.66%;
-        }
-        
-        .cart-item .col-1 {
-            width: 8.33%;
-        }
-        
-        .summary-card {
-            margin-top: 0;
-        }
-    }
-    
-    /* Estilos originales mejorados */
-    .cart-item {
-        transition: all 0.3s ease;
-        border-left: 3px solid transparent;
-    }
+<div class="row">
+    <div class="col-12 mb-3">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
+            <h3 class="mb-0 fw-bold">
+                <i class="fas fa-shopping-cart text-warning me-2"></i>Mi Carrito
+                <span class="badge bg-primary ms-2" id="cartCountBadge">0</span>
+            </h3>
+            <div class="text-muted small"><i class="fas fa-lock me-1"></i> Compra 100% segura</div>
+        </div>
+    </div>
+</div>
 
-    .cart-item:hover {
-        background-color: #f8f9fa;
-        border-left-color: #0d6efd;
-        transform: translateX(5px);
-    }
+<div class="row">
+    <!-- COLUMNA IZQUIERDA -->
+    <div class="col-lg-8">
+        <div id="carritoVacio" class="text-center py-5 rounded-4 vacio-card">
+            <i class="fas fa-shopping-cart fa-5x text-muted mb-3"></i>
+            <h5>¡Tu carrito está vacío!</h5>
+            <p class="text-muted">Explora nuestro catálogo lleno de productos</p>
+            <a href="/catalogo" class="btn btn-gold btn-lg mt-2 rounded-pill px-4 fw-bold">
+                <i class="fas fa-store me-2"></i>Ir a la tienda
+            </a>
+        </div>
 
-    .quantity-btn {
-        transition: all 0.2s;
-        width: 32px;
-        height: 32px;
-        padding: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        cursor: pointer;
-    }
-
-    .quantity-btn:hover {
-        transform: scale(1.1);
-        background-color: #0d6efd;
-        color: white;
-    }
-    
-    /* Touch feedback para móviles */
-    @media (hover: none) and (pointer: coarse) {
-        .quantity-btn:active {
-            transform: scale(0.95);
-            background-color: #0d6efd;
-            color: white;
-        }
-        
-        .delivery-option:active {
-            transform: scale(0.98);
-        }
-    }
-
-    .fade-in {
-        animation: fadeIn 0.5s ease-in;
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .delivery-option {
-        cursor: pointer;
-        transition: all 0.2s;
-        border: 2px solid #e0e0e0;
-        border-radius: 10px;
-        padding: 10px;
-        text-align: center;
-    }
-
-    .delivery-option:hover {
-        border-color: #0d6efd;
-        background-color: #f0f8ff;
-        transform: translateY(-2px);
-    }
-
-    .delivery-option.selected {
-        border-color: #28a745;
-        background-color: #e7f1ff;
-    }
-
-    .product-image {
-        width: 60px;
-        height: 60px;
-        object-fit: contain;
-    }
-
-    .summary-card {
-        position: sticky;
-        top: 20px;
-    }
-    
-    /* Móvil: quitar sticky */
-    @media (max-width: 768px) {
-        .summary-card {
-            position: static;
-        }
-    }
-    
-    .stock-warning {
-        font-size: 11px;
-        margin-top: 5px;
-    }
-    
-    /* Animación para mensajes */
-    .alert {
-        animation: slideDown 0.3s ease-out;
-    }
-    
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    /* Scroll suave */
-    html {
-        scroll-behavior: smooth;
-    }
-    
-    /* Evitar desbordamiento */
-    img {
-        max-width: 100%;
-        height: auto;
-    }
-    
-    /* Mejora para tablas en móvil */
-    @media (max-width: 576px) {
-        .card-header .row {
-            display: none;
-        }
-        
-        /* Indicador visual de producto */
-        .cart-item {
-            border-bottom: 1px solid #dee2e6;
-            margin-bottom: 0;
-        }
-        
-        .cart-item:last-child {
-            border-bottom: none;
-        }
-    }
-</style>
-
-<div class="container py-4 fade-in">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
-                <h3 class="mb-0">
-                    <i class="fas fa-shopping-cart text-primary me-2"></i>
-                    Mi Carrito
-                    <span class="badge bg-secondary ms-2" id="cartCountBadge">0</span>
-                </h3>
-                <div class="text-muted small">
-                    <i class="fas fa-lock me-1"></i> Compra 100% segura
+        <div id="carritoLleno" style="display:none;">
+            <!-- Barra de envío gratis -->
+            <div class="progress-ship card border-0 shadow-sm rounded-4 p-3 mb-3">
+                <div class="d-flex justify-content-between small mb-1 fw-semibold">
+                    <span><i class="fas fa-truck me-1"></i> <span id="envioProgressText">Agrega más productos para:</span></span>
+                    <span class="text-primary">Envío gratis</span>
                 </div>
+                <div class="progress" style="height:10px;border-radius:50px;">
+                    <div class="progress-bar progress-bar-striped" id="envioProgress" style="width:0%;background:linear-gradient(90deg,#f0c94a,#D4AF37);"></div>
+                </div>
+            </div>
+
+            <!-- Cupón -->
+            <div class="card border-0 shadow-sm rounded-4 mb-3">
+                <div class="card-body p-3">
+                    <div class="row align-items-center g-2">
+                        <div class="col-12 col-md-7">
+                            <label class="fw-bold mb-2 small"><i class="fas fa-tag me-2"></i>¿Tienes cupón de descuento?</label>
+                            <div class="input-group">
+                                <input type="text" id="cuponInput" class="form-control rounded-start-pill" placeholder="Código" style="border-radius:50px 0 0 50px;" value="LIBROS10">
+                                <button class="btn btn-outline-primary px-4" id="btnAplicarCupon" style="border-radius:0 50px 50px 0;">Aplicar</button>
+                            </div>
+                            <small class="text-muted d-block mt-1">LIBROS10 (10%), BIENVENIDO5 (S/5), FREESHIP</small>
+                        </div>
+                        <div class="col-12 col-md-5 text-md-end" id="mensajeCupon"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Items -->
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-header bg-white py-3 d-none d-sm-block">
+                    <div class="row fw-bold text-muted small px-1">
+                        <div class="col-6">Producto</div>
+                        <div class="col-3 text-center">Cantidad</div>
+                        <div class="col-2 text-end">Subtotal</div>
+                        <div class="col-1"></div>
+                    </div>
+                </div>
+                <div class="card-body p-0" id="carritoBody"></div>
+            </div>
+
+            <div class="d-flex flex-column flex-sm-row justify-content-between gap-2 mt-3">
+                <a href="/catalogo" class="btn btn-outline-secondary rounded-pill px-4 py-2">
+                    <i class="fas fa-arrow-left me-2"></i>Seguir comprando
+                </a>
+                <button class="btn btn-outline-danger rounded-pill px-4 py-2" onclick="vaciarCarrito()">
+                    <i class="fas fa-trash-alt me-2"></i>Vaciar carrito
+                </button>
             </div>
         </div>
     </div>
 
-    <div class="row">
-        <!-- COLUMNA IZQUIERDA - PRODUCTOS -->
-        <div class="col-lg-8">
-            <div id="carritoVacio" class="text-center py-5 bg-light rounded">
-                <i class="fas fa-shopping-cart fa-5x text-muted mb-3"></i>
-                <h5>¡Tu carrito está vacío!</h5>
-                <p class="text-muted">Explora nuestro catálogo</p>
-                <a href="/catalogo" class="btn btn-primary btn-lg mt-3">
-                    <i class="fas fa-book me-2"></i>Ir a la tienda
-                </a>
+    <!-- COLUMNA DERECHA - RESUMEN -->
+    <div class="col-lg-4 mt-4 mt-lg-0">
+        <div class="card shadow-lg border-0 rounded-4 summary-card">
+            <div class="card-header resumen-header text-white rounded-top-4 py-3">
+                <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Resumen de compra</h5>
             </div>
-
-            <div id="carritoLleno" style="display:none;">
-                <div class="alert alert-info alert-dismissible fade show mb-3">
-                    <i class="fas fa-gift me-2"></i>
-                    🎉 ¡Llevas más de S/. 100! Usa <strong>LIBROS10</strong> y obtén 10% descuento
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white border-0 py-3 d-none d-sm-block">
-                        <div class="row fw-bold text-muted">
-                            <div class="col-6">Producto</div>
-                            <div class="col-3 text-center">Cantidad</div>
-                            <div class="col-2 text-end">Subtotal</div>
-                            <div class="col-1"></div>
-                        </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Subtotal (<span id="itemCount">0</span> items):</span>
+                        <span class="fw-bold" id="subtotalCarrito">S/. 0.00</span>
                     </div>
-                    <div class="card-body p-0">
-                        <div id="carritoBody"></div>
+                    <div class="d-flex justify-content-between mb-2" id="descuentoRow" style="display:none">
+                        <span class="text-success"><i class="fas fa-tag me-1"></i>Descuento:</span>
+                        <span class="text-success" id="descuentoMonto">-S/. 0.00</span>
                     </div>
-                </div>
-
-                <div class="card mt-3 border-0 shadow-sm">
-                    <div class="card-body">
-                        <div class="row align-items-center">
-                            <div class="col-12 col-md-8 mb-3 mb-md-0">
-                                <label class="fw-bold mb-2">
-                                    <i class="fas fa-tag me-2"></i>¿Tienes cupón?
-                                </label>
-                                <div class="input-group">
-                                    <input type="text" id="cuponInput" class="form-control" placeholder="Código">
-                                    <button class="btn btn-outline-primary" id="btnAplicarCupon">Aplicar</button>
-                                </div>
-                                <small class="text-muted d-block mt-1">LIBROS10 (10%), BIENVENIDO5 (S/5), FREESHIP</small>
-                            </div>
-                            <div class="col-12 col-md-4 text-md-end">
-                                <div id="mensajeCupon" class="small"></div>
-                            </div>
-                        </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Envío:</span>
+                        <span id="envioTexto" class="fw-bold">Gratis</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between fs-5 fw-bold">
+                        <span>Total a pagar:</span>
+                        <span class="text-primary" id="totalFinal">S/. 0.00</span>
                     </div>
                 </div>
 
-                <div class="d-flex flex-column flex-sm-row justify-content-between gap-2 mt-3">
-                    <a href="/catalogo" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>Seguir comprando
-                    </a>
-                    <button class="btn btn-outline-danger" onclick="vaciarCarrito()">
-                        <i class="fas fa-trash-alt me-2"></i>Vaciar
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- COLUMNA DERECHA - RESUMEN -->
-        <div class="col-lg-4 mt-4 mt-lg-0">
-            <div class="card shadow-lg border-0 summary-card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Resumen</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Subtotal (<span id="itemCount">0</span>):</span>
-                            <span id="subtotalCarrito">S/. 0.00</span>
+                <!-- TIPO DE ENTREGA -->
+                <div class="mb-3">
+                    <label class="fw-bold mb-2 small"><i class="fas fa-truck me-2"></i>Tipo de entrega</label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="delivery-option selected text-center" data-tipo="recojo" onclick="seleccionarEntrega('recojo')">
+                                <i class="fas fa-store fa-2x mb-2 text-primary"></i>
+                                <div><strong>Recojo en tienda</strong></div>
+                                <small>Gratis</small>
+                            </div>
                         </div>
-                        <div class="d-flex justify-content-between mb-2" id="descuentoRow" style="display:none">
-                            <span class="text-success">Descuento:</span>
-                            <span class="text-success" id="descuentoMonto">-S/. 0.00</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Envío:</span>
-                            <span id="envioTexto">Gratis</span>
-                        </div>
-                        <hr>
-                        <div class="d-flex justify-content-between fs-5 fw-bold">
-                            <span>Total:</span>
-                            <span class="text-primary" id="totalFinal">S/. 0.00</span>
+                        <div class="col-6">
+                            <div class="delivery-option text-center" data-tipo="delivery" onclick="seleccionarEntrega('delivery')">
+                                <i class="fas fa-motorcycle fa-2x mb-2 text-danger"></i>
+                                <div><strong>Delivery</strong></div>
+                                <small id="envioCostoLbl">S/. 5.00</small>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- TIPO DE ENTREGA -->
-                    <div class="mb-3">
-                        <label class="fw-bold mb-2">
-                            <i class="fas fa-truck me-2"></i>Tipo de entrega
-                        </label>
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <div class="delivery-option selected text-center" data-tipo="recojo"
-                                    onclick="seleccionarEntrega('recojo')">
-                                    <i class="fas fa-store fa-2x mb-2"></i>
-                                    <div><strong>Recojo en tienda</strong></div>
-                                    <small>Gratis</small>
-                                </div>
+                    <!-- DIRECCIÓN + MAPA -->
+                    <div id="direccionEntrega" class="mt-3" style="display:none;">
+                        <div class="mapa-card rounded-4 p-3">
+                            <label class="fw-bold small mb-2"><i class="fas fa-map-marked-alt me-2 text-danger"></i>Indica tu dirección en el mapa</label>
+
+                            <!-- Buscador + geolocalización -->
+                            <div class="input-group mb-2">
+                                <input type="text" id="mapaBuscar" class="form-control"
+                                       placeholder="🔍 Busca: calle, distrito, referencia..." autocomplete="off">
+                                <button class="btn btn-primary" type="button" onclick="buscarDireccionEnter()" title="Buscar">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                                <button class="btn btn-outline-success" type="button" onclick="usarMiUbicacion()" title="Usar mi ubicación">
+                                    <i class="fas fa-location-arrow"></i>
+                                </button>
                             </div>
-                            <div class="col-6">
-                                <div class="delivery-option text-center" data-tipo="delivery"
-                                    onclick="seleccionarEntrega('delivery')">
-                                    <i class="fas fa-truck fa-2x mb-2"></i>
-                                    <div><strong>Delivery</strong></div>
-                                    <small>S/. 5.00</small>
-                                </div>
+                            <div id="mapaSugerencias" class="mb-2"></div>
+
+                            <!-- MAPA -->
+                            <div id="mapaEntrega" style="height:300px;" class="mb-2"></div>
+
+                            <!-- Referencias rápidas -->
+                            <div class="mb-2">
+                                <small class="text-muted d-block fw-semibold mb-1"><i class="fas fa-star me-1"></i>Referencias rápidas (Huancayo):</small>
+                                <div class="d-flex flex-wrap gap-1" id="refChips"></div>
                             </div>
-                        </div>
-                        <div id="direccionEntrega" class="mt-3" style="display: none;">
+
+                            <label class="fw-bold small mt-1"><i class="fas fa-notes-medical me-2 text-warning"></i>Punto de referencia cercano (opcional)</label>
+                            <input type="text" id="referenciaInput" class="form-control mb-2" placeholder="Ej: cerca a la iglesia, frente a la bodega...">
+
                             <textarea id="direccion" class="form-control" rows="2"
-                                placeholder="📍 Calle, número, urbanización, referencia"></textarea>
+                                placeholder="📍 Tu dirección se generará aquí automáticamente"></textarea>
                             <small id="direccionAyuda" class="text-muted"></small>
-                            <small class="text-muted d-block mt-1">* Tiempo de entrega: 3-5 días hábiles</small>
+                            <small class="text-muted d-block mt-1"><i class="fas fa-info-circle me-1"></i>Tiempo de entrega: 3-5 días hábiles.</small>
                         </div>
                     </div>
-
-                    <button class="btn btn-success w-100 mt-2 py-2 fw-bold" onclick="irACheckout()">
-                        <i class="fas fa-arrow-right me-2"></i>Continuar
-                    </button>
                 </div>
+
+                <button class="btn btn-success w-100 mt-2 py-2 fw-bold rounded-pill" onclick="irACheckout()">
+                    <i class="fas fa-arrow-right me-2"></i>Continuar con la compra
+                </button>
             </div>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     // ===============================
     // VARIABLES GLOBALES
@@ -535,79 +194,220 @@
     let descuento = 0;
     let tipoEntregaSeleccionado = 'recojo';
     let direccionEntrega = '';
+    let mapa = null;
+    let marcador = null;
+    let mapaInicializado = false;
+    let ultimoLugarMapa = '';
+    const ENVIO_GRATIS_DESDE = 100;
+
+    // Referencias rápidas (Huancayo — Junín)
+    const REFERENCIAS = [
+        { n: 'Colegio Salesiano Santa Rosa', lat: -12.066542, lng: -75.215592 },
+        { n: 'Plaza Huamanmarca', lat: -12.070855, lng: -75.208325 },
+        { n: 'Catedral de Huancayo', lat: -12.067565, lng: -75.209710 },
+        { n: 'Parque de la Identidad Huanca', lat: -12.049215, lng: -75.197825 },
+        { n: 'Mercado Mayorista (Av. Ferrocarril)', lat: -12.073045, lng: -75.205016 },
+    ];
 
     // ===============================
-    // FUNCIÓN PARA VALIDAR STOCK CON EL SERVIDOR
+    // VALIDAR STOCK
     // ===============================
     async function validarStockProducto(productoId, cantidadDeseada) {
         try {
             const response = await fetch(`/api/productos/${productoId}/stock`);
             const data = await response.json();
-            
-            if (!response.ok) {
-                console.error("Error al consultar stock:", data.error);
-                return { valido: true, stockDisponible: 999, nombre: "Producto" };
-            }
-            
-            const stockDisponible = data.stock;
-            return { 
-                valido: cantidadDeseada <= stockDisponible, 
-                stockDisponible: stockDisponible,
-                nombre: data.nombre
-            };
-        } catch (error) {
-            console.error("Error validando stock:", error);
+            if (!response.ok) return { valido: true, stockDisponible: 999, nombre: "Producto" };
+            return { valido: cantidadDeseada <= data.stock, stockDisponible: data.stock, nombre: data.nombre };
+        } catch (e) {
             return { valido: true, stockDisponible: 999, nombre: "Producto" };
         }
     }
 
     // ===============================
-    // CARGAR DIRECCIÓN DEL CLIENTE DESDE BASE DE DATOS
+    // CARGAR DIRECCIÓN DEL CLIENTE
     // ===============================
     async function cargarDireccionCliente() {
         const usuarioLogueado = document.getElementById('usuarioLogueado')?.value === 'true';
-        if (!usuarioLogueado) {
-            console.log("Usuario no logueado, no se carga dirección");
+        if (!usuarioLogueado) return;
+        try {
+            const response = await fetch('/api/cliente/direccion');
+            if (!response.ok) return;
+            const data = await response.json();
+            if (data.success && data.direccion) {
+                const input = document.getElementById('direccion');
+                const ayuda = document.getElementById('direccionAyuda');
+                if (input) {
+                    input.value = data.direccion;
+                    if (ayuda) {
+                        ayuda.innerHTML = '<i class="fas fa-check-circle text-success"></i> Dirección cargada desde tu perfil. Puedes ajustarla con el mapa.';
+                        setTimeout(() => { if (ayuda) ayuda.innerHTML = ''; }, 6000);
+                    }
+                    // Intentar ubicar en el mapa
+                    buscarYUbicar(data.direccion);
+                }
+            }
+        } catch (e) {}
+    }
+
+    // ===============================
+    // MAPA (LEAFLET + OSM)
+    // ===============================
+    function inicializarMapa() {
+        if (mapaInicializado) return;
+        mapaInicializado = true;
+        mapa = L.map('mapaEntrega').setView([-12.066542, -75.215592], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(mapa);
+
+        // Marcador de la tienda
+        L.marker([-12.066542, -75.215592], { icon: L.divIcon({ className: 'tienda-ico', html: '<i class="fas fa-store" style="color:#0d2b6e;font-size:22px;text-shadow:0 0 6px #fff;"></i>', iconSize: [26, 26] }) })
+            .addTo(mapa).bindPopup('Librería Salesiana Don Bosco — Colegio Salesiano Santa Rosa, Huancayo');
+
+        // Punto rojo (ubicación de entrega)
+        marcador = L.marker([-12.066542, -75.215592], {
+            draggable: true,
+            icon: L.divIcon({ className: 'punto-rojo', html: '<div class="red-pin"></div>', iconSize: [24, 34], iconAnchor: [12, 34] })
+        }).addTo(mapa);
+
+        marcador.on('dragend', () => {
+            const p = marcador.getLatLng();
+            geocodificarInverso(p.lat, p.lng);
+        });
+
+        mapa.on('click', (e) => {
+            marcador.setLatLng(e.latlng);
+            geocodificarInverso(e.latlng.lat, e.latlng.lng);
+        });
+
+        // Cargar chips de referencia
+        const chipBox = document.getElementById('refChips');
+        REFERENCIAS.forEach(r => {
+            chipBox.insertAdjacentHTML('beforeend',
+                `<button type="button" class="chip-ref" onclick="moverMarcador(${r.lat}, ${r.lng}, '${r.n}')">📍 ${r.n}</button>`);
+        });
+
+        // Buscar con Enter
+        document.getElementById('mapaBuscar').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') buscarDireccionEnter();
+        });
+    }
+
+    function mostrarMapa() {
+        document.getElementById('direccionEntrega').style.display = 'block';
+        inicializarMapa();
+        // Pequeño empuje para que el mapa se dibuje bien
+        setTimeout(() => { if (mapa) mapa.invalidateSize(); }, 300);
+    }
+
+    function moverMarcador(lat, lng, nombre) {
+        if (!mapa) inicializarMapa();
+        mapa.setView([lat, lng], 16);
+        marcador.setLatLng([lat, lng]);
+        ultimoLugarMapa = nombre;
+        actualizarDireccionMapa(nombre);
+        ocultarSugerencias();
+    }
+
+    function actualizarDireccionMapa(nombre, lat, lng) {
+        const direccionInput = document.getElementById('direccion');
+        const ref = document.getElementById('referenciaInput').value.trim();
+        const dir = nombre + (ref ? ' — Ref: ' + ref : '');
+        direccionInput.value = dir;
+        const p = marcador ? marcador.getLatLng() : { lat, lng };
+        if (p && p.lat && p.lng) {
+            document.getElementById('direccionCoords').value = p.lat.toFixed(6) + ',' + p.lng.toFixed(6);
+        }
+        document.getElementById('direccionAyuda').innerHTML =
+            '<i class="fas fa-map-pin text-danger"></i> Ubicación marcada en el mapa.';
+    }
+
+    function ocultarSugerencias() { document.getElementById('mapaSugerencias').innerHTML = ''; }
+
+    async function buscarDireccionEnter() {
+        const q = document.getElementById('mapaBuscar').value.trim();
+        if (!q) return;
+        try {
+            const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=6&countrycodes=pe&q=' + encodeURIComponent(q));
+            const datos = await r.json();
+            const box = document.getElementById('mapaSugerencias');
+            box.innerHTML = '';
+            if (!datos.length) {
+                box.innerHTML = '<div class="alert alert-warning py-1 small">Sin resultados. Intenta con otro nombre.</div>';
+                return;
+            }
+            if (datos.length === 1) {
+                const d = datos[0];
+                moverMarcador(parseFloat(d.lat), parseFloat(d.lon), resumirNombre(d.display_name));
+                return;
+            }
+            datos.forEach(d => {
+                box.insertAdjacentHTML('beforeend',
+                    `<button class="sug-list" onclick="moverMarcador(${d.lat}, ${d.lon}, '${resumirNombre(d.display_name)}')">${resumirNombre(d.display_name)}</button>`);
+            });
+            limpiarSugerenciasTimeout();
+        } catch (e) {
+            document.getElementById('mapaSugerencias').innerHTML = '<div class="alert alert-danger py-1 small">No se pudo buscar.</div>';
+        }
+    }
+
+    function limpiarSugerenciasTimeout() {
+        clearTimeout(window.__sugTimer);
+        window.__sugTimer = setTimeout(ocultarSugerencias, 8000);
+    }
+
+    function resumirNombre(display) {
+        const partes = display.split(',').slice(0, 3).join(', ').trim();
+        return partes;
+    }
+
+    async function geocodificarInverso(lat, lng) {
+        try {
+            const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+            const d = await r.json();
+            ultimoLugarMapa = d.display_name ? resumirNombre(d.display_name) : `Ubicación (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+            actualizarDireccionMapa(ultimoLugarMapa);
+        } catch (e) {
+            ultimoLugarMapa = `Ubicación (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+            actualizarDireccionMapa(ultimoLugarMapa);
+        }
+    }
+
+    function buscarYUbicar(direccion) {
+        if (!mapaInicializado) return;
+        fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=pe&q=' + encodeURIComponent(direccion))
+            .then(r => r.json())
+            .then(d => {
+                if (d.length) moverMarcador(parseFloat(d[0].lat), parseFloat(d[0].lon), resumirNombre(d[0].display_name));
+            }).catch(() => {});
+    }
+
+    function usarMiUbicacion() {
+        if (!navigator.geolocation) {
+            Swal.fire({ icon: 'warning', title: 'Ubicación no soportada', text: 'Tu navegador no permite geolocalización.' });
             return;
         }
+        if (!mapa) inicializarMapa();
+        Swal.fire({ title: 'Obteniendo ubicación...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                Swal.close();
+                const { latitude, longitude } = pos.coords;
+                mapa.setView([latitude, longitude], 16);
+                marcador.setLatLng([latitude, longitude]);
+                geocodificarInverso(latitude, longitude);
+            },
+            () => {
+                Swal.close();
+                Swal.fire({ icon: 'error', title: 'No se pudo obtener tu ubicación', text: 'Busca tu dirección manualmente.' });
+            },
+            { timeout: 8000 }
+        );
+    }
 
-        try {
-            console.log("Solicitando dirección a /api/cliente/direccion");
-            const response = await fetch('/api/cliente/direccion');
-
-            if (!response.ok) {
-                console.error("Error HTTP:", response.status);
-                return;
-            }
-
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                console.error("La respuesta no es JSON:", contentType);
-                return;
-            }
-
-            const data = await response.json();
-            console.log("Respuesta de dirección:", data);
-
-            if (data.success && data.direccion) {
-                const direccionInput = document.getElementById('direccion');
-                const direccionAyuda = document.getElementById('direccionAyuda');
-                if (direccionInput) {
-                    direccionInput.value = data.direccion;
-                    if (direccionAyuda) {
-                        direccionAyuda.innerHTML = '<i class="fas fa-check-circle text-success"></i> Dirección cargada desde tu perfil. Puedes modificarla si lo deseas.';
-                        setTimeout(() => {
-                            if (direccionAyuda) direccionAyuda.innerHTML = '';
-                        }, 5000);
-                    }
-                    console.log("📍 Dirección cargada desde perfil:", data.direccion);
-                }
-            } else {
-                console.log("No hay dirección guardada en el perfil");
-            }
-        } catch (error) {
-            console.error("Error cargando dirección:", error);
-        }
+    // Actualizar dirección cuando cambia la referencia
+    function sincronizarReferencia() {
+        if (ultimoLugarMapa) actualizarDireccionMapa(ultimoLugarMapa);
     }
 
     // ===============================
@@ -615,26 +415,20 @@
     // ===============================
     function seleccionarEntrega(tipo) {
         tipoEntregaSeleccionado = tipo;
-
-        document.querySelectorAll('.delivery-option').forEach(opt => {
-            opt.classList.remove('selected');
-        });
+        document.querySelectorAll('.delivery-option').forEach(opt => opt.classList.remove('selected'));
         document.querySelector(`.delivery-option[data-tipo="${tipo}"]`).classList.add('selected');
 
-        const direccionDiv = document.getElementById('direccionEntrega');
+        const div = document.getElementById('direccionEntrega');
         const envioTexto = document.getElementById('envioTexto');
-        const direccionInput = document.getElementById('direccion');
+        const input = document.getElementById('direccion');
 
         if (tipo === 'delivery') {
-            direccionDiv.style.display = 'block';
-            envioTexto.innerHTML = 'S/. 5.00';
+            mostrarMapa();
             cargarDireccionCliente();
         } else {
-            direccionDiv.style.display = 'none';
-            envioTexto.innerHTML = 'Gratis';
-            if (direccionInput) direccionInput.value = '';
+            div.style.display = 'none';
+            if (input) input.value = '';
         }
-
         actualizarTotales();
     }
 
@@ -643,37 +437,21 @@
     // ===============================
     function irACheckout() {
         let usuarioLogueado = document.getElementById('usuarioLogueado')?.value === 'true';
-
         if (!usuarioLogueado) {
             Swal.fire({
-                icon: 'warning',
-                title: 'Inicia sesión',
-                text: 'Debes iniciar sesión para comprar',
-                confirmButtonText: 'Iniciar',
-                showCancelButton: true
-            }).then((result) => {
-                if (result.isConfirmed) window.location.href = '/login-cliente';
-            });
+                icon: 'warning', title: 'Inicia sesión', text: 'Debes iniciar sesión para comprar',
+                confirmButtonText: 'Iniciar', showCancelButton: true
+            }).then((r) => { if (r.isConfirmed) window.location.href = '/login-cliente'; });
             return;
         }
-
         if (carrito.length === 0) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Carrito vacío',
-                text: 'Agrega productos'
-            });
+            Swal.fire({ icon: 'error', title: 'Carrito vacío', text: 'Agrega productos' });
             return;
         }
-
         if (tipoEntregaSeleccionado === 'delivery') {
             let direccion = document.getElementById('direccion')?.value.trim();
-            if (!direccion) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Dirección requerida',
-                    text: 'Ingresa tu dirección de entrega'
-                });
+            if (!direccion || !document.getElementById('direccionCoords')?.value) {
+                Swal.fire({ icon: 'warning', title: 'Ubica tu dirección', text: 'Marca tu punto de entrega en el mapa (punto rojo).' });
                 return;
             }
             direccionEntrega = direccion;
@@ -688,7 +466,7 @@
         }
         localStorage.setItem('tipoEntrega', tipoEntregaSeleccionado);
         localStorage.setItem('direccionEntrega', direccionEntrega);
-
+        localStorage.setItem('direccionCoords', document.getElementById('direccionCoords')?.value || '');
         window.location.href = '/checkout';
     }
 
@@ -696,68 +474,83 @@
     // APLICAR CUPÓN
     // ===============================
     function aplicarCupon() {
-        let codigo = document.getElementById('cuponInput')?.value.toUpperCase();
+        let codigo = (document.getElementById('cuponInput')?.value || '').toUpperCase();
         let mensajeDiv = document.getElementById('mensajeCupon');
         let descuentoRow = document.getElementById('descuentoRow');
-
         const cupones = {
             'LIBROS10': { descuento: 10, tipo: 'porcentaje', nombre: '10% off' },
             'BIENVENIDO5': { descuento: 5, tipo: 'fijo', nombre: 'S/5 off' },
             'FREESHIP': { descuento: 5, tipo: 'envio', nombre: 'Envío gratis' }
         };
-
         if (cupones[codigo]) {
             cuponAplicado = cupones[codigo];
             let subtotal = calcularSubtotal();
-
             if (cuponAplicado.tipo === 'envio') {
                 descuento = 5;
-                mensajeDiv.innerHTML = '<span class="text-success">✅ Envío gratis</span>';
+                mensajeDiv.innerHTML = '<span class="text-success fw-bold">✅ Envío gratis</span>';
             } else if (cuponAplicado.tipo === 'porcentaje') {
                 descuento = subtotal * 0.1;
-                mensajeDiv.innerHTML = '<span class="text-success">✅ 10% descuento</span>';
+                mensajeDiv.innerHTML = '<span class="text-success fw-bold">✅ 10% descuento</span>';
             } else {
                 descuento = 5;
-                mensajeDiv.innerHTML = '<span class="text-success">✅ S/5 descuento</span>';
+                mensajeDiv.innerHTML = '<span class="text-success fw-bold">✅ S/5 descuento</span>';
             }
             descuentoRow.style.display = 'flex';
             actualizarTotales();
             Swal.fire({ icon: 'success', title: '¡Cupón aplicado!', timer: 1500, showConfirmButton: false });
         } else {
-            mensajeDiv.innerHTML = '<span class="text-danger">❌ Inválido</span>';
+            mensajeDiv.innerHTML = '<span class="text-danger fw-bold">❌ Cupón inválido</span>';
         }
+        return;
     }
 
     // ===============================
-    // CALCULAR SUBTOTAL
+    // TOTALES Y ENVÍO GRATIS >= S/100
     // ===============================
     function calcularSubtotal() {
         return carrito.reduce((s, i) => s + (i.precio * i.cantidad), 0);
     }
 
-    // ===============================
-    // ACTUALIZAR TOTALES
-    // ===============================
     function actualizarTotales() {
         let subtotal = calcularSubtotal();
         let costoEnvio = 0;
+        let envioGratisPase = subtotal >= ENVIO_GRATIS_DESDE;
+        const envioTexto = document.getElementById('envioTexto');
 
-        if (tipoEntregaSeleccionado === 'delivery' && cuponAplicado?.tipo !== 'envio') {
-            costoEnvio = 5;
-            document.getElementById('envioTexto').innerHTML = 'S/. 5.00';
-        } else if (tipoEntregaSeleccionado === 'delivery' && cuponAplicado?.tipo === 'envio') {
-            document.getElementById('envioTexto').innerHTML = 'Gratis (Cupón)';
+        if (tipoEntregaSeleccionado === 'delivery') {
+            // Envío gratis automático si supera el mínimo
+            if (envioGratisPase || cuponAplicado?.tipo === 'envio') {
+                envioTexto.innerHTML = envioGratisPase ? 'Gratis 🎉' : 'Gratis (Cupón)';
+                costoEnvio = 0;
+            } else {
+                envioTexto.innerHTML = 'S/. 5.00';
+                costoEnvio = 5;
+            }
         } else {
-            document.getElementById('envioTexto').innerHTML = 'Gratis';
+            envioTexto.innerHTML = 'Gratis';
         }
 
-        let descuentoAplicado = (cuponAplicado?.tipo === 'envio' && tipoEntregaSeleccionado === 'delivery') ? 0 : Math.min(descuento, subtotal);
+        let descuentoAplicado = (cuponAplicado?.tipo === 'envio' ? 0 : Math.min(descuento, subtotal));
         let total = subtotal - descuentoAplicado + costoEnvio;
 
         document.getElementById('subtotalCarrito').innerHTML = 'S/. ' + subtotal.toFixed(2);
         document.getElementById('totalFinal').innerHTML = 'S/. ' + total.toFixed(2);
         document.getElementById('descuentoMonto').innerHTML = '-S/. ' + descuentoAplicado.toFixed(2);
         document.getElementById('itemCount').innerHTML = carrito.reduce((sum, item) => sum + parseInt(item.cantidad || 1), 0);
+
+        // Barra de envío gratis
+        const bar = document.getElementById('envioProgress');
+        const txt = document.getElementById('envioProgressText');
+        if (bar && txt) {
+            if (subtotal >= ENVIO_GRATIS_DESDE) {
+                bar.style.width = '100%';
+                txt.textContent = '¡Tienes envío GRATIS en tu delivery! 🎉';
+            } else {
+                const falta = ENVIO_GRATIS_DESDE - subtotal;
+                bar.style.width = Math.min((subtotal / ENVIO_GRATIS_DESDE) * 100, 100) + '%';
+                txt.textContent = `Te faltan S/. ${falta.toFixed(2)} para envío gratis`;
+            }
+        }
     }
 
     // ===============================
@@ -765,11 +558,8 @@
     // ===============================
     function vaciarCarrito() {
         Swal.fire({
-            title: '¿Vaciar carrito?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            confirmButtonText: 'Sí'
+            title: '¿Vaciar carrito?', icon: 'warning', showCancelButton: true,
+            confirmButtonColor: '#d33', confirmButtonText: 'Sí, vaciar'
         }).then((r) => {
             if (r.isConfirmed) {
                 carrito = [];
@@ -788,36 +578,25 @@
     }
 
     // ===============================
-    // CAMBIAR CANTIDAD (CON VALIDACIÓN DE STOCK)
+    // CAMBIAR CANTIDAD
     // ===============================
     async function cambiarCantidad(idx, delta) {
         let nueva = carrito[idx].cantidad + delta;
         if (nueva < 1) return;
-        
         let producto = carrito[idx];
-        
-        // Validar stock SOLO si estamos aumentando la cantidad
         if (delta > 0) {
             const stockInfo = await validarStockProducto(producto.id, nueva);
-            
             if (!stockInfo.valido) {
                 Swal.fire({
-                    icon: 'warning',
-                    title: 'Stock insuficiente',
-                    text: `Solo hay ${stockInfo.stockDisponible} unidades disponibles de "${producto.nombre}"`,
-                    confirmButtonColor: '#3085d6'
+                    icon: 'warning', title: 'Stock insuficiente',
+                    text: `Solo hay ${stockInfo.stockDisponible} unidades disponibles de "${producto.nombre}"`
                 });
                 return;
             }
-            
-            // Actualizar el stock guardado en el carrito
             carrito[idx].stock = stockInfo.stockDisponible;
         }
-        
         carrito[idx].cantidad = nueva;
         localStorage.setItem('carritoCliente', JSON.stringify(carrito));
-        
-        // Si hay cupón aplicado, eliminarlo al cambiar cantidades
         if (cuponAplicado) {
             cuponAplicado = null;
             descuento = 0;
@@ -826,7 +605,6 @@
             document.getElementById('descuentoRow').style.display = 'none';
             document.getElementById('mensajeCupon').innerHTML = '';
         }
-        
         renderizarCarrito();
     }
 
@@ -836,14 +614,12 @@
     function eliminarProducto(idx) {
         carrito.splice(idx, 1);
         localStorage.setItem('carritoCliente', JSON.stringify(carrito));
-        
         if (cuponAplicado) {
             cuponAplicado = null;
             descuento = 0;
             localStorage.removeItem('cuponAplicado');
             localStorage.removeItem('descuento');
         }
-        
         renderizarCarrito();
     }
 
@@ -862,155 +638,121 @@
             if (badge) badge.textContent = '0';
             return;
         }
-
         if (vacio) vacio.style.display = 'none';
         if (lleno) lleno.style.display = 'block';
         if (body) body.innerHTML = '';
 
         let totalItems = 0;
-        
         for (let i = 0; i < carrito.length; i++) {
             let item = carrito[i];
             let cant = item.cantidad;
-            let precio = item.precio;
             totalItems += cant;
-            
-            // Determinar advertencia de stock
             let stockWarning = '';
             if (item.stock && cant >= item.stock) {
-                stockWarning = '<small class="text-danger stock-warning"><i class="fas fa-exclamation-triangle"></i> Stock máximo alcanzado</small>';
+                stockWarning = '<small class="text-danger d-block mt-1"><i class="fas fa-exclamation-triangle"></i> Stock máximo alcanzado</small>';
             } else if (item.stock && cant >= item.stock - 2) {
-                stockWarning = '<small class="text-warning stock-warning"><i class="fas fa-info-circle"></i> Quedan pocas unidades</small>';
+                stockWarning = '<small class="text-warning d-block mt-1"><i class="fas fa-info-circle"></i> Quedan pocas unidades</small>';
             }
 
             body.innerHTML += `
             <div class="cart-item p-3 border-bottom">
-                <div class="row align-items-center">
-                    <div class="col-12 col-sm-6 mb-3 mb-sm-0">
-                        <div class="d-flex align-items-center flex-column flex-sm-row text-center text-sm-start">
-                            <div class="bg-light rounded me-sm-3 p-2 d-flex align-items-center justify-content-center mb-2 mb-sm-0" style="width: 70px; height: 70px;">
-                                ${item.imagen_url ? `<img src="${item.imagen_url}" style="max-width:60px; max-height:60px; object-fit:contain;">` : '<i class="fas fa-book fa-2x text-primary"></i>'}
+                <div class="row align-items-center g-2">
+                    <div class="col-12 col-sm-6">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="cart-img rounded-3 d-flex align-items-center justify-content-center">
+                                ${item.imagen_url ? `<img src="${item.imagen_url}" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-book-open\\'></i>';">` : '<i class="fas fa-book-open"></i>'}
                             </div>
-                            <div>
-                                <h6 class="mb-1 fw-bold">${escapeHtml(item.nombre)}</h6>
-                                <small>S/. ${precio.toFixed(2)}</small>
+                            <div class="min-w-0">
+                                <h6 class="mb-1 fw-bold text-truncate" style="font-size:0.85rem;">${escapeHtml(item.nombre)}</h6>
+                                <small class="text-muted">S/. ${precioItem(item).toFixed(2)} c/u</small>
                                 ${stockWarning}
                             </div>
                         </div>
                     </div>
-                    <div class="col-6 col-sm-3 mb-2 mb-sm-0">
+                    <div class="col-6 col-sm-3">
                         <div class="d-flex justify-content-center gap-2">
                             <button class="btn btn-sm btn-outline-secondary quantity-btn" onclick="cambiarCantidad(${i}, -1)">
                                 <i class="fas fa-minus"></i>
                             </button>
-                            <span class="fw-bold" style="min-width: 30px; text-align: center;">${cant}</span>
+                            <span class="fw-bold qty-num">${cant}</span>
                             <button class="btn btn-sm btn-outline-secondary quantity-btn" onclick="cambiarCantidad(${i}, 1)">
                                 <i class="fas fa-plus"></i>
                             </button>
                         </div>
                     </div>
                     <div class="col-4 col-sm-2 text-start text-sm-end">
-                        <span class="fw-bold text-primary">S/. ${(precio * cant).toFixed(2)}</span>
+                        <span class="fw-bold" style="color:#0d2b6e;">S/. ${(item.precio * cant).toFixed(2)}</span>
                     </div>
                     <div class="col-2 col-sm-1 text-end">
-                        <button class="btn btn-sm btn-link text-danger" onclick="eliminarProducto(${i})">
+                        <button class="btn btn-sm btn-link text-danger p-0" onclick="eliminarProducto(${i})">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
                 </div>
             </div>`;
         }
-        
         if (badge) badge.textContent = totalItems;
         actualizarTotales();
     }
 
+    function precioItem(item) {
+        return item.precio;
+    }
+
     // ===============================
-    // CARGAR CARRITO (CON VALIDACIÓN DE STOCK)
+    // CARGAR CARRITO
     // ===============================
     async function cargarCarrito() {
-        // Cargar datos guardados
-        let g = localStorage.getItem('carritoCliente');
-        carrito = g ? JSON.parse(g) : [];
-        
-        // Cargar cupón guardado
+        carrito = JSON.parse(localStorage.getItem('carritoCliente') || '[]');
+
         let cuponGuardado = localStorage.getItem('cuponAplicado');
         if (cuponGuardado) {
             cuponAplicado = JSON.parse(cuponGuardado);
             descuento = parseFloat(localStorage.getItem('descuento') || 0);
-            let descuentoRow = document.getElementById('descuentoRow');
-            let mensajeCupon = document.getElementById('mensajeCupon');
-            if (descuentoRow) descuentoRow.style.display = 'flex';
-            if (mensajeCupon) mensajeCupon.innerHTML = '<span class="text-success">✅ Cupón aplicado</span>';
+            let dr = document.getElementById('descuentoRow');
+            let mc = document.getElementById('mensajeCupon');
+            if (dr) dr.style.display = 'flex';
+            if (mc) mc.innerHTML = '<span class="text-success fw-bold">✅ Cupón aplicado</span>';
         }
-        
-        // Cargar tipo de entrega guardado
+
         let tipoGuardado = localStorage.getItem('tipoEntrega');
         if (tipoGuardado) {
             tipoEntregaSeleccionado = tipoGuardado;
             seleccionarEntrega(tipoEntregaSeleccionado);
         }
-        
-        // Cargar dirección guardada
+
         let direccionGuardada = localStorage.getItem('direccionEntrega');
-        let direccionInput = document.getElementById('direccion');
-        if (direccionGuardada && direccionInput) {
-            direccionInput.value = direccionGuardada;
-        }
-        
-        // VALIDAR STOCK DE CADA PRODUCTO
+        let input = document.getElementById('direccion');
+        if (direccionGuardada && input) input.value = direccionGuardada;
+
+        // Validar stock
         let carritoActualizado = [];
         let huboCambios = false;
-        
         for (let item of carrito) {
             const stockInfo = await validarStockProducto(item.id, item.cantidad);
-            
             if (!stockInfo.valido) {
                 huboCambios = true;
-                
                 if (stockInfo.stockDisponible === 0) {
-                    // Producto agotado - eliminarlo
-                    await Swal.fire({
-                        icon: 'warning',
-                        title: 'Producto agotado',
-                        text: `"${item.nombre}" ya no tiene stock. Se eliminó de tu carrito.`,
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                    continue; // No agregar al carrito actualizado
+                    await Swal.fire({ icon: 'warning', title: 'Producto agotado', text: `"${item.nombre}" ya no tiene stock. Se eliminó.`, timer: 2000, showConfirmButton: false });
+                    continue;
                 } else {
-                    // Ajustar cantidad al stock disponible
                     item.cantidad = stockInfo.stockDisponible;
                     item.stock = stockInfo.stockDisponible;
                     carritoActualizado.push(item);
-                    await Swal.fire({
-                        icon: 'warning',
-                        title: 'Stock reducido',
-                        text: `"${item.nombre}" ahora solo tiene ${stockInfo.stockDisponible} unidades. Se ajustó tu carrito.`,
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
+                    await Swal.fire({ icon: 'warning', title: 'Stock reducido', text: `"${item.nombre}" ahora solo tiene ${stockInfo.stockDisponible} unidades.`, timer: 2000, showConfirmButton: false });
                 }
             } else {
-                // Stock suficiente, mantener el item
                 item.stock = stockInfo.stockDisponible;
                 carritoActualizado.push(item);
             }
         }
-        
-        // Si hubo cambios, actualizar localStorage y carrito
         if (huboCambios) {
             carrito = carritoActualizado;
             localStorage.setItem('carritoCliente', JSON.stringify(carrito));
         }
-        
-        // Renderizar el carrito
         renderizarCarrito();
     }
 
-    // ===============================
-    // ESCAPE HTML
-    // ===============================
     function escapeHtml(t) {
         if (!t) return '';
         return t.replace(/[&<>]/g, function (m) {
@@ -1025,19 +767,84 @@
     // INICIALIZACIÓN
     // ===============================
     document.addEventListener('DOMContentLoaded', function () {
-        // Cargar carrito con validación
         cargarCarrito();
-        
-        // Configurar eventos
-        const btnCupon = document.getElementById('btnAplicarCupon');
-        const cuponInput = document.getElementById('cuponInput');
-        
-        if (btnCupon) btnCupon.addEventListener('click', aplicarCupon);
-        if (cuponInput) {
-            cuponInput.addEventListener('keypress', function (e) {
-                if (e.key === 'Enter') aplicarCupon();
-            });
-        }
+        document.getElementById('referenciaInput').addEventListener('input', sincronizarReferencia);
+        document.getElementById('btnAplicarCupon').addEventListener('click', aplicarCupon);
+        document.getElementById('cuponInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') aplicarCupon();
+        });
     });
 </script>
+
+<style>
+    :root { --salesiano-gold: #D4AF37; --salesiano-blue: #0d2b6e; }
+
+    .vacio-card { background: #fff; box-shadow: 0 4px 16px rgba(13, 43, 110, 0.05); }
+    .btn-gold {
+        background: linear-gradient(135deg, var(--salesiano-gold), #f0c94a);
+        color: #251d00; border: none;
+    }
+    .btn-gold:hover { color: #251d00; transform: translateY(-1px); }
+
+    /* ===== BARRA ENVÍO GRATIS ===== */
+    .progress-ship { background: linear-gradient(90deg, #fffdf5, #fff8e3); border: 1px dashed #e8c764; }
+
+    /* ===== ITEMS ===== */
+    .cart-img {
+        width: 74px; height: 74px; flex-shrink: 0;
+        background: linear-gradient(135deg, #f2f4ff, #eef2ff);
+        border-radius: 14px; overflow: hidden;
+    }
+    .cart-img i { font-size: 1.8rem; color: #9aa7ce; }
+    .cart-img img { width: 100%; height: 100%; object-fit: contain; }
+    .quantity-btn {
+        width: 34px; height: 34px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        transition: all 0.2s;
+    }
+    .quantity-btn:hover { background: #0d2b6e; color: #fff; border-color: #0d2b6e; }
+    .qty-num { min-width: 30px; text-align: center; }
+    .cart-item { transition: all 0.2s; border-left: 4px solid transparent; background: #fff; }
+    .cart-item:hover { background: #fafbff; border-left-color: var(--salesiano-gold); }
+    .min-w-0 { min-width: 0; }
+
+    /* ===== RESUMEN ===== */
+    .summary-card { position: sticky; top: 20px; overflow: hidden; }
+    .resumen-header { background: linear-gradient(135deg, #0d2b6e, #1d4ed8); }
+    .delivery-option {
+        cursor: pointer; transition: all 0.2s;
+        border: 2px solid #e3e7f0; border-radius: 14px; padding: 0.8rem 0.5rem;
+    }
+    .delivery-option:hover { border-color: #0d2b6e; background: #f4f6ff; transform: translateY(-2px); }
+    .delivery-option.selected {
+        border-color: #16a34a;
+        background: linear-gradient(180deg, #f0fdf4, #ecfdf5);
+        box-shadow: 0 6px 18px rgba(22, 163, 74, 0.18);
+    }
+
+    /* ===== MAPA ===== */
+    .mapa-card { background: #f7f8fc; border: 1px solid #e6eaf3; }
+    .red-pin {
+        width: 22px; height: 22px; border-radius: 50% 50% 50% 0;
+        background: #e11d48; transform: rotate(-45deg);
+        border: 3px solid #fff; box-shadow: 0 4px 12px rgba(225, 29, 72, 0.5);
+    }
+    .sug-list {
+        display: block; width: 100%; text-align: left;
+        background: #fff; border: 1px solid #eef1f8;
+        border-radius: 8px; padding: 0.45rem 0.7rem; margin-bottom: 4px;
+        font-size: 0.8rem; cursor: pointer; transition: all 0.15s;
+    }
+    .sug-list:hover { background: #eef2ff; border-color: #0d2b6e; }
+    .chip-ref {
+        border: 1px solid #d9deeb; background: #fff; color: #334155;
+        border-radius: 50px; font-size: 0.68rem; padding: 0.25rem 0.65rem;
+        cursor: pointer; transition: all 0.15s;
+    }
+    .chip-ref:hover { background: #0d2b6e; color: #fff; border-color: #0d2b6e; }
+
+    @media (max-width: 768px) {
+        .summary-card { position: static; }
+    }
+</style>
 {% endblock %}

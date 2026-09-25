@@ -1,496 +1,488 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📚 Librería Salesiana</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% extends "base_cliente.html" %}
+{% block titulito %}Librería Salesiana — Tienda Online de útiles y libros{% endblock %}
 
-        body {
-            background: #0a0a0f;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0;
-            padding: 20px;
-            overflow: hidden;
-        }
+{% block fullwidth %}
+<!-- ================= HERO ================= -->
+<section class="hero-salesiana position-relative overflow-hidden">
+    <div class="hero-decor hero-decor-1"><i class="fas fa-book-open"></i></div>
+    <div class="hero-decor hero-decor-2"><i class="fas fa-pencil-alt"></i></div>
+    <div class="hero-decor hero-decor-3"><i class="fas fa-graduation-cap"></i></div>
+    <div class="hero-decor hero-decor-4"><i class="fas fa-book"></i></div>
 
-        /* ===== FONDO OSCURO CON ESTRELLAS ===== */
-        .loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #0a0a0f;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            padding: 20px;
-            z-index: 99999;
-        }
-
-        /* ===== ESTRELLAS CON CSS PURO ===== */
-        .stars-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            pointer-events: none;
-            overflow: hidden;
-        }
-
-        .stars-container::before,
-        .stars-container::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                radial-gradient(2px 2px at 10% 20%, rgba(255,255,255,0.9), transparent),
-                radial-gradient(2px 2px at 30% 70%, rgba(255,255,255,0.7), transparent),
-                radial-gradient(1px 1px at 50% 10%, rgba(255,255,255,0.9), transparent),
-                radial-gradient(3px 3px at 70% 40%, rgba(255,255,255,0.6), transparent),
-                radial-gradient(2px 2px at 90% 80%, rgba(255,255,255,0.8), transparent),
-                radial-gradient(1px 1px at 15% 45%, rgba(255,255,255,0.9), transparent),
-                radial-gradient(2px 2px at 45% 90%, rgba(255,255,255,0.7), transparent),
-                radial-gradient(3px 3px at 85% 15%, rgba(255,255,255,0.6), transparent),
-                radial-gradient(1px 1px at 5% 60%, rgba(255,255,255,0.8), transparent),
-                radial-gradient(2px 2px at 60% 55%, rgba(255,255,255,0.9), transparent),
-                radial-gradient(1px 1px at 35% 35%, rgba(255,215,0,0.7), transparent),
-                radial-gradient(2px 2px at 75% 75%, rgba(255,215,0,0.6), transparent),
-                radial-gradient(1px 1px at 95% 45%, rgba(255,255,255,0.8), transparent),
-                radial-gradient(2px 2px at 25% 85%, rgba(255,255,255,0.7), transparent),
-                radial-gradient(3px 3px at 55% 15%, rgba(255,215,0,0.5), transparent),
-                radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,0.9), transparent),
-                radial-gradient(2px 2px at 20% 10%, rgba(255,255,255,0.6), transparent),
-                radial-gradient(1px 1px at 65% 95%, rgba(255,255,255,0.8), transparent),
-                radial-gradient(2px 2px at 40% 50%, rgba(255,215,0,0.7), transparent),
-                radial-gradient(1px 1px at 88% 25%, rgba(255,255,255,0.9), transparent);
-            background-size: 200px 200px;
-            background-repeat: repeat;
-        }
-
-        .stars-container::after {
-            background-image: 
-                radial-gradient(1px 1px at 12% 33%, rgba(255,255,255,0.8), transparent),
-                radial-gradient(2px 2px at 48% 77%, rgba(255,255,255,0.6), transparent),
-                radial-gradient(3px 3px at 68% 12%, rgba(255,215,0,0.5), transparent),
-                radial-gradient(1px 1px at 92% 62%, rgba(255,255,255,0.9), transparent),
-                radial-gradient(2px 2px at 32% 48%, rgba(255,255,255,0.7), transparent),
-                radial-gradient(1px 1px at 76% 88%, rgba(255,255,255,0.8), transparent),
-                radial-gradient(2px 2px at 16% 72%, rgba(255,215,0,0.6), transparent),
-                radial-gradient(1px 1px at 56% 28%, rgba(255,255,255,0.9), transparent),
-                radial-gradient(3px 3px at 84% 52%, rgba(255,255,255,0.5), transparent),
-                radial-gradient(1px 1px at 44% 6%, rgba(255,255,255,0.8), transparent),
-                radial-gradient(2px 2px at 8% 92%, rgba(255,255,255,0.7), transparent),
-                radial-gradient(1px 1px at 72% 38%, rgba(255,215,0,0.6), transparent),
-                radial-gradient(2px 2px at 28% 18%, rgba(255,255,255,0.9), transparent),
-                radial-gradient(1px 1px at 96% 8%, rgba(255,255,255,0.8), transparent),
-                radial-gradient(3px 3px at 52% 62%, rgba(255,255,255,0.5), transparent),
-                radial-gradient(1px 1px at 18% 54%, rgba(255,255,255,0.9), transparent),
-                radial-gradient(2px 2px at 64% 82%, rgba(255,215,0,0.6), transparent),
-                radial-gradient(1px 1px at 38% 40%, rgba(255,255,255,0.8), transparent),
-                radial-gradient(2px 2px at 88% 68%, rgba(255,255,255,0.7), transparent),
-                radial-gradient(1px 1px at 4% 80%, rgba(255,255,255,0.9), transparent);
-            background-size: 180px 180px;
-            background-repeat: repeat;
-            opacity: 0.7;
-            animation: twinkleStars 3s ease-in-out infinite alternate;
-        }
-
-        @keyframes twinkleStars {
-            0% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-
-        /* ===== VÍA LÁCTEA ===== */
-        .milky-way {
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(ellipse at 30% 50%, rgba(100, 100, 255, 0.05) 0%, transparent 50%),
-                        radial-gradient(ellipse at 70% 30%, rgba(200, 150, 255, 0.03) 0%, transparent 40%),
-                        radial-gradient(ellipse at 50% 70%, rgba(100, 200, 255, 0.03) 0%, transparent 40%);
-            z-index: 0;
-            animation: rotateGalaxy 60s linear infinite;
-            pointer-events: none;
-        }
-
-        @keyframes rotateGalaxy {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .loading-content {
-            text-align: center;
-            color: white;
-            max-width: 500px;
-            width: 100%;
-            position: relative;
-            z-index: 1;
-        }
-
-        .logo-ring {
-            width: 120px;
-            height: 120px;
-            border: 4px solid #FFD700;
-            border-radius: 50%;
-            margin: 0 auto 20px auto;
-            position: relative;
-            animation: spinSlow 4s linear infinite;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, 0.5);
-            box-shadow: 0 0 60px rgba(255, 215, 0, 0.2), inset 0 0 30px rgba(255, 215, 0, 0.05);
-        }
-
-        .logo-ring::before {
-            content: '';
-            position: absolute;
-            top: -8px;
-            left: -8px;
-            right: -8px;
-            bottom: -8px;
-            border-radius: 50%;
-            border: 2px solid rgba(255, 215, 0, 0.1);
-            animation: spinSlow 8s linear infinite reverse;
-        }
-
-        .logo-ring i {
-            font-size: 3.5rem;
-            color: #FFD700;
-            text-shadow: 0 0 40px rgba(255, 215, 0, 0.4);
-        }
-
-        .logo-title {
-            color: #FFFFFF;
-            font-size: 2.8rem;
-            font-weight: 800;
-            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
-            margin: 0;
-            letter-spacing: 3px;
-        }
-
-        .logo-subtitle {
-            color: #FFD700;
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin: 0 0 30px 0;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
-        }
-
-        .progress-section {
-            max-width: 400px;
-            margin: 0 auto 25px auto;
-        }
-
-        .progress-label {
-            color: #FFFFFF;
-            font-weight: 500;
-            font-size: 1.1rem;
-            margin-bottom: 12px;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
-            opacity: 0.9;
-        }
-
-        .progress-bar-wrapper {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 25px;
-            height: 12px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 215, 0, 0.15);
-            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #FFD700, #FFA000);
-            width: 0%;
-            border-radius: 25px;
-            transition: width 0.3s ease;
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
-            position: relative;
-        }
-
-        .progress-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            animation: shimmer 1.5s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        .progress-percent {
-            color: #FFD700;
-            font-weight: 700;
-            font-size: 1.2rem;
-            margin-top: 10px;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
-        }
-
-        .dots-container {
-            margin: 25px 0;
-        }
-
-        .loading-dot {
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            background: #FFD700;
-            border-radius: 50%;
-            margin: 0 7px;
-            animation: bounceDot 1.4s infinite ease-in-out;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
-        }
-
-        .dot-delay-1 { animation-delay: 0.2s; }
-        .dot-delay-2 { animation-delay: 0.4s; }
-
-        .countdown-number {
-            display: inline-block;
-            font-size: 3rem;
-            font-weight: 900;
-            color: #FFD700;
-            min-width: 60px;
-            text-shadow: 0 0 40px rgba(255, 215, 0, 0.4);
-            animation: pulseCount 1s ease-in-out infinite alternate;
-        }
-
-        .countdown-label {
-            color: #FFFFFF;
-            font-size: 1.2rem;
-            font-weight: 500;
-            margin-left: 8px;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
-            opacity: 0.7;
-        }
-
-        @keyframes spinSlow {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes bounceDot {
-            0%, 80%, 100% { transform: scale(0.8); opacity: 0.4; }
-            40% { transform: scale(1.3); opacity: 1; }
-        }
-
-        @keyframes pulseCount {
-            0% { transform: scale(1); opacity: 0.8; }
-            100% { transform: scale(1.15); opacity: 1; }
-        }
-
-        @media (max-width: 576px) {
-            .logo-ring { width: 90px; height: 90px; }
-            .logo-ring i { font-size: 2.5rem; }
-            .logo-title { font-size: 2rem; }
-            .logo-subtitle { font-size: 0.95rem; }
-            .countdown-number { font-size: 2.2rem; }
-            .loading-dot { width: 10px; height: 10px; margin: 0 5px; }
-            .progress-section { max-width: 280px; }
-        }
-    </style>
-</head>
-<body>
-    <div class="loading-screen" id="loadingScreen">
-        <div class="milky-way"></div>
-        <div class="stars-container"></div>
-
-        <div class="loading-content">
-            <div class="logo-ring">
-                <i class="fas fa-book-open"></i>
-            </div>
-            <h1 class="logo-title">Salesiana</h1>
-            <p class="logo-subtitle">Librería Don Bosco</p>
-
-            <div class="progress-section">
-                <div class="progress-label">
-                    <span id="progressText">Inicializando sistema...</span>
+    <div class="container py-4 py-md-5 position-relative" style="max-width:1280px;z-index:2;">
+        <div class="row align-items-center g-4">
+            <div class="col-12 col-lg-6">
+                <!-- RECTÁNGULO CON EL NOMBRE -->
+                <div class="hero-box px-4 px-md-5 py-4 py-md-5 rounded-4 shadow-lg">
+                    <span class="badge-hero"><i class="fas fa-star"></i> Don Bosco</span>
+                    <h1 class="hero-title mb-3">
+                        LIBRERÍA<br><span class="hero-title-gold">SALESIANA</span>
+                    </h1>
+                    <p class="hero-sub mb-4">
+                        "Formando buenos cristianos y honrados ciudadanos". Todo lo que necesitas
+                        para el colegio, oficina y tu creatividad en un solo lugar.
+                    </p>
+                    <form class="hero-search mb-4" onsubmit="buscarCatalogo(event)">
+                        <input type="text" id="searchHero" placeholder="¿Qué estás buscando hoy? Ej: cuaderno, lapiceros...">
+                        <button type="submit" class="btn-gold-hero"><i class="fas fa-search me-2"></i>Buscar</button>
+                    </form>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{{ url_for('pedidos.catalogo_cliente') }}" class="btn btn-warning fw-bold px-4 shadow">
+                            <i class="fas fa-store me-2"></i>Ver catálogo
+                        </a>
+                        <a href="{{ url_for('main.contacto') }}" class="btn btn-outline-light fw-bold px-4">
+                            <i class="fas fa-map-marker-alt me-2"></i>Nuestra tienda
+                        </a>
+                    </div>
                 </div>
-                <div class="progress-bar-wrapper">
-                    <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="col-12 col-lg-6 d-none d-lg-block text-center">
+                <div class="stack-books">
+                    <div class="book book-1">📚</div>
+                    <div class="book book-2">✏️</div>
+                    <div class="book book-3">🎨</div>
+                    <div class="book book-4">📓</div>
+                    <div class="book book-5">🖍️</div>
+                    <div class="book book-6">🎒</div>
+                    <div class="book-ring">
+                        <i class="fas fa-book-open"></i>
+                    </div>
                 </div>
-                <div class="progress-percent" id="progressPercent">0%</div>
-            </div>
-
-            <div class="dots-container">
-                <span class="loading-dot"></span>
-                <span class="loading-dot dot-delay-1"></span>
-                <span class="loading-dot dot-delay-2"></span>
-            </div>
-
-            <div>
-                <span class="countdown-number" id="countdownNum">3</span>
-                <span class="countdown-label">s</span>
             </div>
         </div>
     </div>
 
-    <script>
-        // ===== SILENCIAR ERRORES DE PERMISOS =====
-        window.addEventListener('unhandledrejection', function(e) {
-            if (e.reason && e.reason.code === 403) {
-                e.preventDefault();
-                return true;
-            }
-            if (e.reason && e.reason.message && (
-                e.reason.message.includes('permission error') ||
-                e.reason.message.includes('permission denied') ||
-                e.reason.message.includes('not authorized')
-            )) {
-                e.preventDefault();
-                return true;
-            }
+    <!-- ONDA -->
+    <svg class="hero-wave" viewBox="0 0 1440 70" preserveAspectRatio="none">
+        <path d="M0,40 C360,90 1080,-10 1440,40 L1440,70 L0,70 Z" fill="#f6f7fb"></path>
+    </svg>
+</section>
+
+<!-- ================= ESTADÍSTICAS ================= -->
+<section class="container main-container" style="max-width:1280px;">
+    <div class="row g-3 justify-content-center">
+        <div class="col-6 col-md-3">
+            <div class="stat-card text-center">
+                <i class="fas fa-box-open"></i>
+                <h3 id="statProductos">0</h3>
+                <small>Productos</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card text-center">
+                <i class="fas fa-th-large"></i>
+                <h3>{{ categorias|length }}</h3>
+                <small>Categorías</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card text-center">
+                <i class="fas fa-truck"></i>
+                <h3>24h</h3>
+                <small>Despacho rápido</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card text-center">
+                <i class="fas fa-shield-alt"></i>
+                <h3>100%</h3>
+                <small>Compra segura</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= CATEGORÍAS ================= -->
+    <div class="mt-5">
+        <div class="d-flex justify-content-between align-items-end mb-3">
+            <h2 class="fw-bold mb-0 fs-4">Compra por <span style="color:var(--salesiano-gold);">categoría</span></h2>
+            <a href="{{ url_for('pedidos.catalogo_cliente') }}" class="text-decoration-none small fw-bold">Ver todas <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="row g-3">
+            {% for categoria in categorias %}
+            <div class="col-6 col-md-3 col-lg-2">
+                <a class="cat-card text-decoration-none" href="{{ url_for('pedidos.catalogo_cliente') }}?categoria={{ categoria.id_categoria }}">
+                    <div class="cat-icon">
+                        {% if categoria.nombre|lower == 'cuadernos' %}📓
+                        {% elif categoria.nombre|lower == 'lapiceros' %}✍️
+                        {% elif categoria.nombre|lower == 'papeleria' %}📄
+                        {% elif categoria.nombre|lower == 'arte' %}🎨
+                        {% elif categoria.nombre|lower == 'oficina' %}📎
+                        {% elif categoria.nombre|lower == 'herramientas' %}🔧
+                        {% elif categoria.nombre|lower == 'libros' %}📚
+                        {% elif categoria.nombre|lower == 'mochilas' %}🎒
+                        {% else %}📂{% endif %}
+                    </div>
+                    <strong class="fs-7">{{ categoria.nombre|capitalize }}</strong>
+                    <small>{{ categoria.productos|length if categoria.productos else 0 }} productos</small>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ================= PRODUCTOS DESTACADOS ================= -->
+    <div class="mt-5">
+        <div class="d-flex justify-content-between align-items-end mb-3">
+            <h2 class="fw-bold mb-0 fs-4">Lo más <span style="color:var(--salesiano-gold);">buscado</span></h2>
+            <a href="{{ url_for('pedidos.catalogo_cliente') }}" class="text-decoration-none small fw-bold">Ver todo el catálogo <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="row g-3" id="destacadosGrid">
+            <div class="col-12 text-center py-4">
+                <div class="spinner-border text-warning"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= BENEFICIOS ================= -->
+    <div class="row g-3 mt-2">
+        <div class="col-6 col-lg-3">
+            <div class="benefit-card">
+                <i class="fas fa-truck-fast text-warning"></i>
+                <strong>Envío a domicilio</strong>
+                <small>Recibe tu pedido donde estés</small>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="benefit-card">
+                <i class="fas fa-credit-card text-success"></i>
+                <strong>Pago seguro</strong>
+                <small>Tarjeta, Yape o contra entrega</small>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="benefit-card">
+                <i class="fas fa-star text-primary"></i>
+                <strong>Puntos por compra</strong>
+                <small>Canjea beneficios en tu perfil</small>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="benefit-card">
+                <i class="fas fa-headset text-danger"></i>
+                <strong>Atención al cliente</strong>
+                <small>Te ayudamos en cada compra</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= CITA DON BOSCO ================= -->
+    <div class="quote-banner rounded-4 my-5 p-4 p-md-5 text-center text-white position-relative overflow-hidden">
+        <i class="fas fa-quote-left quote-icon"></i>
+        <h3 class="fw-bold mb-2 fs-4">"No basta amar a los jóvenes, sino que ellos se den cuenta de que son amados."</h3>
+        <p class="mb-0 text-warning fw-semibold">— San Juan Bosco · Fundador de los Salesianos</p>
+    </div>
+</section>
+{% endblock %}
+
+{% block contenido %}
+<!-- El resto de la página se muestra en fullwidth -->
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    const coloresCategoria = {
+        'libros': '#8e44ad', 'cuadernos': '#16a085', 'lapiceros': '#2e86de',
+        'arte': '#e67e22', 'oficina': '#34495e', 'herramientas': '#c0392b',
+        'papeleria': '#27ae60', 'mochilas': '#d35400'
+    };
+
+    // ===== CARGAR PRODUCTOS DESTACADOS =====
+    function cargarDestacados() {
+        fetch('/api/productos/catalogo')
+            .then(r => r.json())
+            .then(data => {
+                let destacados = data.filter(p => p.destacado).slice(0, 8);
+                if (destacados.length === 0) destacados = data.slice(0, 8);
+                document.getElementById('statProductos').textContent = data.length;
+                mostrarDestacados(destacados);
+            })
+            .catch(() => {
+                document.getElementById('destacadosGrid').innerHTML = '<div class="col-12 text-center">No se pudieron cargar los productos</div>';
+            });
+    }
+
+    function mostrarDestacados(productos) {
+        const grid = document.getElementById('destacadosGrid');
+        if (!productos.length) {
+            grid.innerHTML = '<div class="col-12 text-center py-4">Pronto tendremos novedades 😊</div>';
+            return;
+        }
+        let html = '';
+        productos.forEach(p => {
+            const precioOferta = p.precio_oferta && parseFloat(p.precio_oferta) < p.precio ? parseFloat(p.precio_oferta) : null;
+            const precioMostrar = precioOferta || p.precio;
+            html += `
+            <div class="col-6 col-lg-3">
+                <div class="card h-100 border-0 shadow-sm minicard rounded-4 overflow-hidden">
+                    <div class="mini-img" style="background:linear-gradient(135deg,#fff, ${coloresCategoria[p.categoria || 'papeleria']}22);">
+                        ${precioOferta ? `<span class="badge bg-danger position-absolute" style="top:10px;left:10px;">-${Math.round((1-precioOferta/p.precio)*100)}%</span>` : ''}
+                        ${p.imagen_url
+                            ? `<img src="${p.imagen_url}" onerror="this.style.display='none';">`
+                            : `<i class="fas fa-book-open"></i>`}
+                    </div>
+                    <div class="card-body p-2 p-md-3">
+                        <h6 class="fw-bold mb-1 text-truncate" style="font-size:0.82rem;">${escapeHtml(p.nombre)}</h6>
+                        <div class="d-flex align-items-baseline gap-2 mb-2">
+                            ${precioOferta ? `<span class="text-decoration-line-through small text-muted">S/. ${p.precio.toFixed(2)}</span><span class="text-danger fw-bold">S/. ${precioOferta.toFixed(2)}</span>` : `<span class="text-primary fw-bold">S/. ${p.precio.toFixed(2)}</span>`}
+                        </div>
+                        ${p.cantidad > 0
+                            ? `<button class="btn btn-warning w-100 fw-bold rounded-pill btn-sm" onclick="agregarAlCarrito(${p.id}, '${escapeHtml(p.nombre)}', ${precioMostrar}, ${p.cantidad})"><i class="fas fa-cart-plus me-1"></i>Agregar</button>`
+                            : `<button class="btn btn-light w-100 rounded-pill btn-sm" disabled>Agotado</button>`}
+                    </div>
+                </div>
+            </div>`;
         });
+        grid.innerHTML = html;
+    }
 
-        const originalConsoleError = console.error;
-        console.error = function() {
-            const args = Array.from(arguments);
-            const msg = args.join(' ');
-            if (msg.includes('permission error') ||
-                msg.includes('403') ||
-                msg.includes('not authorized') ||
-                msg.includes('permission denied')) {
-                return;
-            }
-            originalConsoleError.apply(console, arguments);
-        };
+    function escapeHtml(t) { if (!t) return ''; return t.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
 
-        // ===== PROGRESO Y CONTADOR =====
-        (function() {
-            'use strict';
+    async function verificarStock(productoId) {
+        try {
+            const r = await fetch(`/api/productos/${productoId}/stock`);
+            const d = await r.json();
+            return r.ok ? { ok: true, stock: d.stock } : { ok: true, stock: 999 };
+        } catch { return { ok: true, stock: 999 }; }
+    }
 
-            function initLoading() {
-                try {
-                    const progressFill = document.getElementById('progressFill');
-                    const progressPercent = document.getElementById('progressPercent');
-                    const progressText = document.getElementById('progressText');
-                    const countdownNum = document.getElementById('countdownNum');
+    async function agregarAlCarrito(id, nombre, precio, stockDisponible) {
+        const info = await verificarStock(id);
+        if (info.stock === 0) {
+            Swal.fire({ icon: 'error', title: 'Agotado', text: `"${nombre}" ya no tiene stock.` });
+            return;
+        }
+        let carrito = JSON.parse(localStorage.getItem('carritoCliente') || '[]');
+        let existente = carrito.find(p => p.id === id);
+        let nueva = existente ? existente.cantidad + 1 : 1;
+        if (nueva > info.stock) {
+            Swal.fire({ icon: 'warning', title: 'Stock insuficiente', text: `Solo hay ${info.stock} unidades.` });
+            return;
+        }
+        let productoCompleto = null;
+        try {
+            const r = await fetch('/api/productos/catalogo');
+            const data = await r.json();
+            productoCompleto = data.find(p => p.id === id);
+        } catch (e) {}
+        if (existente) {
+            existente.cantidad = nueva;
+            if (productoCompleto && !existente.imagen_url) existente.imagen_url = productoCompleto.imagen_url;
+        } else {
+            carrito.push({ id, nombre, precio, cantidad: 1, stock: info.stock, imagen_url: productoCompleto ? productoCompleto.imagen_url : null });
+        }
+        localStorage.setItem('carritoCliente', JSON.stringify(carrito));
+        actualizarContadorCarrito();
+        const toast = document.createElement('div');
+        toast.className = 'position-fixed bottom-0 end-0 bg-success text-white p-3 m-3 rounded-4 shadow-lg d-flex align-items-center gap-2';
+        toast.innerHTML = `<i class="fas fa-check-circle"></i><span>${nombre}</span>`;
+        toast.style.zIndex = '9999';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 1800);
+    }
 
-                    if (!progressFill || !progressPercent || !progressText || !countdownNum) {
-                        return;
-                    }
+    document.addEventListener('DOMContentLoaded', cargarDestacados);
+    window.addEventListener('storage', function (e) {
+        if (e.key === 'carritoCliente' || e.key === null) actualizarContadorCarrito();
+    });
 
-                    let progress = 0;
-                    let countdown = 3;
-                    let phase = 0;
-                    let progressInterval = null;
-                    let countdownInterval = null;
+    // Registro de console.error silencioso (evita ruido en consola)
+    const originalConsoleError = console.error;
+    console.error = function (...args) {
+        const msg = args.join(' ');
+        if (msg.includes('403') || msg.includes('permission') || msg.includes('not authorized')) return;
+        originalConsoleError.apply(console, args);
+    };
+</script>
 
-                    const messages = [
-                        'Cargando módulos...',
-                        'Conectando base de datos...',
-                        'Inicializando ventas...',
-                        '¡Listo! 🙏'
-                    ];
+<style>
+    /* ===== HERO ===== */
+    .hero-salesiana {
+        background: linear-gradient(135deg, #0d2b6e 0%, #173f9e 45%, #2c5fd0 100%);
+        min-height: 460px;
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .hero-decor {
+        position: absolute;
+        color: rgba(255, 255, 255, 0.08);
+        font-size: 9rem;
+        z-index: 1;
+    }
+    .hero-decor-1 { top: 8%; left: 5%; transform: rotate(-15deg); }
+    .hero-decor-2 { top: 60%; right: 8%; font-size: 6rem; transform: rotate(20deg); }
+    .hero-decor-3 { bottom: 5%; left: 40%; font-size: 5rem; transform: rotate(10deg); }
+    .hero-decor-4 { top: 20%; right: 38%; font-size: 4.5rem; transform: rotate(-25deg); }
 
-                    function clearIntervals() {
-                        if (progressInterval) clearInterval(progressInterval);
-                        if (countdownInterval) clearInterval(countdownInterval);
-                    }
+    .hero-box {
+        background: linear-gradient(145deg, rgba(255, 255, 255, 0.97), rgba(255, 250, 235, 0.95));
+        backdrop-filter: blur(8px);
+        border-left: 8px solid var(--salesiano-gold);
+        color: #1d2a4d;
+    }
+    .badge-hero {
+        background: linear-gradient(90deg, #b8860b, var(--salesiano-gold));
+        color: #251d00;
+        font-weight: 700;
+        font-size: 0.75rem;
+        padding: 0.35rem 0.9rem;
+        border-radius: 50px;
+        display: inline-block;
+        margin-bottom: 1rem;
+        letter-spacing: 1px;
+    }
+    .hero-title {
+        font-size: 2.9rem;
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: 1px;
+    }
+    .hero-title-gold {
+        background: linear-gradient(90deg, #b8860b, #e8b923);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .hero-sub { color: #3d4a6b; font-size: 0.95rem; }
+    .hero-search {
+        display: flex;
+        border: 2px solid var(--salesiano-gold);
+        border-radius: 50px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 8px 25px rgba(13, 43, 110, 0.15);
+        max-width: 520px;
+    }
+    .hero-search input { flex: 1; border: 0; outline: none; padding: 0.7rem 1.1rem; font-size: 0.9rem; }
+    .btn-gold-hero {
+        border: 0;
+        background: linear-gradient(135deg, var(--salesiano-gold), #f0c94a);
+        color: #1d2a4d;
+        font-weight: 700;
+        padding: 0 1.3rem;
+    }
 
-                    progressInterval = setInterval(() => {
-                        try {
-                            let increment;
-                            if (progress < 30) increment = 3 + Math.random() * 5;
-                            else if (progress < 70) increment = 2 + Math.random() * 3;
-                            else increment = 1 + Math.random() * 2;
+    /* Libros apilados decorativos */
+    .stack-books { position: relative; height: 380px; }
+    .book {
+        position: absolute;
+        width: 90px;
+        height: 90px;
+        border-radius: 20px;
+        background: linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06));
+        border: 1px solid rgba(255,255,255,0.25);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.6rem;
+        animation: floatY 5s ease-in-out infinite;
+    }
+    .book-1 { top: 0; left: 8%; animation-delay: 0s; }
+    .book-2 { top: 14%; right: 12%; animation-delay: 0.6s; }
+    .book-3 { top: 46%; left: 2%; animation-delay: 1.2s; }
+    .book-4 { top: 58%; right: 4%; animation-delay: 1.8s; }
+    .book-5 { top: 8%; left: 38%; animation-delay: 2.4s; }
+    .book-6 { bottom: 2%; left: 22%; animation-delay: 3s; }
+    .book-ring {
+        position: absolute;
+        top: 32%;
+        left: 36%;
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, var(--salesiano-gold), #f0c94a);
+        color: #251d00;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        box-shadow: 0 0 50px rgba(212, 175, 55, 0.5);
+    }
+    @keyframes floatY {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-14px); }
+    }
 
-                            progress = Math.min(progress + increment, 100);
+    .hero-wave { position: absolute; bottom: -1px; left: 0; width: 100%; height: 60px; }
 
-                            progressFill.style.width = progress + '%';
-                            progressPercent.textContent = Math.floor(progress) + '%';
+    /* ===== STATS ===== */
+    .stat-card {
+        background: #fff;
+        border-radius: 18px;
+        padding: 1.1rem;
+        box-shadow: 0 6px 22px rgba(13, 43, 110, 0.08);
+        margin-top: -28px;
+        border-bottom: 3px solid var(--salesiano-gold);
+    }
+    .stat-card i { font-size: 1.6rem; color: var(--salesiano-blue); opacity: 0.9; }
+    .stat-card h3 { font-weight: 800; color: var(--salesiano-blue); margin: 0.2rem 0; }
+    .stat-card small { color: #6b7a99; }
 
-                            const phaseIndex = Math.floor(progress / 33);
-                            if (phaseIndex > phase && phaseIndex < 3) {
-                                phase = phaseIndex;
-                                progressText.textContent = messages[phase];
-                            }
+    /* ===== CAT CARDS ===== */
+    .cat-card {
+        background: #fff;
+        border-radius: 18px;
+        padding: 1.1rem 0.8rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        color: #1d2a4d;
+        text-align: center;
+        box-shadow: 0 4px 16px rgba(13, 43, 110, 0.06);
+        transition: all 0.25s;
+        border: 2px solid transparent;
+    }
+    .cat-card:hover { transform: translateY(-6px); border-color: var(--salesiano-gold); color: #1d2a4d; box-shadow: 0 14px 30px rgba(13, 43, 110, 0.14); }
+    .cat-icon { font-size: 2rem; background: #f2f4ff; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 6px; }
+    .cat-card strong { font-size: 0.85rem; }
+    .cat-card small { color: #6b7a99; font-size: 0.7rem; }
 
-                            if (progress >= 100) {
-                                progressFill.style.width = '100%';
-                                progressText.textContent = messages[3];
-                                clearInterval(progressInterval);
-                            }
-                        } catch (e) {}
-                    }, 150);
+    /* ===== MINI PRODUCT CARDS ===== */
+    .minicard { transition: all 0.25s; }
+    .minicard:hover { transform: translateY(-6px); box-shadow: 0 16px 30px rgba(13,43,110,0.13) !important; }
+    .mini-img {
+        height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .mini-img i { font-size: 3rem; color: #b3bdd8; }
+    .mini-img img { width: 100%; height: 100%; object-fit: cover; }
 
-                    countdownInterval = setInterval(() => {
-                        try {
-                            countdown--;
-                            countdownNum.textContent = countdown;
+    /* ===== BENEFITS ===== */
+    .benefit-card {
+        background: linear-gradient(145deg, #fff, #fbfcff);
+        border-radius: 18px;
+        padding: 1.2rem 1rem;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        border: 1px solid #eef1f8;
+        height: 100%;
+    }
+    .benefit-card i { font-size: 2rem; margin-bottom: 4px; }
+    .benefit-card strong { font-size: 0.85rem; color: #1d2a4d; }
+    .benefit-card small { font-size: 0.72rem; color: #6b7a99; }
 
-                            countdownNum.style.transform = 'scale(0.8)';
-                            setTimeout(() => {
-                                countdownNum.style.transform = 'scale(1)';
-                            }, 150);
+    /* ===== QUOTE ===== */
+    .quote-banner {
+        background: linear-gradient(135deg, #0d2b6e, #173f9e);
+        box-shadow: 0 20px 50px rgba(13, 43, 110, 0.35);
+    }
+    .quote-icon { position: absolute; font-size: 6rem; opacity: 0.12; top: 5px; left: 20px; }
 
-                            if (countdown <= 0) {
-                                clearIntervals();
-                                const screen = document.getElementById('loadingScreen');
-                                if (screen) {
-                                    screen.style.transition = 'opacity 0.6s ease';
-                                    screen.style.opacity = '0';
-                                }
-                                setTimeout(() => {
-                                    window.location.href = '/catalogo';
-                                }, 500);
-                            }
-                        } catch (e) {}
-                    }, 1000);
-
-                    setTimeout(() => {
-                        try {
-                            if (countdown > 0) {
-                                window.location.href = '/catalogo';
-                            }
-                        } catch (e) {}
-                    }, 8000);
-
-                    window.addEventListener('beforeunload', clearIntervals);
-                } catch (e) {
-                    setTimeout(() => {
-                        window.location.href = '/catalogo';
-                    }, 3000);
-                }
-            }
-
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initLoading);
-            } else {
-                initLoading();
-            }
-        })();
-    </script>
-
-    <noscript>
-        <meta http-equiv="refresh" content="3;url=/catalogo">
-    </noscript>
-</body>
-</html>
+    @media (max-width: 576px) {
+        .hero-title { font-size: 2rem; }
+        .hero-decor { font-size: 4rem; }
+        .stat-card { margin-top: -14px; }
+        .stat-card i { font-size: 1.2rem; }
+    }
+</style>
+{% endblock %}

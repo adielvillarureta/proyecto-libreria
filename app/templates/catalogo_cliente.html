@@ -1,146 +1,152 @@
 {% extends "base_cliente.html" %}
-{% block titulito %}🏪 Tienda Online - Librería Salesiana{% endblock %}
+{% block titulito %}Tienda Online — Librería Salesiana{% endblock %}
 
 {% block contenido %}
-<div class="container-fluid py-3 py-md-4">
-    <div class="row">
-        <!-- Panel de Filtros - Lado Izquierdo -->
-        <div class="col-12 col-md-3 mb-4">
-            <div class="card shadow-lg border-0 rounded-4">
-                <div class="card-header bg-gradient-primary text-white rounded-top-4 py-3">
-                    <h6 class="mb-0 fw-bold"><i class="fas fa-sliders-h me-2"></i>Filtrar Productos</h6>
-                </div>
-                <div class="card-body p-3">
-                    <!-- Búsqueda por nombre -->
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold small text-uppercase text-muted">
-                            <i class="fas fa-search me-1 text-primary"></i> Buscar
-                        </label>
-                        <input type="text" id="filtroBuscar" class="form-control form-control-sm rounded-pill" 
-                               placeholder="🔍 Nombre del producto..." onkeyup="if(event.key==='Enter') aplicarFiltros();">
-                    </div>
-                    
-                    <!-- Filtro por categoría -->
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold small text-uppercase text-muted">
-                            <i class="fas fa-folder me-1 text-primary"></i> Categoría
-                        </label>
-                        <select id="filtroCategoria" class="form-select form-select-sm rounded-pill" onchange="aplicarFiltros()">
-                            <option value="">📂 Todas las categorías</option>
-                            {% for categoria in categorias %}
-                            <option value="{{ categoria.id_categoria }}">
-                                {% if categoria.nombre == 'cuadernos' %}📓
-                                {% elif categoria.nombre == 'lapiceros' %}✍️
-                                {% elif categoria.nombre == 'papeleria' %}📄
-                                {% elif categoria.nombre == 'arte' %}🎨
-                                {% elif categoria.nombre == 'oficina' %}📎
-                                {% elif categoria.nombre == 'herramientas' %}🔧
-                                {% else %}📂{% endif %}
-                                {{ categoria.nombre|capitalize }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    
-                    <!-- Filtro por precio (rango) -->
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold small text-uppercase text-muted">
-                            <i class="fas fa-coins me-1 text-primary"></i> Precio
-                        </label>
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text">S/.</span>
-                                    <input type="number" id="precioMin" class="form-control" placeholder="Mín" value="0" step="1" onchange="aplicarFiltros()">
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text">S/.</span>
-                                    <input type="number" id="precioMax" class="form-control" placeholder="Máx" value="100" step="1" onchange="aplicarFiltros()">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Filtro por stock -->
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold small text-uppercase text-muted">
-                            <i class="fas fa-boxes me-1 text-primary"></i> Disponibilidad
-                        </label>
-                        <div class="d-flex gap-2 flex-wrap">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="filtroStock" id="stockTodos" value="" checked onchange="aplicarFiltros()">
-                                <label class="form-check-label small" for="stockTodos">Todos</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="filtroStock" id="stockDisponible" value="stock" onchange="aplicarFiltros()">
-                                <label class="form-check-label small" for="stockDisponible">En stock</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="filtroStock" id="stockBajo" value="bajo" onchange="aplicarFiltros()">
-                                <label class="form-check-label small" for="stockBajo">Stock bajo</label>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Ordenar -->
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold small text-uppercase text-muted">
-                            <i class="fas fa-sort-amount-down me-1 text-primary"></i> Ordenar por
-                        </label>
-                        <select id="filtroOrden" class="form-select form-select-sm rounded-pill" onchange="aplicarFiltros()">
-                            <option value="nombre_asc">📝 Nombre A-Z</option>
-                            <option value="nombre_desc">📝 Nombre Z-A</option>
-                            <option value="precio_asc">💰 Menor precio</option>
-                            <option value="precio_desc">💰 Mayor precio</option>
-                            <option value="stock_desc">📦 Más stock</option>
-                            <option value="destacado_desc">⭐ Destacados primero</option>
-                        </select>
-                    </div>
-                    
-                    <hr class="my-3">
-                    
-                    <!-- Botones -->
-                    <button class="btn btn-primary w-100 mb-2 rounded-pill" id="btnAplicarFiltros">
-                        <i class="fas fa-search me-2"></i>Aplicar Filtros
-                    </button>
-                    <button class="btn btn-outline-secondary w-100 rounded-pill" id="btnLimpiarFiltros">
-                        <i class="fas fa-undo-alt me-2"></i>Limpiar Filtros
-                    </button>
-                </div>
-                
-                <!-- Banner promocional -->
-                <div class="card-footer bg-gradient-warning text-center py-3 rounded-bottom-4">
-                    <i class="fas fa-truck fa-2x mb-2 text-dark"></i>
-                    <h6 class="fw-bold mb-1 text-dark">¡Envíos a domicilio!</h6>
-                    <small class="text-dark">Recibe tus pedidos en casa</small>
-                </div>
+<!-- BANNER CATÁLOGO -->
+<div class="catalogo-banner rounded-4 p-4 p-md-5 mb-4 text-white position-relative overflow-hidden">
+    <div class="banner-glow"></div>
+    <div class="row align-items-center position-relative" style="z-index:2;">
+        <div class="col-12 col-lg-6">
+            <h1 class="fw-bold mb-1 fs-3 fs-md-2"><i class="fas fa-store me-2 text-warning"></i>Nuestra Tienda</h1>
+            <p class="mb-0 opacity-75 d-none d-md-block">Encuentra útiles escolares, libros y artículos de oficina con los mejores precios.</p>
+        </div>
+        <div class="col-12 col-lg-6 mt-3 mt-lg-0">
+            <div class="search-form bg-white">
+                <input type="text" id="filtroBuscar" placeholder="🔍 Busca por nombre de producto..." onkeyup="if(event.key==='Enter') aplicarFiltros();">
+                <button type="button" onclick="aplicarFiltros()"><i class="fas fa-search"></i></button>
             </div>
         </div>
-        
-        <!-- Productos - Lado Derecho -->
-        <div class="col-12 col-md-9">
-            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-                <h5 class="mb-0 fw-bold fs-6 fs-md-5">
-                    <i class="fas fa-gem me-2 text-primary"></i>Nuestros Productos
-                    <span id="categoriaSeleccionadaLabel" class="badge bg-gold ms-2" style="display:none;"></span>
-                </h5>
-                <div class="d-flex align-items-center gap-2 gap-md-3">
-                    <span class="badge bg-primary rounded-pill px-2 px-md-3 py-2" id="contadorProductos">
-                        <i class="fas fa-box me-1"></i> 0 productos
-                    </span>
-                    <button class="btn btn-sm btn-outline-secondary rounded-pill" id="btnVerCarrito" onclick="window.location.href='/carrito'">
-                        <i class="fas fa-shopping-cart me-1"></i><span class="d-none d-sm-inline"> Ver carrito</span>
-                    </button>
-                </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Panel de Filtros -->
+    <div class="col-12 col-lg-3 mb-4">
+        <div class="card shadow-sm border-0 rounded-4 sticky-filtros">
+            <div class="card-header bg-gradient-primary text-white rounded-top-4 py-3">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-sliders-h me-2"></i>Filtrar Productos</h6>
             </div>
-            
-            <div class="row g-3 g-md-4" id="productosGrid">
-                <div class="col-12 text-center py-5">
-                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
-                    <p class="mt-3 text-muted">Cargando productos...</p>
+            <div class="card-body p-3">
+                <!-- Búsqueda por nombre -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small text-uppercase text-muted"><i class="fas fa-search me-1 text-primary"></i> Buscar</label>
+                    <input type="text" id="filtroBuscarLateral" class="form-control form-control-sm rounded-pill"
+                           placeholder="🔍 Nombre del producto..." onkeyup="if(event.key==='Enter') aplicarFiltros();">
                 </div>
+
+                <!-- Filtro por categoría -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small text-uppercase text-muted"><i class="fas fa-folder me-1 text-primary"></i> Categoría</label>
+                    <select id="filtroCategoria" class="form-select form-select-sm rounded-pill" onchange="aplicarFiltros()">
+                        <option value="">📂 Todas las categorías</option>
+                        {% for categoria in categorias %}
+                        <option value="{{ categoria.id_categoria }}">
+                            {% if categoria.nombre|lower == 'cuadernos' %}📓
+                            {% elif categoria.nombre|lower == 'lapiceros' %}✍️
+                            {% elif categoria.nombre|lower == 'papeleria' %}📄
+                            {% elif categoria.nombre|lower == 'arte' %}🎨
+                            {% elif categoria.nombre|lower == 'oficina' %}📎
+                            {% elif categoria.nombre|lower == 'herramientas' %}🔧
+                            {% elif categoria.nombre|lower == 'libros' %}📚
+                            {% elif categoria.nombre|lower == 'mochilas' %}🎒
+                            {% else %}📂{% endif %}
+                            {{ categoria.nombre|capitalize }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Filtro por precio -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small text-uppercase text-muted"><i class="fas fa-coins me-1 text-primary"></i> Precio</label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">S/.</span>
+                                <input type="number" id="precioMin" class="form-control" placeholder="Mín" value="0" step="1" onchange="aplicarFiltros()">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">S/.</span>
+                                <input type="number" id="precioMax" class="form-control" placeholder="Máx" value="100" step="1" onchange="aplicarFiltros()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtro por stock -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small text-uppercase text-muted"><i class="fas fa-boxes me-1 text-primary"></i> Disponibilidad</label>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="filtroStock" id="stockTodos" value="" checked onchange="aplicarFiltros()">
+                            <label class="form-check-label small" for="stockTodos">Todos</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="filtroStock" id="stockDisponible" value="stock" onchange="aplicarFiltros()">
+                            <label class="form-check-label small" for="stockDisponible">En stock</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="filtroStock" id="stockBajo" value="bajo" onchange="aplicarFiltros()">
+                            <label class="form-check-label small" for="stockBajo">Stock bajo</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ordenar -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small text-uppercase text-muted"><i class="fas fa-sort-amount-down me-1 text-primary"></i> Ordenar por</label>
+                    <select id="filtroOrden" class="form-select form-select-sm rounded-pill" onchange="aplicarFiltros()">
+                        <option value="destacado_desc">⭐ Destacados primero</option>
+                        <option value="nombre_asc">📝 Nombre A-Z</option>
+                        <option value="nombre_desc">📝 Nombre Z-A</option>
+                        <option value="precio_asc">💰 Menor precio</option>
+                        <option value="precio_desc">💰 Mayor precio</option>
+                        <option value="stock_desc">📦 Más stock</option>
+                    </select>
+                </div>
+
+                <hr class="my-3">
+
+                <button class="btn btn-primary w-100 mb-2 rounded-pill" id="btnAplicarFiltros">
+                    <i class="fas fa-search me-2"></i>Aplicar Filtros
+                </button>
+                <button class="btn btn-outline-secondary w-100 rounded-pill" id="btnLimpiarFiltros">
+                    <i class="fas fa-undo-alt me-2"></i>Limpiar Filtros
+                </button>
+            </div>
+
+            <!-- Banner promocional -->
+            <div class="card-footer promo-banner text-center py-3 rounded-bottom-4">
+                <i class="fas fa-truck fa-2x mb-2 text-dark"></i>
+                <h6 class="fw-bold mb-1 text-dark">¡Envíos a domicilio!</h6>
+                <small class="text-dark">Solo S/. 5.00 en toda Lima</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Productos -->
+    <div class="col-12 col-lg-9">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h5 class="mb-0 fw-bold fs-6 fs-md-5">
+                <i class="fas fa-gem me-2 text-warning"></i>Nuestros Productos
+                <span id="categoriaSeleccionadaLabel" class="badge bg-gold ms-2" style="display:none;"></span>
+            </h5>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary rounded-pill px-3 py-2" id="contadorProductos">
+                    <i class="fas fa-box me-1"></i> 0 productos
+                </span>
+                <button class="btn btn-sm btn-gold rounded-pill" id="btnVerCarrito" onclick="window.location.href='/carrito'">
+                    <i class="fas fa-shopping-cart me-1"></i><span class="d-none d-sm-inline"> Ver carrito</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="row g-3" id="productosGrid">
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-warning" style="width:3rem;height:3rem;"></div>
+                <p class="mt-3 text-muted">Cargando productos...</p>
             </div>
         </div>
     </div>
@@ -154,6 +160,17 @@
 var productosOriginal = [];
 var productosFiltrados = [];
 
+// Colores por categoría (deben coincidir con la BD)
+const COLORES_CAT = {
+    'libros': '#8e44ad', 'cuadernos': '#16a085', 'lapiceros': '#2e86de',
+    'arte': '#e67e22', 'oficina': '#34495e', 'herramientas': '#c0392b',
+    'papeleria': '#27ae60', 'mochilas': '#d35400'
+};
+const EMOJIS_CAT = {
+    'libros':'📚','cuadernos':'📓','lapiceros':'✍️','arte':'🎨',
+    'oficina':'📎','herramientas':'🔧','papeleria':'📄','mochilas':'🎒'
+};
+
 // ===============================
 // CARGAR PRODUCTOS
 // ===============================
@@ -163,88 +180,80 @@ function cargarProductos() {
         .then(function(data) {
             productosOriginal = data;
             productosFiltrados = data;
-            mostrarProductos(productosFiltrados);
+            aplicarFiltros();
         })
-        .catch(function(error) {
+        .catch(function() {
             document.getElementById('productosGrid').innerHTML = '<div class="col-12 text-center"><div class="alert alert-danger">❌ Error al cargar productos</div></div>';
         });
 }
 
 // ===============================
-// MOSTRAR PRODUCTOS
+// MOSTRAR PRODUCTOS (TARJETAS A COLOR)
 // ===============================
 function mostrarProductos(productos) {
     var grid = document.getElementById('productosGrid');
     var contador = document.getElementById('contadorProductos');
-    
+
     if (!productos || productos.length === 0) {
-        grid.innerHTML = '<div class="col-12 text-center py-5"><i class="fas fa-box-open fa-5x text-muted mb-4 opacity-50"></i><h5 class="text-muted">No hay productos que coincidan</h5><p class="text-muted small">Prueba con otros filtros</p></div>';
+        grid.innerHTML = '<div class="col-12 text-center py-5">' +
+            '<i class="fas fa-box-open fa-5x text-muted mb-4 opacity-50"></i>' +
+            '<h5 class="text-muted">No hay productos que coincidan</h5>' +
+            '<p class="text-muted small">Prueba con otros filtros</p></div>';
         contador.innerHTML = '<i class="fas fa-box me-1"></i> 0 productos';
         return;
     }
-    
+
     contador.innerHTML = '<i class="fas fa-box me-1"></i> ' + productos.length + ' producto' + (productos.length !== 1 ? 's' : '');
-    
+
     var html = '';
     for (var i = 0; i < productos.length; i++) {
         var p = productos[i];
         var precioOferta = p.precio_oferta ? parseFloat(p.precio_oferta) : null;
         var tieneOferta = precioOferta && precioOferta < p.precio;
         var precioMostrar = tieneOferta ? precioOferta : p.precio;
-        
-        var stockBadge = '';
-        var stockColor = '';
-        if (p.cantidad === 0) {
-            stockBadge = '<span class="badge bg-danger rounded-pill">❌ Agotado</span>';
-            stockColor = 'opacity-50';
-        } else if (p.cantidad <= 5) {
-            stockBadge = '<span class="badge bg-warning text-dark rounded-pill">⚠️ ¡Últimas unidades!</span>';
-        } else {
-            stockBadge = '<span class="badge bg-success rounded-pill">✅ En stock</span>';
-        }
-        
+        var color = COLORES_CAT[p.categoria] || '#1e3a8a';
+        var emoji = EMOJIS_CAT[p.categoria] || '📂';
+
+        var stockChip = '';
+        var cardOpacity = '';
+        if (p.cantidad === 0) { stockChip = '<span class="badge bg-danger">❌ Agotado</span>'; cardOpacity = 'opacity-50'; }
+        else if (p.cantidad <= 5) stockChip = '<span class="badge text-bg-warning">⚠️ Últimas unidades</span>';
+        else stockChip = '<span class="badge bg-success">✅ En stock</span>';
+
         html += `
-            <div class="col-12 col-sm-6 col-md-6 col-lg-4 ${stockColor}">
-                <div class="card h-100 shadow-sm producto-card border-0 rounded-4 overflow-hidden">
-                    ${tieneOferta ? `<div class="position-absolute top-0 start-0 bg-danger text-white px-2 px-md-3 py-1 m-2 m-md-3 rounded-pill" style="z-index:2; font-size:0.65rem;">-${Math.round((1 - precioOferta/p.precio)*100)}%</div>` : ''}
-                    <div class="position-relative overflow-hidden" style="height: 180px; background: #f8f9fa;">
-                        <img src="${p.imagen_url || '/static/img/default-product.png'}" 
-                                class="img-fluid w-100 h-100" style="object-fit: cover; transition: transform 0.3s;"
-                                onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'d-flex align-items-center justify-content-center h-100 text-muted\\' style=\\'font-size:3rem;\\'>📚</div>'"
-                                onmouseover="this.style.transform='scale(1.05)'"
-                                onmouseout="this.style.transform='scale(1)'">
+        <div class="col-6 col-lg-4 ${cardOpacity}">
+            <div class="card h-100 border-0 shadow-sm cat-card-prod rounded-4 overflow-hidden">
+                <div class="cat-strip" style="background:${color};"></div>
+                ${tieneOferta ? `<span class="badge bg-danger position-absolute" style="top:14px;left:12px;z-index:2;font-size:0.65rem;">-${Math.round((1-precioOferta/p.precio)*100)}%</span>` : ''}
+                ${p.destacado ? `<span class="badge rounded-pill position-absolute" style="top:12px;right:12px;z-index:2;background:${color};font-size:0.6rem;"><i class="fas fa-star me-1"></i>Destacado</span>` : ''}
+                <div class="prod-img position-relative" style="background:linear-gradient(135deg,#fff 0%, ${color}20 100%);">
+                    <span class="cat-emoji" style="color:${color};">${emoji}</span>
+                    <img src="${p.imagen_url || '/static/img/default-product.png'}"
+                         class="img-fluid w-100 h-100" style="object-fit:contain; transition: transform 0.3s;"
+                         onerror="this.style.display='none';"
+                         onmouseover="this.style.transform='scale(1.06)'"
+                         onmouseout="this.style.transform='scale(1)'">
+                </div>
+                <div class="card-body p-2 p-md-3 d-flex flex-column">
+                    <span class="badge rounded-pill align-self-start mb-2" style="background:${color}22; color:${color}; font-size:0.6rem; font-weight:700;">${emoji} ${p.categoria ? p.categoria.charAt(0).toUpperCase() + p.categoria.slice(1) : 'General'}</span>
+                    <h6 class="card-title fw-bold mb-1 text-dark" style="font-size:0.82rem;">${escapeHtml(p.nombre.substring(0, 35))}</h6>
+                    <p class="card-text small text-muted mb-2 flex-grow-1" style="min-height:32px;font-size:0.72rem;">${p.descripcion ? escapeHtml(p.descripcion.substring(0, 55)) + (p.descripcion.length > 55 ? '...' : '') : 'Sin descripción'}</p>
+                    <div class="mb-2">
+                        ${tieneOferta
+                            ? `<span class="text-decoration-line-through text-muted small me-2">S/. ${p.precio.toFixed(2)}</span><span class="text-danger fw-bold" style="font-size:1rem;">S/. ${precioOferta.toFixed(2)}</span>`
+                            : `<span class="text-primary fw-bold" style="font-size:1rem;">S/. ${p.precio.toFixed(2)}</span>`}
                     </div>
-                    <div class="card-body p-2 p-md-3">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h6 class="card-title fw-bold mb-0 text-dark" style="font-size: 0.85rem;">${escapeHtml(p.nombre.substring(0, 35))}</h6>
-                            ${p.destacado ? '<i class="fas fa-star text-warning" title="Producto destacado"></i>' : ''}
-                        </div>
-                        <p class="card-text small text-muted mb-2" style="min-height: 35px;">${p.descripcion ? escapeHtml(p.descripcion.substring(0, 55)) + (p.descripcion.length > 55 ? '...' : '') : 'Sin descripción'}</p>
-                        <div class="mb-2">
-                            ${tieneOferta ? 
-                                `<div class="d-flex align-items-baseline gap-2 flex-wrap">
-                                    <span class="text-decoration-line-through text-muted small">S/. ${p.precio.toFixed(2)}</span>
-                                    <span class="h6 text-danger fw-bold mb-0">S/. ${precioOferta.toFixed(2)}</span>
-                                </div>` : 
-                                `<span class="h6 text-primary fw-bold mb-0">S/. ${p.precio.toFixed(2)}</span>`
-                            }
-                        </div>
-                        <div class="small text-muted mb-3 d-flex justify-content-between align-items-center flex-wrap gap-1">
-                            <span><i class="fas fa-box me-1"></i> ${p.cantidad} uds</span>
-                            ${stockBadge}
-                        </div>
-                        ${p.cantidad > 0 ? 
-                            `<button class="btn btn-success w-100 rounded-pill py-1 py-md-2" style="font-size:0.75rem;" onclick="agregarAlCarrito(${p.id}, '${escapeHtml(p.nombre)}', ${precioMostrar}, ${p.cantidad})">
-                                <i class="fas fa-cart-plus me-2"></i>Agregar
-                            </button>` :
-                            `<button class="btn btn-secondary w-100 rounded-pill py-1 py-md-2" style="font-size:0.75rem;" disabled>
-                                <i class="fas fa-times-circle me-2"></i>Agotado
-                            </button>`
-                        }
+                    <div class="small text-muted mb-2 d-flex justify-content-between align-items-center flex-wrap gap-1" style="font-size:0.68rem;">
+                        <span><i class="fas fa-box me-1"></i> ${p.cantidad} uds</span>${stockChip}
                     </div>
+                    ${p.cantidad > 0
+                        ? `<button class="btn w-100 rounded-pill py-1 py-md-2 fw-bold text-white" style="font-size:0.72rem;background:${color};" onclick="agregarAlCarrito(${p.id}, '${escapeHtml(p.nombre).replace(/\\\\/g,'')}', ${precioMostrar}, ${p.cantidad})">
+                            <i class="fas fa-cart-plus me-2"></i>Agregar
+                           </button>`
+                        : `<button class="btn btn-secondary w-100 rounded-pill py-1 py-md-2" style="font-size:0.72rem;" disabled><i class="fas fa-times-circle me-2"></i>Agotado</button>`}
                 </div>
             </div>
-        `;
+        </div>`;
     }
     grid.innerHTML = html;
 }
@@ -268,8 +277,7 @@ async function verificarStock(productoId, cantidadDeseada) {
         const data = await response.json();
         if (!response.ok) return { disponible: true, stock: 999 };
         return { disponible: cantidadDeseada <= data.stock, stock: data.stock, nombre: data.nombre };
-    } catch (error) {
-        console.error("Error verificando stock:", error);
+    } catch (e) {
         return { disponible: true, stock: 999 };
     }
 }
@@ -279,67 +287,48 @@ async function verificarStock(productoId, cantidadDeseada) {
 // ===============================
 async function agregarAlCarrito(id, nombre, precio, stockDisponible) {
     const stockInfo = await verificarStock(id, 1);
-    
+
     if (!stockInfo.disponible) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Stock insuficiente',
-            text: stockInfo.stock === 0 ? `"${nombre}" ya no tiene stock disponible.` : `Solo hay ${stockInfo.stock} unidades disponibles.`,
-            confirmButtonColor: '#d33'
-        });
+        Swal.fire({ icon: 'error', title: 'Stock insuficiente',
+            text: stockInfo.stock === 0 ? `"${nombre}" ya no tiene stock disponible.` : `Solo hay ${stockInfo.stock} unidades disponibles.` });
         return;
     }
-    
+
     var productoCompleto = productosOriginal.find(p => p.id === id);
     var imagenUrl = productoCompleto ? productoCompleto.imagen_url : null;
-    
+
     var carrito = JSON.parse(localStorage.getItem('carritoCliente') || '[]');
     var existente = carrito.find(p => p.id === id);
     var nuevaCantidad = existente ? existente.cantidad + 1 : 1;
-    
+
     if (nuevaCantidad > stockInfo.stock) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Stock insuficiente',
-            text: `Ya tienes ${existente.cantidad} en tu carrito. Solo puedes agregar ${stockInfo.stock - existente.cantidad} más.`,
-            confirmButtonColor: '#ffc107'
-        });
+        Swal.fire({ icon: 'warning', title: 'Stock insuficiente',
+            text: `Ya tienes ${existente.cantidad} en tu carrito. Solo puedes agregar ${stockInfo.stock - existente.cantidad} más.` });
         return;
     }
-    
+
     if (existente) {
         existente.cantidad = nuevaCantidad;
         existente.stock = stockInfo.stock;
         if (imagenUrl && !existente.imagen_url) existente.imagen_url = imagenUrl;
     } else {
-        carrito.push({ 
-            id: id, 
-            nombre: nombre, 
-            precio: precio, 
-            cantidad: 1, 
-            stock: stockInfo.stock, 
-            imagen_url: imagenUrl
-        });
+        carrito.push({ id, nombre, precio, cantidad: 1, stock: stockInfo.stock, imagen_url: imagenUrl });
     }
-    
+
     localStorage.setItem('carritoCliente', JSON.stringify(carrito));
     actualizarContadorCarrito();
-    
+
     var toast = document.createElement('div');
-    toast.className = 'position-fixed bottom-0 end-0 bg-success text-white p-2 p-md-3 m-2 m-md-3 rounded-4 shadow-lg';
-    toast.innerHTML = '<i class="fas fa-check-circle me-2"></i>' + nombre + ' agregado al carrito';
+    toast.className = 'position-fixed bottom-0 end-0 bg-success text-white p-3 m-3 rounded-4 shadow-lg d-flex align-items-center gap-2';
+    toast.innerHTML = '<i class="fas fa-check-circle"></i><span>' + nombre + '</span>';
     toast.style.zIndex = '9999';
-    toast.style.fontSize = '0.8rem';
     document.body.appendChild(toast);
     setTimeout(function() { toast.remove(); }, 2000);
 }
 
 function actualizarContadorCarrito() {
     var carrito = JSON.parse(localStorage.getItem('carritoCliente') || '[]');
-    var total = 0;
-    for (var i = 0; i < carrito.length; i++) {
-        total = total + carrito[i].cantidad;
-    }
+    var total = carrito.reduce(function(s, i) { return s + i.cantidad; }, 0);
     var contador = document.getElementById('carritoContador');
     if (contador) {
         contador.textContent = total;
@@ -348,63 +337,25 @@ function actualizarContadorCarrito() {
 }
 
 // ===============================
-// FILTRAR POR CATEGORÍA DESDE EL MENÚ
-// ===============================
-function filtrarPorCategoria(categoriaId) {
-    // Actualizar el select de categorías
-    var select = document.getElementById('filtroCategoria');
-    if (select) {
-        select.value = categoriaId || '';
-        // Disparar evento change para que se apliquen los filtros
-        var event = new Event('change');
-        select.dispatchEvent(event);
-    }
-    
-    // También aplicar filtros directamente
-    if (typeof aplicarFiltros === 'function') {
-        aplicarFiltros();
-    }
-    
-    // Cerrar el dropdown
-    var dropdown = document.querySelector('.dropdown-categorias .dropdown-menu');
-    if (dropdown) {
-        var parent = dropdown.closest('.dropdown');
-        if (parent) {
-            var toggle = parent.querySelector('.dropdown-toggle');
-            if (toggle) {
-                toggle.click();
-            }
-        }
-    }
-    
-    // Scroll al inicio de los productos
-    var grid = document.getElementById('productosGrid');
-    if (grid) {
-        grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-}
-
-// ===============================
 // APLICAR FILTROS
 // ===============================
 function aplicarFiltros() {
-    var buscar = document.getElementById('filtroBuscar').value.toLowerCase();
+    var buscarEl = document.getElementById('filtroBuscar') || document.getElementById('filtroBuscarLateral');
+    var buscar = (buscarEl.value || '').toLowerCase();
     var categoriaId = document.getElementById('filtroCategoria').value;
     var precioMin = parseFloat(document.getElementById('precioMin').value) || 0;
     var precioMax = parseFloat(document.getElementById('precioMax').value) || 999999;
     var stock = document.querySelector('input[name="filtroStock"]:checked').value;
     var orden = document.getElementById('filtroOrden').value;
-    
-    // Actualizar la URL sin recargar la página
+
+    // Sincronizar ambos inputs de búsqueda
+    document.querySelectorAll('#filtroBuscar, #filtroBuscarLateral').forEach(el => { if (el !== buscarEl) el.value = buscarEl.value; });
+
     if (categoriaId) {
-        var newUrl = window.location.pathname + '?categoria=' + categoriaId;
-        window.history.pushState({ categoria: categoriaId }, '', newUrl);
-        // Mostrar categoría seleccionada
+        window.history.pushState({ categoria: categoriaId }, '', window.location.pathname + '?categoria=' + categoriaId);
         var label = document.getElementById('categoriaSeleccionadaLabel');
         if (label) {
-            var select = document.getElementById('filtroCategoria');
-            var text = select.options[select.selectedIndex]?.text || '';
-            label.textContent = '📌 ' + text.replace('📂', '').trim();
+            label.textContent = '📌 ' + (document.getElementById('filtroCategoria').selectedOptions[0] || {}).text.replace('📂', '').trim();
             label.style.display = 'inline';
         }
     } else {
@@ -412,23 +363,20 @@ function aplicarFiltros() {
         var label = document.getElementById('categoriaSeleccionadaLabel');
         if (label) label.style.display = 'none';
     }
-    
+
     productosFiltrados = productosOriginal.filter(function(p) {
         var precioActual = p.precio_oferta || p.precio;
-        
         if (buscar && p.nombre.toLowerCase().indexOf(buscar) === -1) return false;
         if (categoriaId && p.categoria_id != categoriaId) return false;
         if (precioActual < precioMin || precioActual > precioMax) return false;
         if (stock === 'stock' && p.cantidad === 0) return false;
         if (stock === 'bajo' && p.cantidad > 5) return false;
-        
         return true;
     });
-    
+
     productosFiltrados.sort(function(a, b) {
         var aPrecio = a.precio_oferta || a.precio;
         var bPrecio = b.precio_oferta || b.precio;
-        
         if (orden === 'nombre_asc') return a.nombre.localeCompare(b.nombre);
         if (orden === 'nombre_desc') return b.nombre.localeCompare(a.nombre);
         if (orden === 'precio_asc') return aPrecio - bPrecio;
@@ -437,20 +385,34 @@ function aplicarFiltros() {
         if (orden === 'destacado_desc') return (b.destacado || 0) - (a.destacado || 0);
         return 0;
     });
-    
+
     mostrarProductos(productosFiltrados);
 }
 
 function limpiarFiltros() {
-    document.getElementById('filtroBuscar').value = '';
+    document.querySelectorAll('#filtroBuscar, #filtroBuscarLateral').forEach(el => el.value = '');
     document.getElementById('filtroCategoria').value = '';
     document.getElementById('precioMin').value = 0;
     document.getElementById('precioMax').value = 100;
     document.getElementById('stockTodos').checked = true;
-    document.getElementById('filtroOrden').value = 'nombre_asc';
+    document.getElementById('filtroOrden').value = 'destacado_desc';
     document.getElementById('categoriaSeleccionadaLabel').style.display = 'none';
     window.history.pushState({ categoria: null }, '', window.location.pathname);
     aplicarFiltros();
+}
+
+// ===============================
+// LEER PARÁMETROS DE LA URL (q y categoria)
+// ===============================
+function leerParametrosURL() {
+    var params = new URLSearchParams(window.location.search);
+    var q = params.get('q');
+    if (q) {
+        var el = document.getElementById('filtroBuscar') || document.getElementById('filtroBuscarLateral');
+        if (el) el.value = q;
+    }
+    var cat = params.get('categoria');
+    if (cat) document.getElementById('filtroCategoria').value = cat;
 }
 
 // ===============================
@@ -459,7 +421,14 @@ function limpiarFiltros() {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('btnAplicarFiltros').addEventListener('click', aplicarFiltros);
     document.getElementById('btnLimpiarFiltros').addEventListener('click', limpiarFiltros);
-    
+    document.getElementById('filtroBuscar').addEventListener('input', function(e) {
+        document.getElementById('filtroBuscarLateral').value = e.target.value;
+    });
+    document.getElementById('filtroBuscarLateral').addEventListener('input', function(e) {
+        document.getElementById('filtroBuscar').value = e.target.value;
+    });
+
+    leerParametrosURL();
     cargarProductos();
     actualizarContadorCarrito();
 });
@@ -467,44 +436,71 @@ document.addEventListener('DOMContentLoaded', function() {
 window.addEventListener('storage', function(e) {
     if (e.key === 'carritoCliente') actualizarContadorCarrito();
 });
-
-// Estilos adicionales
-var style = document.createElement('style');
-style.textContent = `
-    .bg-gradient-primary { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); }
-    .bg-gradient-warning { background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); }
-    .bg-gold { background: #D4AF37; color: #1E3A8A; }
-    .producto-card { transition: all 0.3s ease; }
-    .producto-card:hover { transform: translateY(-5px); box-shadow: 0 20px 30px -12px rgba(0,0,0,0.2) !important; }
-    .rounded-4 { border-radius: 1rem !important; }
-    
-    @media (max-width: 576px) {
-        .producto-card .card-body { padding: 0.75rem !important; }
-        .producto-card .card-title { font-size: 0.8rem !important; }
-        .btn-success { font-size: 0.7rem !important; padding: 0.35rem 0.5rem !important; }
-        .badge { font-size: 0.6rem !important; }
-        .small.text-muted { font-size: 0.65rem !important; }
-    }
-`;
-document.head.appendChild(style);
 </script>
 
 <style>
-.producto-card {
-    transition: transform 0.3s, box-shadow 0.3s;
-}
-.producto-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 30px -12px rgba(0,0,0,0.2) !important;
-}
-.bg-gradient-primary {
-    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-}
-.bg-gradient-warning {
-    background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
-}
-.rounded-4 {
-    border-radius: 1rem !important;
-}
+    :root { --salesiano-gold: #D4AF37; --salesiano-blue: #0d2b6e; }
+
+    .sticky-filtros { position: sticky; top: 90px; }
+
+    /* ===== BANNER CATÁLOGO ===== */
+    .catalogo-banner {
+        background: linear-gradient(120deg, #0d2b6e 0%, #1d4ed8 55%, #2c6ff2 100%);
+        box-shadow: 0 18px 45px rgba(13, 43, 110, 0.35);
+    }
+    .banner-glow {
+        position: absolute;
+        top: -60px;
+        right: -40px;
+        width: 260px;
+        height: 260px;
+        background: radial-gradient(circle, rgba(212, 175, 55, 0.5), transparent 70%);
+        border-radius: 50%;
+        filter: blur(6px);
+    }
+    .catalogo-banner .search-form {
+        border: 2px solid var(--salesiano-gold);
+        border-radius: 50px;
+        overflow: hidden;
+        background: #fff;
+        display: flex;
+    }
+    .catalogo-banner .search-form input { flex: 1; border: 0; outline: none; padding: 0.7rem 1rem; font-size: 0.9rem; }
+    .catalogo-banner .search-form button {
+        border: 0; background: linear-gradient(135deg, var(--salesiano-gold), #f0c94a);
+        color: #1d2a4d; font-weight: 700; padding: 0 1.2rem; cursor: pointer;
+    }
+
+    .bg-gradient-primary { background: linear-gradient(135deg, #0d2b6e 0%, #1d4ed8 100%); }
+    .promo-banner { background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); }
+    .bg-gold { background: var(--salesiano-gold); color: #1d2a4d; font-weight: 700; }
+
+    /* ===== TARJETAS DE PRODUCTO A COLOR ===== */
+    .cat-card-prod {
+        transition: all 0.25s ease;
+        position: relative;
+    }
+    .cat-card-prod:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 18px 32px -12px rgba(13, 43, 110, 0.25) !important;
+    }
+    .cat-strip { height: 6px; }
+    .prod-img { height: 150px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .cat-emoji {
+        position: absolute;
+        left: 12px;
+        top: 12px;
+        font-size: 1.6rem;
+        opacity: 0.25;
+        z-index: 1;
+        pointer-events: none;
+    }
+    .prod-img img { position: relative; z-index: 2; }
+    .rounded-4 { border-radius: 1rem !important; }
+
+    @media (max-width: 576px) {
+        .prod-img { height: 130px; }
+        .cat-card-prod .card-body { padding: 0.6rem !important; }
+    }
 </style>
 {% endblock %}

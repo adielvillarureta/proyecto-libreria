@@ -1,5 +1,5 @@
 # app/routes/api.py
-from flask import Blueprint, request, jsonify, url_for, session, flash, redirect
+from flask import Blueprint, request, jsonify, url_for, session, flash, redirect, render_template
 from app import db
 from app.models import Producto, Venta, Cliente, RucEmpresa
 from app.utils import login_required, login_required_cliente
@@ -192,6 +192,20 @@ def api_cliente_direccion():
 
 
 # ---------------- DNI / RUC ----------------
+def _consultar_apis_peru(ruta, timeout=10):
+    """Consulta el API de ApisPerú (RENIEC/SUNAT). Reintenta una vez ante errores 5xx."""
+    url = f"https://dniruc.apisperu.com/api/v1/{ruta}"
+    headers = {
+        "Authorization": f"Bearer {Config.API_PERU_TOKEN}",
+        "Accept": "application/json"
+    }
+    respuesta = requests.get(url, headers=headers, timeout=timeout)
+    if respuesta.status_code >= 500:
+        print("⚠️ ApiPerú respondió " + str(respuesta.status_code) + ", reintentando...")
+        respuesta = requests.get(url, headers=headers, timeout=timeout)
+    return respuesta
+
+
 @api_bp.route('/api/consultar-dni/<dni>')
 @login_required_cliente
 def api_consultar_dni_cliente(dni):
@@ -209,53 +223,49 @@ def api_consultar_dni_cliente(dni):
         })
 
     try:
-        url = f"https://dniruc.apisperu.com/api/v1/dni/{dni}"
-        headers = {
-            "Authorization": f"Bearer {Config.API_PERU_TOKEN}",
-            "Accept": "application/json"
-        }
-
         print(f"🔍 Consultando DNI {dni} en ApisPerú...")
-        response = requests.get(url, headers=headers, timeout=10)
+        response = _consultar_apis_peru(f"dni/{dni}")
         print(f"📡 Respuesta: {response.status_code}")
 
-        if response.status_code == 200:
-            data = response.json()
+        if response.status_code == 401:
+            return jsonify({
+                "success": False,
+                "error": "El token de API Perú es inválido o venció. Actualízalo en https://apisperu.com (variable API_PERU_TOKEN del .env)."
+            }), 401
 
-            if data.get("nombres"):
-                return jsonify({
-                    "success": True,
-                    "nombres": data.get("nombres", ""),
-                    "apellidos": f"{data.get('apellidoPaterno', '')} {data.get('apellidoMaterno', '')}".strip(),
-                    "dni": dni,
-                    "origen": "apis_peru"
-                })
-            elif data.get("Nombre"):
-                return jsonify({
-                    "success": True,
-                    "nombres": data.get("Nombre", ""),
-                    "apellidos": f"{data.get('ApellidoPaterno', '')} {data.get('ApellidoMaterno', '')}".strip(),
-                    "dni": dni,
-                    "origen": "apis_peru"
-                })
-            else:
-                return jsonify({
-                    "success": True,
-                    "nombres": request.args.get("nombres", ""),
-                    "apellidos": request.args.get("apellidos", ""),
-                    "dni": dni,
-                    "origen": "usuario",
-                    "mensaje": "DNI válido pero sin nombres completos"
-                })
-        elif response.status_code == 404:
+        if response.status_code == 404:
             return jsonify({"success": False, "error": "DNI no encontrado en RENIEC"}), 404
+
+        if response.status_code != 200:
+            return jsonify({"success": False, "error": f"RENIEC no está disponible ahora ({response.status_code}). Inténtalo en unos segundos."}), 502
+
+        data = response.json()
+
+        # ApisPerú responde 200 pero con success=False cuando no encuentra el documento
+        if data.get("success") is False:
+            return jsonify({"success": False, "error": "DNI no encontrado en RENIEC"}), 404
+
+        if data.get("nombres"):
+            nombres = data.get("nombres", "")
+            apellidos = f"{data.get('apellidoPaterno', '')} {data.get('apellidoMaterno', '')}".strip()
+        elif data.get("Nombre"):
+            nombres = data.get("Nombre", "")
+            apellidos = f"{data.get('ApellidoPaterno', '')} {data.get('ApellidoMaterno', '')}".strip()
         else:
-            return jsonify({"success": False, "error": f"Error al consultar DNI: {response.status_code}"}), 500
+            return jsonify({"success": False, "error": "DNI no encontrado en RENIEC"}), 404
+
+        return jsonify({
+            "success": True,
+            "nombres": nombres,
+            "apellidos": apellidos,
+            "dni": dni,
+            "origen": "apis_peru"
+        })
 
     except requests.exceptions.Timeout:
-        return jsonify({"success": False, "error": "Tiempo de espera agotado"}), 500
+        return jsonify({"success": False, "error": "Tiempo de espera agotado. Inténtalo de nuevo."}), 503
     except requests.exceptions.RequestException as e:
-        return jsonify({"success": False, "error": f"Error de conexión: {str(e)}"}), 500
+        return jsonify({"success": False, "error": f"Error de conexión con RENIEC: {str(e)}"}), 502
     except Exception as e:
         return jsonify({"success": False, "error": f"Error inesperado: {str(e)}"}), 500
 
@@ -277,57 +287,63 @@ def api_consultar_ruc_cliente(ruc):
         })
 
     try:
-        url = f"https://dniruc.apisperu.com/api/v1/ruc/{ruc}"
-        headers = {
-            "Authorization": f"Bearer {Config.API_PERU_TOKEN}",
-            "Accept": "application/json"
-        }
-
         print(f"🔍 Consultando RUC {ruc} en ApisPerú...")
-        response = requests.get(url, headers=headers, timeout=10)
+        response = _consultar_apis_peru(f"ruc/{ruc}")
         print(f"📡 Respuesta: {response.status_code}")
 
-        if response.status_code == 200:
-            data = response.json()
+        if response.status_code == 401:
+            return jsonify({
+                "success": False,
+                "error": "El token de API Perú es inválido o venció. Actualízalo en https://apisperu.com (variable API_PERU_TOKEN del .env)."
+            }), 401
 
-            if data.get("razonSocial"):
-                razon_social = data.get("razonSocial", "")
-                direccion = data.get("direccion", "")
-
-                nueva_empresa = RucEmpresa(
-                    ruc=ruc,
-                    razon_social=razon_social,
-                    direccion=direccion
-                )
-                db.session.add(nueva_empresa)
-                db.session.commit()
-
-                return jsonify({
-                    "success": True,
-                    "razon_social": razon_social,
-                    "direccion": direccion,
-                    "ruc": ruc,
-                    "origen": "apis_peru"
-                })
-            elif data.get("RazonSocial"):
-                return jsonify({
-                    "success": True,
-                    "razon_social": data.get("RazonSocial", ""),
-                    "direccion": data.get("Direccion", ""),
-                    "ruc": ruc,
-                    "origen": "apis_peru"
-                })
-            else:
-                return jsonify({"success": False, "error": "RUC no encontrado en SUNAT"}), 404
-        elif response.status_code == 404:
+        if response.status_code == 404:
             return jsonify({"success": False, "error": "RUC no encontrado en SUNAT"}), 404
+
+        if response.status_code != 200:
+            return jsonify({"success": False, "error": f"SUNAT no está disponible ahora ({response.status_code}). Inténtalo en unos segundos."}), 502
+
+        data = response.json()
+
+        if data.get("success") is False:
+            return jsonify({"success": False, "error": "RUC no encontrado en SUNAT"}), 404
+
+        if data.get("razonSocial"):
+            razon_social = data.get("razonSocial", "")
+            direccion = data.get("direccion", "")
+
+            nueva_empresa = RucEmpresa(
+                ruc=ruc,
+                razon_social=razon_social,
+                direccion=direccion
+            )
+            db.session.add(nueva_empresa)
+            db.session.commit()
+
+            return jsonify({
+                "success": True,
+                "razon_social": razon_social,
+                "direccion": direccion,
+                "ruc": ruc,
+                "origen": "apis_peru"
+            })
+        elif data.get("RazonSocial"):
+            return jsonify({
+                "success": True,
+                "razon_social": data.get("RazonSocial", ""),
+                "direccion": data.get("Direccion", ""),
+                "ruc": ruc,
+                "origen": "apis_peru"
+            })
         else:
-            return jsonify({"success": False, "error": f"Error al consultar RUC: {response.status_code}"}), 500
+            return jsonify({"success": False, "error": "RUC no encontrado en SUNAT"}), 404
 
     except requests.exceptions.Timeout:
-        return jsonify({"success": False, "error": "Tiempo de espera agotado"}), 500
+        return jsonify({"success": False, "error": "Tiempo de espera agotado. Inténtalo de nuevo."}), 503
     except requests.exceptions.RequestException as e:
-        return jsonify({"success": False, "error": f"Error de conexión: {str(e)}"}), 500
+        return jsonify({"success": False, "error": f"Error de conexión con SUNAT: {str(e)}"}), 502
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Error inesperado: {str(e)}"}), 500
 
 
 # ---------------- DEBUG ----------------

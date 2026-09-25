@@ -3,6 +3,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
+from werkzeug.middleware.proxy_fix import ProxyFix
 from .config import Config
 
 # 1) Instancias GLOBALES (antes de la fábrica)
@@ -15,6 +16,9 @@ def create_app(config_class=Config):
     # 2) Crear la app
     app = Flask(__name__, template_folder='templates', static_folder='static')
     app.config.from_object(config_class)
+
+    # 2b) Confiar en cabeceras de proxy (ngrok, nginx): esquema https + dominio público
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     # 3) Inicializar extensiones
     db.init_app(app)

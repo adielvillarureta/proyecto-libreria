@@ -1,7 +1,10 @@
 # app/routes/clientes.py
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
+import secrets
+import requests
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, current_app
+from urllib.parse import urlencode
 from app import db, bcrypt
-from app.models import Cliente, IntentosLogin
+from app.models import Cliente, IntentosLogin, Pedido
 from app.utils import (
     login_required_cliente, obtener_ip_cliente, registrar_intento_fallido,
     verificar_bloqueo_ip, verificar_bloqueo_email, limpiar_bloqueos_expirados,
@@ -209,9 +212,17 @@ def registro_cliente():
                 flash("❌ El correo ya está registrado", "danger")
                 return redirect(url_for("clientes.registro_cliente"))
 
+            # 2b. Validar que el DNI no esté registrado
+            dni_ingresado = (request.form.get("dni") or "").strip()
+            if dni_ingresado:
+                existe_dni = Cliente.query.filter_by(dni=dni_ingresado).first()
+                if existe_dni:
+                    flash(f"❌ El DNI {dni_ingresado} ya está registrado con otra cuenta. Verifica tu número de documento.", "danger")
+                    return redirect(url_for("clientes.registro_cliente"))
+
             # 3. Crear el nuevo cliente
             cliente = Cliente(
-                dni=request.form.get("dni"),
+                dni=dni_ingresado or None,
                 nombres=request.form["nombres"],
                 apellidos=request.form["apellidos"],
                 correo=request.form["email"],
@@ -225,7 +236,7 @@ def registro_cliente():
             return redirect(url_for("clientes.login_cliente"))
         except Exception as e:
             db.session.rollback()
-            flash(f"❌ Error: {str(e)}", "danger")
+            flash(f"❌ Error al registrar: {str(e)}", "danger")
             return render_template("registro_cliente.html")
 
     # ✅ CORREGIDO: Petición GET simplemente muestra el formulario (sin redirigir)
@@ -246,7 +257,24 @@ def cliente_perfil():
     if not cliente:
         flash("❌ Cliente no encontrado", "danger")
         return redirect(url_for("clientes.logout_cliente"))
-    return render_template("cliente_perfil.html", cliente=cliente)
+
+    pedidos = Pedido.query.filter_by(cliente_id=cliente.id).order_by(Pedido.fecha_pedido.desc()).all()
+    total_pedidos = len(pedidos)
+    completados = sum(1 for p in pedidos if p.estado in ('entregado', 'recogido'))
+    en_proceso = sum(1 for p in pedidos if p.estado in ('confirmado', 'preparando', 'enviado', 'listo_tienda'))
+    pendientes = sum(1 for p in pedidos if p.estado == 'pendiente')
+    total_gastado = sum(p.total or 0 for p in pedidos)
+
+    return render_template(
+        "cliente_perfil.html",
+        cliente=cliente,
+        pedidos=pedidos[:3],
+        total_pedidos=total_pedidos,
+        completados=completados,
+        en_proceso=en_proceso,
+        pendientes=pendientes,
+        total_gastado=total_gastado,
+    )
 
 
 @clientes_bp.route('/cliente/actualizar-perfil', methods=['POST'])
@@ -345,7 +373,11 @@ def recuperar_contrasena():
             cliente.token_expiracion = datetime.now() + timedelta(hours=1)
             db.session.commit()
 
-            enlace = url_for("clientes.resetear_contrasena", token=token, _external=True)
+            base_url = current_app.config.get("BASE_URL", "")
+            if base_url:
+                enlace = base_url + url_for("clientes.resetear_contrasena", token=token)
+            else:
+                enlace = url_for("clientes.resetear_contrasena", token=token, _external=True)
             flash(f"✅ Enlace de recuperación: {enlace}", "info")
         else:
             flash("✅ Si el correo está registrado, recibirás un enlace", "success")
@@ -399,13 +431,184 @@ def resetear_contrasena(token):
     return render_template("resetear_contrasena.html", token=token)
 
 
+def _oauth_redirect_uri(endpoint, override_key):
+    """Devuelve la URI de callback de OAuth: prioriza la configurada en .env (p. ej. HTTPS/ngrok),
+    y si no existe usa la URL desde la que el usuario entró."""
+    base_url = current_app.config.get("BASE_URL", "")
+    override = current_app.config.get(override_key, "")
+    if override:
+        return override
+    if base_url:
+        return base_url + url_for(endpoint)
+    return request.url_root.rstrip("/") + url_for(endpoint)
+
+
 @clientes_bp.route('/auth/google')
 def auth_google():
-    flash("🚧 El inicio de sesión con Google estará disponible muy pronto.", "info")
-    return redirect(url_for('clientes.login_cliente'))
+    client_id = current_app.config.get("GOOGLE_CLIENT_ID", "")
+    if not client_id:
+        flash("🚧 El inicio de sesión con Google estará disponible próximamente. Mientras tanto, registra tu cuenta con el formulario.", "warning")
+        return redirect(url_for("clientes.login_cliente"))
+
+    state = secrets.token_urlsafe(16)
+    session["oauth_state"] = state
+    redirect_uri = _oauth_redirect_uri("clientes.auth_google_callback", "GOOGLE_REDIRECT_URI")
+
+    auth_url = "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode({
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "state": state,
+        "prompt": "select_account",
+    })
+    return redirect(auth_url)
+
+
+@clientes_bp.route('/auth/google/callback')
+def auth_google_callback():
+    error = request.args.get("error")
+    if error:
+        flash(f"❌ Google: {error}. Intenta de nuevo o usa otro método.", "danger")
+        return redirect(url_for("clientes.login_cliente"))
+
+    code = request.args.get("code")
+    state = request.args.get("state")
+    if not code or state != session.get("oauth_state"):
+        flash("❌ La autenticación con Google falló (estado no válido).", "danger")
+        return redirect(url_for("clientes.login_cliente"))
+
+    client_id = current_app.config.get("GOOGLE_CLIENT_ID", "")
+    client_secret = current_app.config.get("GOOGLE_CLIENT_SECRET", "")
+    redirect_uri = _oauth_redirect_uri("clientes.auth_google_callback", "GOOGLE_REDIRECT_URI")
+
+    try:
+        resp = requests.post("https://oauth2.googleapis.com/token", data={
+            "code": code,
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code",
+        }, timeout=15)
+        token_data = resp.json()
+    except requests.RequestException:
+        flash("❌ No se pudo conectar con Google. Revisa tu conexión e inténtalo de nuevo.", "danger")
+        return redirect(url_for("clientes.login_cliente"))
+
+    access_token = token_data.get("access_token")
+    if not access_token:
+        flash(f"❌ Google no devolvió un token válido: {token_data.get('error_description') or 'error desconocido'}", "danger")
+        return redirect(url_for("clientes.login_cliente"))
+
+    try:
+        info = requests.get("https://www.googleapis.com/oauth2/v3/userinfo",
+                            headers={"Authorization": f"Bearer {access_token}"}, timeout=15).json()
+    except requests.RequestException:
+        flash("❌ No se pudo obtener tu perfil de Google.", "danger")
+        return redirect(url_for("clientes.login_cliente"))
+
+    email = (info.get("email") or "").lower()
+    nombre_completo = info.get("name") or ""
+    nombres = info.get("given_name") or (nombre_completo.split(" ")[0] if nombre_completo else "Usuario")
+    apellidos = info.get("family_name") or (" ".join(nombre_completo.split(" ")[1:]) if nombre_completo else "Google")
+    return _registrar_o_ingresar("Google", email, nombres, apellidos)
 
 
 @clientes_bp.route('/auth/facebook')
 def auth_facebook():
-    flash("🚧 El inicio de sesión con Facebook estará disponible muy pronto.", "info")
-    return redirect(url_for('clientes.login_cliente'))
+    app_id = current_app.config.get("FACEBOOK_APP_ID", "")
+    if not app_id:
+        flash("🚧 El inicio de sesión con Facebook estará disponible próximamente. Mientras tanto, registra tu cuenta con el formulario.", "warning")
+        return redirect(url_for("clientes.login_cliente"))
+
+    state = secrets.token_urlsafe(16)
+    session["oauth_state"] = state
+    redirect_uri = _oauth_redirect_uri("clientes.auth_facebook_callback", "FACEBOOK_REDIRECT_URI")
+
+    auth_url = "https://www.facebook.com/v19.0/dialog/oauth?" + urlencode({
+        "client_id": app_id,
+        "redirect_uri": redirect_uri,
+        "state": state,
+        "scope": "email,public_profile",
+    })
+    return redirect(auth_url)
+
+
+@clientes_bp.route('/auth/facebook/callback')
+def auth_facebook_callback():
+    error = request.args.get("error")
+    if error:
+        flash(f"❌ Facebook: {error}. Intenta de nuevo o usa otro método.", "danger")
+        return redirect(url_for("clientes.login_cliente"))
+
+    code = request.args.get("code")
+    state = request.args.get("state")
+    if not code or state != session.get("oauth_state"):
+        flash("❌ La autenticación con Facebook falló (estado no válido).", "danger")
+        return redirect(url_for("clientes.login_cliente"))
+
+    app_id = current_app.config.get("FACEBOOK_APP_ID", "")
+    app_secret = current_app.config.get("FACEBOOK_APP_SECRET", "")
+    redirect_uri = _oauth_redirect_uri("clientes.auth_facebook_callback", "FACEBOOK_REDIRECT_URI")
+
+    try:
+        token_data = requests.get("https://graph.facebook.com/v19.0/oauth/access_token", params={
+            "client_id": app_id,
+            "redirect_uri": redirect_uri,
+            "client_secret": app_secret,
+            "code": code,
+        }, timeout=15).json()
+    except requests.RequestException:
+        flash("❌ No se pudo conectar con Facebook. Revisa tu conexión e inténtalo de nuevo.", "danger")
+        return redirect(url_for("clientes.login_cliente"))
+
+    access_token = token_data.get("access_token")
+    if not access_token:
+        flash(f"❌ Facebook no devolvió un token válido: {token_data.get('error', {}).get('message', 'error desconocido')}", "danger")
+        return redirect(url_for("clientes.login_cliente"))
+
+    try:
+        info = requests.get("https://graph.facebook.com/me", params={
+            "fields": "id,name,email,first_name,last_name",
+            "access_token": access_token,
+        }, timeout=15).json()
+    except requests.RequestException:
+        flash("❌ No se pudo obtener tu perfil de Facebook.", "danger")
+        return redirect(url_for("clientes.login_cliente"))
+
+    email = (info.get("email") or "").lower()
+    nombre_completo = info.get("name") or ""
+    nombres = info.get("first_name") or (nombre_completo.split(" ")[0] if nombre_completo else "Usuario")
+    apellidos = info.get("last_name") or (" ".join(nombre_completo.split(" ")[1:]) if nombre_completo else "Facebook")
+    return _registrar_o_ingresar("Facebook", email, nombres, apellidos)
+
+
+def _registrar_o_ingresar(proveedor, email, nombres, apellidos):
+    """Encuentra el cliente por correo o lo crea, y luego inicia sesión."""
+    cliente = None
+    if email:
+        cliente = Cliente.query.filter_by(correo=email).first()
+
+    if not cliente:
+        if not email:
+            flash(f"❌ Tu cuenta de {proveedor} no tiene un correo público asociado. Crea tu cuenta manualmente.", "danger")
+            return redirect(url_for("clientes.registro_cliente"))
+        cliente = Cliente(
+            nombres=nombres or "Usuario",
+            apellidos=apellidos or proveedor,
+            correo=email,
+            clave=bcrypt.generate_password_hash(secrets.token_urlsafe(24)).decode("utf-8"),
+        )
+        db.session.add(cliente)
+        db.session.commit()
+        flash(f"✅ Cuenta creada correctamente con {proveedor}. ¡Bienvenido!", "success")
+
+    session["cliente_id"] = cliente.id
+    session["cliente_nombres"] = cliente.nombres
+    session["cliente_apellidos"] = cliente.apellidos
+    session["cliente_correo"] = cliente.correo
+    session["cliente_telefono"] = cliente.telefono
+    session["cliente_direccion"] = cliente.direccion
+    session["cliente_dni"] = cliente.dni
+    flash(f"✅ ¡Bienvenido {cliente.nombres}!", "success")
+    return redirect("/catalogo")

@@ -328,7 +328,7 @@ def generar_comprobante_html(venta, producto, precio, cantidad, total, vendedor_
 def enviar_comprobante_email(destinatario, cliente_nombre, tipo_comprobante, numero_comprobante, fecha, productos, total_venta):
     try:
         msg = MIMEMultipart()
-        msg['From'] = EMAIL_USER
+        msg['From'] = Config.EMAIL_USER
         msg['To'] = destinatario
         msg['Subject'] = f"{tipo_comprobante.upper()} ELECTRÓNICA N° {numero_comprobante}"
         html = f"""
@@ -366,9 +366,9 @@ def enviar_comprobante_email(destinatario, cliente_nombre, tipo_comprobante, num
         </html>
         """
         msg.attach(MIMEText(html, 'html'))
-        server = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT)
+        server = smtplib.SMTP(Config.EMAIL_HOST, Config.EMAIL_PORT)
         server.starttls()
-        server.login(EMAIL_USER, EMAIL_PASSWORD)
+        server.login(Config.EMAIL_USER, Config.EMAIL_PASSWORD)
         server.send_message(msg)
         server.quit()
         return True

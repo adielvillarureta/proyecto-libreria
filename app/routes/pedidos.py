@@ -148,7 +148,7 @@ def crear_pedido():
 
         cliente_razon_social = cliente_data.get("razon_social", "").strip()
         cliente_direccion_fiscal = cliente_data.get("direccion_fiscal", "").strip()
-        cliente_direccion = data.get("direccion", "").strip()
+        cliente_direccion = data.get("direccion", "").strip() or cliente_data.get("direccion", "").strip()
 
         # Fallback a sesión
         if not cliente_nombres:
