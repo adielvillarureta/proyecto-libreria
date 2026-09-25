@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% block titulito %}📦 Pedidos - Librería Salesiana{% endblock %}
 
 {% block contenido %}
@@ -26,7 +26,7 @@
             <h5 class="mb-0"><i class="fas fa-filter me-2 text-primary"></i>Filtros de Búsqueda</h5>
         </div>
         <div class="card-body">
-            <form method="GET" action="{{ url_for('ver_pedidos') }}" class="row g-3" id="filtroForm">
+            <form method="GET" action="{{ url_for('pedidos.ver_pedidos') }}" class="row g-3" id="filtroForm">
                 <div class="col-md-4">
                     <label class="form-label small fw-bold">🔍 Buscar</label>
                     <input type="text" name="search" class="form-control" 
@@ -58,7 +58,7 @@
                     <button type="submit" class="btn btn-primary w-100" title="Buscar">
                         <i class="fas fa-search"></i>
                     </button>
-                    <a href="{{ url_for('ver_pedidos') }}" class="btn btn-secondary w-100" title="Limpiar filtros">
+                    <a href="{{ url_for('pedidos.ver_pedidos') }}" class="btn btn-secondary w-100" title="Limpiar filtros">
                         <i class="fas fa-times"></i>
                     </a>
                 </div>
@@ -210,7 +210,7 @@
                                 <i class="fas fa-inbox fa-3x fa-md-4x text-muted mb-2 mb-md-3"></i>
                             </div>
                             <h5 class="text-muted mb-3 mb-md-4 fs-6 fs-md-5">No hay pedidos que coincidan con los filtros</h5>
-                            <a href="{{ url_for('ver_pedidos') }}" class="btn btn-primary btn-md px-4 px-md-5 py-2 py-md-3 rounded-pill shadow-sm">
+                            <a href="{{ url_for('pedidos.ver_pedidos') }}" class="btn btn-primary btn-md px-4 px-md-5 py-2 py-md-3 rounded-pill shadow-sm">
                                 <i class="fas fa-undo me-2"></i>Limpiar filtros
                             </a>
                         </td>

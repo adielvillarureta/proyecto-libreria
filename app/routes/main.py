@@ -30,6 +30,11 @@ def contacto():
     return render_template('contacto.html')
 
 
+@main_bp.route('/favicon.ico')
+def favicon():
+    return ("", 204)
+
+
 @main_bp.route('/dashboard')
 @login_required
 def dashboard():

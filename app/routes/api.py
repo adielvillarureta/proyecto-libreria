@@ -346,16 +346,6 @@ def api_consultar_ruc_cliente(ruc):
         return jsonify({"success": False, "error": f"Error inesperado: {str(e)}"}), 500
 
 
-# ---------------- DEBUG ----------------
-@api_bp.route('/debug-token')
-def debug_token():
-    return jsonify({
-        "token_existe": bool(Config.API_PERU_TOKEN),
-        "token_preview": Config.API_PERU_TOKEN[:20] + "..." if Config.API_PERU_TOKEN else None,
-        "db_host": "mysql-librospe.alwaysdata.net"
-    })
-
-
 # ---------------- MICROSERVICIO INVENTARIO ----------------
 @api_bp.route('/api/inventario/productos', methods=["GET"])
 @login_required
@@ -447,6 +437,7 @@ def api_inventario_verificar_stock(id, cantidad):
 
 # ---------------- HEALTH ----------------
 @api_bp.route('/api/health', methods=["GET"])
+@api_bp.route('/health', methods=["GET"])
 def api_health():
     try:
         db.session.execute(text("SELECT 1"))

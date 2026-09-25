@@ -1,4 +1,4 @@
-{% extends "base_cliente.html" %}
+﻿{% extends "base_cliente.html" %}
 {% block titulito %}🔑 Cambiar Contraseña - Cliente{% endblock %}
 
 {% block extra_css %}
@@ -551,7 +551,7 @@
                                 <i class="fas fa-shield-check me-2 me-md-3"></i>
                                 <span class="fw-bolder">🔒 Actualizar Contraseña</span>
                             </button>
-                            <a href="{{ url_for('catalogo_cliente') }}"
+                            <a href="{{ url_for('pedidos.catalogo_cliente') }}"
                                 class="btn btn-outline-secondary btn-lg px-5 py-3 shadow-sm hover-lift text-decoration-none">
                                 <i class="fas fa-arrow-left me-2 me-md-3"></i>
                                 <span class="fw-semibold">← Volver a la Tienda</span>

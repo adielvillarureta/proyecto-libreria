@@ -1,4 +1,17 @@
 # app/__init__.py
+import os
+import sys
+
+# Windows (cp1252) rompe los print con emojis: UTF-8 para que
+# ningún print tumbe una petición.
+try:
+    if sys.stdout is not None and hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if sys.stderr is not None and hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
@@ -19,6 +32,9 @@ def create_app(config_class=Config):
 
     # 2b) Confiar en cabeceras de proxy (ngrok, nginx): esquema https + dominio público
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
+    # 2c) Carpeta de subida de imágenes de productos
+    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
     # 3) Inicializar extensiones
     db.init_app(app)

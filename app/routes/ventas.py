@@ -237,27 +237,56 @@ def ver_ventas():
 @ventas_bp.route('/procesar_pago', methods=['POST'])
 @login_required_cliente
 def procesar_pago():
+    """Reenvía el comprobante de un pedido online por email."""
     try:
-        data = request.get_json()
-        email_cliente = data.get("email")
-        nombres = data.get("nombres")
-        apellidos = data.get("apellidos")
+        data = request.get_json(silent=True) or {}
+        email_cliente = str(data.get("email") or "").strip()
+        nombres = str(data.get("nombres") or "").strip()
+        apellidos = str(data.get("apellidos") or "").strip()
         total = data.get("total")
-        tipo_comprobante = data.get("tipo_comprobante")
-        productos = data.get("productos", [])
+        tipo_comprobante = str(data.get("tipo_comprobante") or "boleta").strip().lower()
+        numero_comprobante = str(data.get("numero_comprobante") or "").strip()
+        productos = data.get("productos", []) or []
+
+        if not email_cliente or "@" not in email_cliente:
+            return jsonify({"success": False, "message": "Email inválido"}), 400
+        if tipo_comprobante not in ("boleta", "factura"):
+            tipo_comprobante = "boleta"
+        try:
+            total = float(total)
+        except (TypeError, ValueError):
+            return jsonify({"success": False, "message": "Total inválido"}), 400
+        if not isinstance(productos, list):
+            return jsonify({"success": False, "message": "Productos inválidos"}), 400
+
+        items = []
+        for p in productos:
+            try:
+                precio = float(p.get("precio", p.get("precio_unitario", 0)))
+                cant = int(p.get("cantidad", 1))
+                items.append({
+                    "nombre": str(p.get("nombre", "Producto")),
+                    "cantidad": cant,
+                    "precio_unitario": precio,
+                    "total": precio * cant,
+                })
+            except (TypeError, ValueError, AttributeError):
+                continue
+        if not items:
+            return jsonify({"success": False, "message": "Sin productos"}), 400
 
         exito = enviar_comprobante_email(
             destinatario=email_cliente,
-            cliente_nombre=f"{nombres} {apellidos}".strip(),
+            cliente_nombre=f"{nombres} {apellidos}".strip() or email_cliente,
             tipo_comprobante=tipo_comprobante,
-            numero_comprobante=f"PAGO-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            numero_comprobante=numero_comprobante or f"PAGO-{datetime.now().strftime('%Y%m%d%H%M%S')}",
             fecha=datetime.now(),
-            productos=productos,
+            productos=items,
             total_venta=total
         )
         if exito:
             return jsonify({"success": True, "message": "Correo enviado correctamente"})
         else:
-            return jsonify({"success": False, "message": "Error al enviar correo"})
+            return jsonify({"success": False, "message": "Error al enviar correo"}), 502
     except Exception as e:
-        return jsonify({"success": False, "message": str(e)})
+        return jsonify({"success": False, "message": str(e)}), 500

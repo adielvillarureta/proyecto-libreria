@@ -320,3 +320,31 @@ def api_bloqueos():
         return jsonify(resultado)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@bloqueos_bp.route('/ips-bloqueadas')
+@login_required
+def ver_ips_bloqueadas():
+    """Lista IPs con bloqueo activo (solo admin)."""
+    if session.get("rol") != "administrador":
+        flash("Solo administradores", "danger")
+        return redirect(url_for("main.dashboard"))
+    ahora = datetime.now()
+    ips = IntentosLogin.query.filter(IntentosLogin.ips_bloqueadas > ahora).order_by(IntentosLogin.ips_bloqueadas.desc()).all()
+    return render_template("ips_bloqueadas.html", ips=ips)
+
+
+@bloqueos_bp.route('/desbloquear-ip', methods=['GET', 'POST'])
+@login_required
+def desbloquear_ip():
+    """Libera el bloqueo de una IP (solo admin)."""
+    if session.get("rol") != "administrador":
+        flash("Solo administradores", "danger")
+        return redirect(url_for("main.dashboard"))
+    ip = request.values.get("ip", "").strip()
+    if not ip:
+        flash("IP no indicada", "warning")
+        return redirect(url_for("bloqueos.ver_ips_bloqueadas"))
+    IntentosLogin.query.filter_by(ip=ip).update({IntentosLogin.ips_bloqueadas: None})
+    db.session.commit()
+    flash(f"IP {ip} desbloqueada", "success")
+    return redirect(url_for("bloqueos.ver_ips_bloqueadas"))

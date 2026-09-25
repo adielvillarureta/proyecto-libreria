@@ -1,7 +1,7 @@
 # app/routes/pedidos.py
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from app import db
-from app.models import Pedido, DetallePedido, Producto, Cliente, Venta, Categoria
+from app.models import Pedido, DetallePedido, Producto, Cliente, Venta, Categoria, UsuarioSistema
 from app.utils import login_required, login_required_cliente, enviar_comprobante_email
 from datetime import datetime
 from sqlalchemy import func, text
@@ -115,40 +115,74 @@ def api_mis_pedidos():
 @pedidos_bp.route('/api/pedidos/crear', methods=['POST'])
 @login_required_cliente
 def crear_pedido():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
+    items = data.get("items") or []
 
     print("=" * 60)
-    print("📦 DATOS RECIBIDOS EN /api/pedidos/crear:")
-    print(f"Items: {len(data.get('items', []))} productos")
+    print("DATOS RECIBIDOS EN /api/pedidos/crear:")
+    print(f"Items: {len(items)} productos")
     print(f"Tipo entrega: {data.get('tipo_entrega')}")
     print(f"Total: {data.get('total')}")
     print("=" * 60)
 
+    if not isinstance(items, list) or not items:
+        return jsonify({"success": False, "error": "Carrito vacío"}), 400
     try:
-        # Validar stock
-        for item in data["items"]:
-            producto = Producto.query.get(item["id"])
+        total_cliente = float(data.get("total", 0))
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "error": "Total inválido"}), 400
+    if total_cliente <= 0:
+        return jsonify({"success": False, "error": "Total inválido"}), 400
+    tipo_entrega = str(data.get("tipo_entrega") or "recojo").strip().lower()
+    if tipo_entrega not in ("recojo", "delivery"):
+        tipo_entrega = "recojo"
+
+    def _get_producto(pid):
+        try:
+            p = db.session.get(Producto, pid)
+            if p is not None:
+                return p
+        except Exception:
+            pass
+        return Producto.query.get(pid)
+
+    try:
+        # Validar stock y resolver precios desde la BD (no confiar en el cliente)
+        lineas = []
+        for item in items:
+            try:
+                pid = int(item.get("id"))
+                cant = int(item.get("cantidad", 0))
+            except (TypeError, ValueError, AttributeError):
+                return jsonify({"success": False, "error": "Ítem inválido en el carrito"}), 400
+            if cant <= 0:
+                return jsonify({"success": False, "error": "Cantidad inválida"}), 400
+            producto = _get_producto(pid)
             if not producto:
-                return jsonify({"success": False, "error": f'Producto no encontrado: {item["nombre"]}'})
-            if producto.cantidad < item["cantidad"]:
-                return jsonify({"success": False, "error": f'Stock insuficiente: {item["nombre"]}. Disponible: {producto.cantidad}'})
+                return jsonify({"success": False, "error": f'Producto no encontrado: {item.get("nombre", pid)}'}), 404
+            if (producto.cantidad or 0) < cant:
+                return jsonify({"success": False, "error": f'Stock insuficiente: {producto.nombre}. Disponible: {producto.cantidad}'}), 409
+            precio_server = float(producto.precio_oferta or producto.precio or 0)
+            lineas.append({"producto": producto, "cantidad": cant, "precio": precio_server,
+                           "subtotal": round(precio_server * cant, 2)})
 
-        cliente_data = data.get("cliente", {})
+        cliente_data = data.get("cliente", {}) or {}
+        _s = lambda v: str(v or "").strip()
 
-        cliente_nombres = cliente_data.get("nombres", "").strip()
-        cliente_apellidos = cliente_data.get("apellidos", "").strip()
-        cliente_email = cliente_data.get("email", "").strip()
-        cliente_telefono = cliente_data.get("telefono", "").strip()
+        cliente_nombres = _s(cliente_data.get("nombres"))
+        cliente_apellidos = _s(cliente_data.get("apellidos"))
+        cliente_email = _s(cliente_data.get("email"))
+        cliente_telefono = _s(cliente_data.get("telefono"))
 
-        cliente_documento = cliente_data.get("documento", "").strip()
+        cliente_documento = _s(cliente_data.get("documento"))
         if not cliente_documento:
-            cliente_documento = cliente_data.get("dni", "").strip()
+            cliente_documento = _s(cliente_data.get("dni"))
         if not cliente_documento:
-            cliente_documento = cliente_data.get("ruc", "").strip()
+            cliente_documento = _s(cliente_data.get("ruc"))
 
-        cliente_razon_social = cliente_data.get("razon_social", "").strip()
-        cliente_direccion_fiscal = cliente_data.get("direccion_fiscal", "").strip()
-        cliente_direccion = data.get("direccion", "").strip() or cliente_data.get("direccion", "").strip()
+        cliente_razon_social = _s(cliente_data.get("razon_social"))
+        cliente_direccion_fiscal = _s(cliente_data.get("direccion_fiscal"))
+        cliente_direccion = _s(data.get("direccion")) or _s(cliente_data.get("direccion"))
 
         # Fallback a sesión
         if not cliente_nombres:
@@ -161,39 +195,52 @@ def crear_pedido():
             cliente_telefono = session.get("cliente_telefono", "")
         if not cliente_documento:
             cliente_documento = session.get("cliente_dni", "")
+        if not cliente_nombres or not cliente_email:
+            return jsonify({"success": False, "error": "Faltan datos del cliente"}), 400
+        tipo_comp = str((data.get("comprobante", {}) or {}).get("tipo", "boleta") or "boleta").strip().lower()
+        if tipo_comp not in ("boleta", "factura"):
+            tipo_comp = "boleta"
+        if tipo_comp == "factura" and not cliente_razon_social:
+            return jsonify({"success": False, "error": "Factura requiere razón social"}), 400
+
+        vendedor = db.session.query(UsuarioSistema.id).order_by(UsuarioSistema.id).first()
+        if not vendedor:
+            return jsonify({"success": False, "error": "Sin vendedor configurado"}), 500
 
         pedido = Pedido(
             cliente_id=session["cliente_id"],
-            total=float(data["total"]),
-            tipo_entrega=data["tipo_entrega"],
-            direccion_entrega=cliente_direccion if data["tipo_entrega"] == "delivery" else "",
+            total=round(total_cliente, 2),
+            tipo_entrega=tipo_entrega,
+            direccion_entrega=cliente_direccion if tipo_entrega == "delivery" else "",
         )
         db.session.add(pedido)
         db.session.flush()
 
         productos_para_correo = []
 
-        for item in data["items"]:
-            producto = Producto.query.get(item["id"])
-            subtotal = float(item["precio"]) * int(item["cantidad"])
+        for linea in lineas:
+            producto = linea["producto"]
+            cant = linea["cantidad"]
+            precio = linea["precio"]
+            subtotal = linea["subtotal"]
 
             detalle = DetallePedido(
                 pedido_id=pedido.id,
-                producto_id=item["id"],
-                cantidad=int(item["cantidad"]),
-                precio_unitario=float(item["precio"]),
+                producto_id=producto.id,
+                cantidad=cant,
+                precio_unitario=precio,
                 subtotal=subtotal,
             )
             db.session.add(detalle)
 
-            producto.cantidad -= int(item["cantidad"])
+            producto.cantidad = (producto.cantidad or 0) - cant
 
             venta = Venta(
-                producto_id=item["id"],
-                cantidad=int(item["cantidad"]),
-                vendedor_id=1,
+                producto_id=producto.id,
+                cantidad=cant,
+                vendedor_id=vendedor[0],
                 fecha_venta=datetime.now(),
-                tipo_comprobante=data.get("comprobante", {}).get("tipo", "boleta"),
+                tipo_comprobante=tipo_comp,
                 numero_comprobante=f"ONLINE-{pedido.id}",
                 cliente_nombres=cliente_nombres,
                 cliente_apellidos=cliente_apellidos,
@@ -207,8 +254,8 @@ def crear_pedido():
 
             productos_para_correo.append({
                 'nombre': producto.nombre,
-                'cantidad': int(item["cantidad"]),
-                'precio_unitario': float(item["precio"]),
+                'cantidad': cant,
+                'precio_unitario': precio,
                 'total': subtotal
             })
 
@@ -219,24 +266,24 @@ def crear_pedido():
             enviar_comprobante_email(
                 destinatario=cliente_email,
                 cliente_nombre=f"{cliente_nombres} {cliente_apellidos}".strip(),
-                tipo_comprobante=data.get("comprobante", {}).get("tipo", "boleta"),
+                tipo_comprobante=tipo_comp,
                 numero_comprobante=f"ONLINE-{pedido.id}",
                 fecha=datetime.now(),
                 productos=productos_para_correo,
-                total_venta=float(data["total"])
+                total_venta=round(total_cliente, 2)
             )
-            print(f"📧 Correo enviado a {cliente_email}")
+            print(f"Correo enviado a {cliente_email}")
         except Exception as e:
-            print(f"⚠️ Error al enviar correo: {e}")
+            print(f"Error al enviar correo: {e}")
 
         return jsonify({"success": True, "pedido_id": pedido.id})
 
     except Exception as e:
         db.session.rollback()
-        print(f"❌ ERROR: {e}")
+        print(f"ERROR: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify({"success": False, "error": str(e)})
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 # ---------------- PEDIDOS (ADMIN) ----------------
