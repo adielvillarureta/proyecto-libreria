@@ -1,0 +1,523 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>{% block titulito %}Librería Salesiana — Tienda Online{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --salesiano-gold: #D4AF37;
+            --salesiano-gold2: #f0c94a;
+            --salesiano-blue: #0d2b6e;
+            --salesiano-blue2: #173f9e;
+            --salesiano-bg: #f6f7fb;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--salesiano-bg);
+            padding-bottom: 0;
+        }
+
+        /* ================= ANUNCIO SUPERIOR ================= */
+        .top-bar {
+            background: linear-gradient(90deg, #b8860b, var(--salesiano-gold), #f0c94a);
+            color: #251d00;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            padding: 0.35rem 0;
+            text-align: center;
+        }
+        .top-bar i { margin-right: 6px; }
+
+        /* ================= NAV PRINCIPAL ================= */
+        .navbar-salesiana {
+            background: linear-gradient(135deg, var(--salesiano-blue), var(--salesiano-blue2)) !important;
+            position: sticky;
+            top: 0;
+            z-index: 1060;
+            box-shadow: 0 4px 24px rgba(13, 43, 110, 0.35);
+            padding: 0;
+        }
+        .navbar-salesiana.scrolled { box-shadow: 0 6px 30px rgba(13, 43, 110, 0.5); }
+
+        .navbar-brand {
+            font-size: 1.15rem !important;
+            font-weight: 800 !important;
+            color: #fff !important;
+            white-space: nowrap;
+            letter-spacing: 0.3px;
+        }
+        .navbar-brand i { color: var(--salesiano-gold); }
+
+        /* Barra de búsqueda estilo Amazon */
+        .search-wrap { width: 100%; max-width: 620px; }
+        .search-form {
+            display: flex;
+            border: 2px solid var(--salesiano-gold);
+            border-radius: 50px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+        }
+        .search-form input {
+            flex: 1;
+            border: 0;
+            outline: none;
+            padding: 0.55rem 1rem;
+            font-size: 0.9rem;
+            background: transparent;
+        }
+        .search-form button {
+            border: 0;
+            background: linear-gradient(135deg, var(--salesiano-gold), #f0c94a);
+            color: #1d2a4d;
+            padding: 0 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .search-form button:hover { background: #f0c94a; }
+
+        .icon-link {
+            color: #fff;
+            text-decoration: none;
+            text-align: center;
+            padding: 0.15rem 0.6rem;
+            border-radius: 10px;
+            transition: background 0.2s;
+        }
+        .icon-link:hover { background: rgba(255, 255, 255, 0.15); color:#fff; }
+        .icon-link i { display: block; font-size: 1.15rem; color: var(--salesiano-gold); }
+        .icon-link small { font-size: 0.62rem; opacity: 0.9; line-height: 1; }
+        .icon-link .nombre-mini { font-size: 0.72rem; font-weight: 600; display: block; line-height: 1.1; }
+
+        /* ================= FILA DE CATEGORÍAS ================= */
+        .cat-row {
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 0.35rem 0;
+        }
+        .cat-row .nav-link-categoria {
+            color: rgba(255, 255, 255, 0.92);
+            font-size: 0.78rem;
+            font-weight: 500;
+            padding: 0.3rem 0.75rem;
+            border-radius: 20px;
+            transition: all 0.2s;
+            text-decoration: none;
+            margin-right: 0.15rem;
+        }
+        .cat-row .nav-link-categoria:hover { background: rgba(255, 255, 255, 0.14); color: #fff; }
+        .cat-row .nav-link-categoria.activo { background: var(--salesiano-gold); color: #1d2a4d; font-weight: 700; }
+
+        .dropdown-categorias .dropdown-menu {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 18px 55px rgba(13, 43, 110, 0.25);
+            padding: 0.5rem;
+            min-width: 260px;
+            border: none;
+            margin-top: 6px;
+        }
+        .dropdown-categorias .dropdown-item {
+            padding: 0.6rem 1rem;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            color: #222;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .dropdown-categorias .dropdown-item:hover {
+            background: linear-gradient(90deg, rgba(212, 175, 55, 0.15), rgba(212, 175, 55, 0.05));
+            transform: translateX(4px);
+            color: var(--salesiano-blue);
+        }
+        .dropdown-categorias .dropdown-item i { margin-right: 0.6rem; }
+
+        .btn-gold {
+            background: linear-gradient(135deg, var(--salesiano-gold), #f0c94a);
+            color: #1d2a4d;
+            font-weight: 700;
+            border-radius: 50px;
+            border: none;
+            padding: 0.45rem 1rem;
+            transition: all 0.2s;
+        }
+        .btn-gold:hover { transform: scale(1.04); color: #141a30; }
+        .btn-gold .carrito-badge {
+            position: absolute;
+            top: -6px;
+            right: -8px;
+            background: #e23b3b;
+            border-radius: 50%;
+            min-width: 20px;
+            height: 20px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            padding: 0 5px;
+        }
+
+        .avatar-mini {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--salesiano-gold);
+        }
+
+        /* Dropdown de usuario */
+        .user-menu .dropdown-menu {
+            min-width: 240px;
+            border: 0;
+            border-radius: 16px;
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+        }
+        .user-menu .dropdown-header { background: linear-gradient(135deg, var(--salesiano-blue), var(--salesiano-blue2)); color: #fff; border-radius: 14px 14px 0 0; margin: -4px -4px 6px; padding: 0.8rem 1rem; }
+        .user-menu .dropdown-item { padding: 0.55rem 1rem; border-radius: 8px; font-size: 0.85rem; }
+        .user-menu .dropdown-item:hover { background: #f1f3ff; }
+
+        /* ================= FOOTER ================= */
+        .footer-salesiana { background: linear-gradient(180deg, #0d1b3a, #0a1530); }
+        .footer-salesiana h5 { color: var(--salesiano-gold); font-size: 0.95rem; font-weight: 700; letter-spacing: 0.5px; }
+        .footer-salesiana a.f-link { color: #9fb0d8; text-decoration: none; font-size: 0.82rem; }
+        .footer-salesiana a.f-link:hover { color: #fff; }
+        .footer-salesiana .social-btn { transition: all 0.2s; border-radius: 50%; }
+        .footer-salesiana .social-btn:hover { background: var(--salesiano-gold); color: #141a30 !important; transform: translateY(-3px); }
+
+        .navbar-salesiana .container { max-width: 1280px; }
+        .footer-salesiana .container { max-width: 1280px; }
+        .main-container { max-width: 1280px; }
+
+        @media (max-width: 992px) {
+            .search-wrap { max-width: 100%; }
+            .navbar-brand { font-size: 0.95rem !important; }
+        }
+        @media (max-width: 576px) {
+            .navbar-brand { font-size: 0.8rem !important; }
+            .navbar-brand i { font-size: 0.75rem; }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+    <!-- ANNUNCIO -->
+    <div class="top-bar">
+        <div class="container d-flex justify-content-center" style="max-width:1280px;">
+            <span><i class="fas fa-truck"></i>Envío gratis en compras desde S/ 100</span>
+            <span class="d-none d-sm-inline mx-3">·</span>
+            <span class="d-none d-sm-inline"><i class="fas fa-gift"></i>Usa el cupón <strong>BIENVENIDO5</strong> en tu primera compra</span>
+        </div>
+    </div>
+
+    <!-- ===== NAVBAR TIPO AMAZON ===== -->
+    <nav class="navbar navbar-dark navbar-salesiana" id="mainNavbar">
+        <div class="container py-2">
+            <div class="row w-100 align-items-center g-2">
+                <!-- LOGO -->
+                <div class="col-6 col-md-3">
+                    <a class="navbar-brand fw-bold" href="{{ url_for('pedidos.catalogo_cliente') }}">
+                        <i class="fas fa-book-open me-1 me-sm-2"></i>Librería Salesiana
+                    </a>
+                </div>
+
+                <!-- BUSCADOR -->
+                <div class="col-12 col-md-6 order-3 order-md-2 mt-2 mt-md-0">
+                    <div class="search-wrap mx-auto">
+                        <form class="search-form" onsubmit="buscarCatalogo(event)">
+                            <input type="text" id="searchGlobal" placeholder="🔍 Buscar libros, cuadernos, útiles...">
+                            <button type="submit"><i class="fas fa-search"></i></button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- ICONOS -->
+                <div class="col-6 col-md-3 order-2 order-md-3">
+                    <div class="d-flex align-items-center justify-content-end gap-1">
+                        {% if session.cliente_id %}
+                        <div class="dropdown user-menu d-none d-md-block">
+                            <a class="icon-link dropdown-toggle d-flex align-items-center gap-2" href="#" data-bs-toggle="dropdown" role="button">
+                                <img src="https://ui-avatars.com/api/?name={{ session.cliente_nombres }}&background=0d2b6e&color=d4af37&bold=true&size=64" class="avatar-mini" alt="avatar">
+                                <div class="text-start lh-1 d-none d-lg-block">
+                                    <small style="font-size:0.6rem;opacity:.8;">Hola, bienvenido</small>
+                                    <span class="nombre-mini">{{ session.cliente_nombres }} {{ session.cliente_apellidos }}</span>
+                                </div>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end user-menu">
+                                <li class="dropdown-header">Hola, {{ session.cliente_nombres }} {{ session.cliente_apellidos }}</li>
+                                <li><a class="dropdown-item" href="{{ url_for('clientes.cliente_perfil') }}"><i class="fas fa-id-card me-2 text-primary"></i>Mi cuenta y perfil</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('pedidos.mis_pedidos') }}"><i class="fas fa-box me-2 text-warning"></i>Mis pedidos</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('clientes.cliente_cambiar_contrasena') }}"><i class="fas fa-key me-2 text-info"></i>Cambiar contraseña</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="{{ url_for('clientes.logout_cliente') }}"><i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión</a></li>
+                            </ul>
+                        </div>
+                        {% else %}
+                        <a class="icon-link d-none d-md-block" href="{{ url_for('clientes.login_cliente') }}">
+                            <i class="fas fa-user-circle"></i>
+                            <small>Ingresar</small>
+                        </a>
+                        {% endif %}
+
+                        <a class="icon-link d-none d-md-block" href="{{ url_for('pedidos.mis_pedidos') }}">
+                            <i class="fas fa-box"></i>
+                            <small>Pedidos</small>
+                        </a>
+
+                        <div class="position-relative">
+                            <a class="btn btn-gold position-relative" href="{{ url_for('pedidos.ver_carrito') }}">
+                                <i class="fas fa-shopping-cart me-1"></i>Carrito
+                                <span id="carritoContador" class="carrito-badge" style="display:none;">0</span>
+                            </a>
+                        </div>
+
+                        <button class="navbar-toggler d-md-none ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCliente" aria-label="Menú">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FILA CATEGORÍAS (desktop) -->
+            <div class="cat-row d-none d-lg-flex align-items-center mt-2">
+                <div class="dropdown-categorias position-relative">
+                    <a class="nav-link-categoria dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-th-list me-1"></i> Comprar por categoría
+                    </a>
+                    <ul class="dropdown-menu shadow-lg" id="menuCategorias">
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="filtrarPorCategoria(null); return false;">
+                                <span><i class="fas fa-store text-primary"></i>Todas las categorías</span>
+                                <span class="badge bg-primary">Ver todo</span>
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% for categoria in categorias %}
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="filtrarPorCategoria({{ categoria.id_categoria }}); return false;">
+                                <span>
+                                    {% if categoria.nombre|lower == 'cuadernos' %}📓
+                                    {% elif categoria.nombre|lower == 'lapiceros' %}✍️
+                                    {% elif categoria.nombre|lower == 'papeleria' %}📄
+                                    {% elif categoria.nombre|lower == 'arte' %}🎨
+                                    {% elif categoria.nombre|lower == 'oficina' %}📎
+                                    {% elif categoria.nombre|lower == 'herramientas' %}🔧
+                                    {% elif categoria.nombre|lower == 'libros' %}📚
+                                    {% elif categoria.nombre|lower == 'mochilas' %}🎒
+                                    {% else %}📂{% endif %}
+                                    {{ categoria.nombre|capitalize }}
+                                </span>
+                                <span class="badge bg-light text-muted">{{ categoria.productos|length if categoria.productos else 0 }}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% for categoria in categorias[:7] %}
+                <a class="nav-link-categoria" href="#" onclick="filtrarPorCategoria({{ categoria.id_categoria }}); return false;">
+                    {% if categoria.nombre|lower == 'cuadernos' %}📓{% elif categoria.nombre|lower == 'lapiceros' %}✍️
+                    {% elif categoria.nombre|lower == 'papeleria' %}📄{% elif categoria.nombre|lower == 'arte' %}🎨
+                    {% elif categoria.nombre|lower == 'oficina' %}📎{% elif categoria.nombre|lower == 'herramientas' %}🔧
+                    {% elif categoria.nombre|lower == 'libros' %}📚{% elif categoria.nombre|lower == 'mochilas' %}🎒
+                    {% else %}📂{% endif %} {{ categoria.nombre|capitalize }}
+                </a>
+                {% endfor %}
+                <a class="nav-link-categoria ms-auto text-warning" href="{{ url_for('pedidos.catalogo_cliente') }}">
+                    <i class="fas fa-fire me-1"></i>Ofertas
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MENÚ MÓVIL -->
+    <div class="collapse bg-white shadow-sm" id="navbarCliente">
+        <div class="container py-3">
+            <form class="search-form mb-3" onsubmit="buscarCatalogo(event)">
+                <input type="text" id="searchGlobalMovil" placeholder="🔍 Buscar productos...">
+                <button type="submit"><i class="fas fa-search"></i></button>
+            </form>
+            <div class="dropdown-categorias mb-2">
+                <a class="btn btn-outline-primary w-100 text-start dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                    <i class="fas fa-th-list me-2"></i>Categorías
+                </a>
+                <ul class="dropdown-menu w-100 shadow">
+                    <li><a class="dropdown-item" href="#" onclick="filtrarPorCategoria(null); return false;"><i class="fas fa-store"></i> Todas las categorías</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    {% for categoria in categorias %}
+                    <li><a class="dropdown-item" href="#" onclick="filtrarPorCategoria({{ categoria.id_categoria }}); return false;">
+                        {% if categoria.nombre|lower == 'cuadernos' %}📓{% elif categoria.nombre|lower == 'lapiceros' %}✍️
+                        {% elif categoria.nombre|lower == 'papeleria' %}📄{% elif categoria.nombre|lower == 'arte' %}🎨
+                        {% elif categoria.nombre|lower == 'oficina' %}📎{% elif categoria.nombre|lower == 'herramientas' %}🔧
+                        {% elif categoria.nombre|lower == 'libros' %}📚{% elif categoria.nombre|lower == 'mochilas' %}🎒
+                        {% else %}📂{% endif %} {{ categoria.nombre|capitalize }}
+                    </a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% if session.cliente_id %}
+            <a class="btn btn-outline-dark w-100 mb-2" href="{{ url_for('clientes.cliente_perfil') }}"><i class="fas fa-user me-2"></i>Mi perfil</a>
+            <a class="btn btn-outline-dark w-100 mb-2" href="{{ url_for('pedidos.mis_pedidos') }}"><i class="fas fa-box me-2"></i>Mis pedidos</a>
+            <a class="btn btn-outline-danger w-100" href="{{ url_for('clientes.logout_cliente') }}"><i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión</a>
+            {% else %}
+            <a class="btn btn-outline-primary w-100 mb-2" href="{{ url_for('clientes.login_cliente') }}"><i class="fas fa-sign-in-alt me-2"></i>Iniciar sesión</a>
+            <a class="btn btn-gold w-100" href="{{ url_for('clientes.registro_cliente') }}"><i class="fas fa-user-plus me-2"></i>Registrarme</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- HERO A SANGRES COMPLETAS (solo si la página lo pide) -->
+    {% block fullwidth %}{% endblock %}
+
+    <div class="container main-container mt-3 mt-sm-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show shadow-sm">
+            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' }} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block contenido %}{% endblock %}
+    </div>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="footer-salesiana text-white mt-5 pt-5 pb-3">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-12 col-lg-4">
+                    <h5 class="mb-3"><i class="fas fa-book-open me-2"></i>Librería Salesiana Don Bosco</h5>
+                    <p class="small" style="color:#9fb0d8;">"Formando buenos cristianos y honrados ciudadanos" — San Juan Bosco.</p>
+                    <div class="fw-bold text-warning small mb-1"><i class="fas fa-map-marker-alt me-2 text-danger"></i>Sede Huancayo — Santa Rosa</div>
+                    <p class="small mb-1" style="color:#9fb0d8;">Av. Santa Rosa 123, Huancayo – Junín, Perú</p>
+                    <p class="small mb-1" style="color:#9fb0d8;"><i class="fas fa-phone me-2 text-success"></i>(064) 123-456</p>
+                    <p class="small mb-3" style="color:#9fb0d8;"><i class="fas fa-envelope me-2 text-info"></i>info@libreriasalesiana.com</p>
+                    <div class="d-flex gap-2">
+                        <a href="#" class="btn btn-outline-light btn-sm social-btn" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="btn btn-outline-light btn-sm social-btn" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="btn btn-outline-light btn-sm social-btn" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                        <a href="#" class="btn btn-outline-light btn-sm social-btn" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <h5 class="mb-3">Tienda</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="{{ url_for('pedidos.catalogo_cliente') }}" class="f-link">🏪 Catálogo</a></li>
+                        <li class="mb-2"><a href="{{ url_for('pedidos.catalogo_cliente') }}?categoria=libros" class="f-link">📚 Libros</a></li>
+                        <li class="mb-2"><a href="{{ url_for('pedidos.catalogo_cliente') }}?categoria=cuadernos" class="f-link">📓 Cuadernos</a></li>
+                        <li class="mb-2"><a href="{{ url_for('pedidos.catalogo_cliente') }}" class="f-link">🎁 Ofertas</a></li>
+                    </ul>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <h5 class="mb-3">Cuenta</h5>
+                    <ul class="list-unstyled">
+                        {% if session.cliente_id %}
+                        <li class="mb-2"><a href="{{ url_for('clientes.cliente_perfil') }}" class="f-link">👤 Mi perfil</a></li>
+                        <li class="mb-2"><a href="{{ url_for('pedidos.mis_pedidos') }}" class="f-link">📦 Mis pedidos</a></li>
+                        <li class="mb-2"><a href="{{ url_for('clientes.cliente_cambiar_contrasena') }}" class="f-link">🔐 Seguridad</a></li>
+                        <li class="mb-2"><a href="{{ url_for('pedidos.ver_carrito') }}" class="f-link">🛒 Mi carrito</a></li>
+                        {% else %}
+                        <li class="mb-2"><a href="{{ url_for('clientes.login_cliente') }}" class="f-link">🔐 Iniciar sesión</a></li>
+                        <li class="mb-2"><a href="{{ url_for('clientes.registro_cliente') }}" class="f-link">📝 Regístrate</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="col-12 col-lg-3">
+                    <h5 class="mb-3">Horario</h5>
+                    <p class="small mb-1" style="color:#9fb0d8;">📅 Lun - Vie: 9am - 7pm</p>
+                    <p class="small mb-1" style="color:#9fb0d8;">📅 Sábados: 9am - 2pm</p>
+                    <p class="small mb-3" style="color:#9fb0d8;">🌞 Domingos: Cerrado</p>
+                    <div class="p-2 rounded" style="background:rgba(212,175,55,0.12);border:1px dashed var(--salesiano-gold);">
+                        <small class="text-warning"><i class="fas fa-tag me-1"></i>Cupón de bienvenida: <strong>BIENVENIDO5</strong></small>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4" style="border-color:rgba(255,255,255,0.1);">
+            <div class="text-center small" style="color:#8ba0d0;">
+                &copy; 2025 Librería Salesiana Don Bosco — Todos los derechos reservados
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ============================================
+        // BUSCAR EN EL CATÁLOGO
+        // ============================================
+        function buscarCatalogo(event) {
+            event.preventDefault();
+            var input = document.getElementById('searchGlobal') || document.getElementById('searchGlobalMovil');
+            var q = (input && input.value) ? encodeURIComponent(input.value.trim()) : '';
+            window.location.href = '/catalogo' + (q ? '?q=' + q : '');
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const navbar = document.getElementById('mainNavbar');
+            if (navbar) {
+                window.addEventListener('scroll', function () {
+                    navbar.classList.toggle('scrolled', window.scrollY > 50);
+                });
+            }
+
+            function actualizarContadorCarrito() {
+                let carrito = JSON.parse(localStorage.getItem('carritoCliente') || '[]');
+                let total = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+                let contador = document.getElementById('carritoContador');
+                if (contador) {
+                    if (total > 0) {
+                        contador.textContent = total;
+                        contador.style.display = 'flex';
+                    } else {
+                        contador.style.display = 'none';
+                    }
+                }
+            }
+            actualizarContadorCarrito();
+            window.addEventListener('storage', function (e) {
+                if (e.key === 'carritoCliente' || e.key === null) actualizarContadorCarrito();
+            });
+        });
+
+        // ============================================
+        // FILTRAR POR CATEGORÍA DESDE EL MENÚ
+        // ============================================
+        function filtrarPorCategoria(categoriaId) {
+            var select = document.getElementById('filtroCategoria');
+            if (select) {
+                select.value = categoriaId || '';
+                select.dispatchEvent(new Event('change'));
+            }
+            if (typeof aplicarFiltros === 'function') aplicarFiltros();
+
+            if (window.location.pathname !== '/catalogo' && window.location.pathname.startsWith('/')) {
+                var url = '/catalogo';
+                if (categoriaId) url += '?categoria=' + categoriaId;
+                window.location.href = url;
+                return;
+            }
+
+            var grid = document.getElementById('productosGrid');
+            if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

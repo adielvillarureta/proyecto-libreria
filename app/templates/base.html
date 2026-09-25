@@ -1,0 +1,143 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>{% block titulito %}Inventario Librería Salesiana{% endblock %}</title>
+    <!-- BOOTSTRAP 5 CSS + ICONOS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- GOOGLE FONTS -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/">Librería Salesiana</a>
+            {% if session.usuario_id %}
+            <div class="d-flex align-items-center text-white gap-2 gap-sm-3">
+                <div class="d-none d-md-block">
+                    <i class="fas fa-user-circle me-2"></i>
+                    {{ session.nombre }}
+                    <span class="badge bg-warning text-dark px-2 py-1 ms-1">{{ session.rol }}</span>
+                </div>
+                <div class="d-flex gap-1 gap-sm-2">
+                    <a class="btn btn-outline-light btn-sm px-2 px-sm-3" href="/cambiar_clave">
+                        <i class="fas fa-key me-1"></i><span class="d-none d-sm-inline">Clave</span>
+                    </a>
+                    <a class="btn btn-outline-light btn-sm px-2 px-sm-3" href="/logout">
+                        <i class="fas fa-sign-out-alt me-1"></i><span class="d-none d-sm-inline">Salir</span>
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- ========================================================= -->
+    <!-- ===== PANEL SALESIANO CON BOTONES - STICKY ===== -->
+    <!-- ========================================================= -->
+    {% if session.usuario_id %}
+    <div class="panel-salesiano-wrapper" id="panelSalesiano">
+        <div class="container">
+            <div class="dashboard-header">
+                <div class="row align-items-center g-1 g-md-2">
+                    <div class="col-12 col-lg-4">
+                        <h1 class="fw-bold mb-0 text-dark">
+                            <i class="fas fa-cube me-2 text-primary"></i>Panel Salesiano
+                        </h1>
+                        <p class="mb-0 text-secondary small">
+                            <i class="fas fa-warehouse me-1"></i>Sistema de gestión completa
+                        </p>
+                    </div>
+
+                    <!-- BOTONES EN HORIZONTAL SEGÚN ROL -->
+                    <div class="col-12 col-lg-8">
+                        <div class="admin-dashboard-grid">
+                            <!-- ===== BOTONES PARA ADMINISTRADOR ===== -->
+                            {% if session.rol == 'administrador' %}
+                            <a href="/usuarios/nuevo" class="btn-card btn-card-purple" title="Nuevo Vendedor">
+                                <i class="fas fa-user-plus"></i>
+                                <span>Nuevo Vendedor</span>
+                            </a>
+                            <a href="/ver_ventas" class="btn-card btn-card-orange" title="Reporte Ventas">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Reporte Ventas</span>
+                            </a>
+                            <a href="/bloqueos" class="btn-card btn-card-rose" title="Usuarios Bloqueados" id="btn-bloqueos">
+                                <i class="fas fa-lock"></i>
+                                <span>Bloqueados</span>
+                                <span class="badge bg-danger ms-1" id="contador-bloqueos" style="display:none;font-size:0.6rem;">0</span>
+                            </a>
+                            <a href="/bloqueos-sistema" class="btn-card btn-card-purple" title="Bloqueos Sistema">
+                                <i class="fas fa-user-lock"></i>
+                                <span>Bloq. Sistema</span>
+                            </a>
+                            <a href="/usuarios-sistema" class="btn-card btn-card-indigo" title="Gestionar Usuarios">
+                                <i class="fas fa-users-cog"></i>
+                                <span>Usuarios Sistema</span>
+                            </a>
+                            {% endif %}
+
+                            <!-- ===== BOTONES PARA ADMIN Y VENDEDOR (no vendedor) ===== -->
+                            {% if session.rol != 'vendedor' %}
+                            <a href="/productos/nuevo" class="btn-card btn-card-gold" title="Nuevo Producto">
+                                <i class="fas fa-box-open"></i>
+                                <span>Nuevo Producto</span>
+                            </a>
+                            <a href="/proveedores" class="btn-card btn-card-blue" title="Proveedores">
+                                <i class="fas fa-handshake"></i>
+                                <span>Proveedores</span>
+                            </a>
+                            <a href="/dashboard" class="btn-card btn-card-indigo" title="Dashboard">
+                                <i class="fas fa-chart-pie"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            {% endif %}
+
+                            <!-- ===== BOTONES PARA TODOS (admin y vendedor) ===== -->
+                            <a href="/pedidos" class="btn-card btn-card-pink" title="Ver Pedidos">
+                                <i class="fas fa-truck"></i>
+                                <span>Pedidos</span>
+                            </a>
+                            <a href="/ventas/nueva" class="btn-card btn-card-emerald" title="Nueva Venta">
+                                <i class="fas fa-cash-register"></i>
+                                <span>Nueva Venta</span>
+                            </a>
+
+                            <!-- ===== BOTONES SOLO PARA ADMIN ===== -->
+                            {% if session.rol == 'administrador' %}
+                            <a href="/ventas" class="btn-card btn-card-purple" title="Reportes Vendedores">
+                                <i class="fas fa-chart-bar"></i>
+                                <span>Reportes</span>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ========================================================= -->
+    <!-- ===== CONTENIDO DE CADA PÁGINA ===== -->
+    <!-- ========================================================= -->
+    <div class="container fade-in">
+        {% block contenido %}
+        {% endblock %}
+    </div>
+
+    <!-- BOOTSTRAP JS + JS propio -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/base.js') }}"></script>
+</body>
+
+</html>

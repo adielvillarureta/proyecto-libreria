@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+
+{% block titulito %}📦 Productos Salesianos{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== ESTILOS ESPECÍFICOS DE PRODUCTOS ===== */
+    .badge-categoria {
+        display: inline-block;
+        font-size: 0.7rem;
+        font-weight: 600;
+        border-radius: 20px;
+        padding: 0.3rem 0.7rem;
+        color: white;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    .badge-categoria-cuadernos { background: #4F46E5; }
+    .badge-categoria-lapiceros { background: #DC2626; }
+    .badge-categoria-papeleria { background: #059669; }
+    .badge-categoria-arte { background: #7C3AED; }
+    .badge-categoria-oficina { background: #D97706; }
+    .badge-categoria-herramientas { background: #6B7280; }
+    .badge-categoria-default { background: #6B7280; }
+    
+    .table-row-hover:hover { 
+        background-color: rgba(212, 175, 55, 0.06);
+        transition: background-color 0.2s ease;
+    }
+    .table thead th {
+        background: linear-gradient(135deg, #1e3a8a, #3b82f6) !important;
+        color: white !important;
+        font-weight: 600;
+        border: none;
+    }
+    .card-header.bg-primary {
+        background: linear-gradient(135deg, #1e3a8a, #3b82f6) !important;
+        border: none;
+    }
+    .form-control-sm:focus,
+    .form-select-sm:focus {
+        border-color: #d4af37;
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25);
+    }
+    #filtroCategoria {
+        border: 2px solid #1e3a8a !important;
+        background-color: #eef2ff !important;
+        font-weight: 600 !important;
+        color: #1e3a8a !important;
+    }
+    #filtroCategoria:focus {
+        border-color: #d4af37 !important;
+        box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.3) !important;
+    }
+    .card, .dashboard-header {
+        animation: fadeInUp 0.5s ease-out;
+    }
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block contenido %}
+<!-- ===== CONTENIDO ESPECÍFICO DE PRODUCTOS (sin el Panel Salesiano) ===== -->
+<div class="row">
+    <div class="col-12">
+        <!-- FILTROS -->
+        <div class="card mb-4 shadow-sm border-0">
+            <div class="card-body p-2 p-md-3">
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-md-4 col-lg-3">
+                        <label class="form-label fw-semibold mb-1 small text-primary">
+                            <i class="fas fa-filter me-1 text-primary"></i>Categoría
+                        </label>
+                        <select id="filtroCategoria" class="form-select form-select-sm">
+                            <option value="">📂 Todas las categorías</option>
+                            {% for categoria in categorias %}
+                            <option value="{{ categoria.id_categoria }}" 
+                                {% if categoria_seleccionada == categoria.id_categoria %}selected{% endif %}>
+                                {% if categoria.nombre == 'cuadernos' %}📓
+                                {% elif categoria.nombre == 'lapiceros' %}✍️
+                                {% elif categoria.nombre == 'papeleria' %}📄
+                                {% elif categoria.nombre == 'arte' %}🎨
+                                {% elif categoria.nombre == 'oficina' %}📎
+                                {% elif categoria.nombre == 'herramientas' %}🔧
+                                {% else %}📂{% endif %}
+                                {{ categoria.nombre }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-12 col-md-4 col-lg-3">
+                        <label class="form-label fw-semibold mb-1 small text-secondary">
+                            <i class="fas fa-search me-1 text-primary"></i>Buscar producto
+                        </label>
+                        <input type="text" id="buscarProducto" class="form-control form-control-sm" 
+                               placeholder="Nombre del producto...">
+                    </div>
+                    
+                    <div class="col-12 col-md-4 col-lg-2">
+                        <button id="btnLimpiar" class="btn btn-outline-secondary btn-sm w-100">
+                            <i class="fas fa-times me-1"></i>Limpiar filtros
+                        </button>
+                    </div>
+                    
+                    <div class="col-12 col-lg-4 text-lg-end">
+                        <span class="badge bg-primary" id="contadorProductos">{{ productos|length }} productos encontrados</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLA DE PRODUCTOS -->
+        <div class="card shadow-lg border-0 overflow-hidden">
+            <div class="card-header bg-primary text-white p-2 p-md-3">
+                <h5 class="mb-0 fw-bold fs-6">
+                    <i class="fas fa-th-list me-2"></i>Inventario
+                </h5>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle table-sm" id="tablaProductos">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="text-center small" style="width: 60px;">Imagen</th>
+                            <th class="small">Producto</th>
+                            <th class="small">Categoría</th>
+                            <th class="small d-none d-md-table-cell">Descripción</th>
+                            <th class="text-center small" style="width: 70px;">Stock</th>
+                            <th class="text-center small" style="width: 90px;">Precio</th>
+                            <th class="small d-none d-lg-table-cell" style="width: 120px;">Proveedor</th>
+                            <th class="text-center small" style="width: 80px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pr in productos %}
+                        <tr class="table-row-hover" 
+                            data-nombre="{{ pr.nombre.lower() }}" 
+                            data-categoria="{{ pr.id_categoria }}">
+                            <td class="text-center">
+                                {% if pr.imagen %}
+                                <img src="{{ url_for('static', filename='img/productos/' + pr.imagen) }}" alt="{{ pr.nombre }}"
+                                    class="rounded-2 shadow-sm" style="width: 40px; height: 40px; object-fit: cover;"
+                                    onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<div class=\'d-flex align-items-center justify-content-center rounded-2\' style=\'width:40px;height:40px;background:#f8f9fa;\'><i class=\'fas fa-image text-muted fs-6\'></i></div>'"
+                                    loading="lazy">
+                                {% else %}
+                                <div class="bg-light d-flex align-items-center justify-content-center rounded-2"
+                                    style="width: 40px; height: 40px;">
+                                    <i class="fas fa-image text-muted fs-6"></i>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong class="d-block text-dark small">{{ pr.nombre|truncate(35) }}</strong>
+                                {% if pr.destacado %}
+                                <span class="badge bg-warning text-dark mt-1" style="font-size: 0.6rem;">
+                                    <i class="fas fa-star fa-xs"></i> Destacado
+                                </span>
+                                {% endif %}
+                                {% if pr.precio_oferta %}
+                                <span class="badge bg-danger mt-1 ms-1" style="font-size: 0.6rem;">
+                                    <i class="fas fa-tag fa-xs"></i> Oferta
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if pr.categoria_rel %}
+                                <span class="badge-categoria badge-categoria-{{ pr.categoria_rel.nombre }}">
+                                    {% if pr.categoria_rel.nombre == 'cuadernos' %}📓
+                                    {% elif pr.categoria_rel.nombre == 'lapiceros' %}✍️
+                                    {% elif pr.categoria_rel.nombre == 'papeleria' %}📄
+                                    {% elif pr.categoria_rel.nombre == 'arte' %}🎨
+                                    {% elif pr.categoria_rel.nombre == 'oficina' %}📎
+                                    {% elif pr.categoria_rel.nombre == 'herramientas' %}🔧
+                                    {% else %}📂{% endif %}
+                                    {{ pr.categoria_rel.nombre }}
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary px-2 py-1" style="font-size: 0.7rem;">📦 Sin categoría</span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-secondary d-none d-md-table-cell" style="font-size: 0.75rem;">
+                                {{ pr.descripcion[:40] }}{% if pr.descripcion|length > 40 %}...{% endif %}
+                            </td>
+                            <td class="text-center fw-bold small 
+                                    {% if pr.cantidad == 0 %}text-danger
+                                    {% elif pr.cantidad <= 5 %}text-warning
+                                    {% else %}text-success{% endif %}">
+                                {{ pr.cantidad }}
+                            </td>
+                            <td class="text-center">
+                                <div>
+                                    <strong class="text-success">S/. {{ "%.2f"|format(pr.precio|default(0)) }}</strong>
+                                    {% if pr.precio_oferta %}
+                                    <br><small class="text-danger text-decoration-line-through" style="font-size: 0.6rem;">S/. {{ "%.2f"|format(pr.precio_oferta) }}</small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="d-none d-lg-table-cell">
+                                {% if pr.proveedor %}
+                                <span class="badge bg-info px-2 py-1" style="font-size: 0.65rem;">{{ pr.proveedor.nombre[:18] }}{% if pr.proveedor.nombre|length > 18 %}...{% endif %}</span>
+                                {% else %}
+                                <span class="badge bg-secondary px-2 py-1" style="font-size: 0.65rem;">Sin proveedor</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if session.rol != 'vendedor' %}
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="/productos/editar/{{ pr.id }}" class="btn btn-sm btn-outline-warning py-0 px-2"
+                                        title="Editar" style="font-size: 0.7rem;">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="/productos/eliminar/{{ pr.id }}" class="btn btn-sm btn-outline-danger py-0 px-2"
+                                        onclick="return confirm('¿Eliminar {{ pr.nombre }}?')" title="Eliminar" style="font-size: 0.7rem;">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                                {% else %}
+                                <span class="text-muted" style="font-size: 0.7rem;">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr class="no-data">
+                            <td colspan="8" class="text-center py-4">
+                                <i class="fas fa-boxes fa-3x text-muted mb-2 opacity-50"></i>
+                                <h6 class="text-muted mb-3">No hay productos registrados</h6>
+                                {% if session.rol != 'vendedor' %}
+                                <a href="/productos/nuevo" class="btn btn-primary btn-sm px-3">
+                                    <i class="fas fa-plus me-2"></i>Primer Producto
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let filterTimeout;
+    
+    function filtrarProductos() {
+        const categoriaId = document.getElementById('filtroCategoria').value;
+        const busqueda = document.getElementById('buscarProducto').value.toLowerCase().trim();
+        
+        const rows = document.querySelectorAll('#tablaProductos tbody tr:not(.no-data)');
+        let contador = 0;
+        
+        rows.forEach(row => {
+            const rowCategoria = row.getAttribute('data-categoria') || '';
+            const rowNombre = row.getAttribute('data-nombre') || '';
+            
+            let mostrar = true;
+            
+            if (categoriaId && rowCategoria !== categoriaId) mostrar = false;
+            if (busqueda && !rowNombre.includes(busqueda)) mostrar = false;
+            
+            if (mostrar) {
+                row.style.display = '';
+                contador++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        const contadorSpan = document.getElementById('contadorProductos');
+        if (contadorSpan) {
+            contadorSpan.innerHTML = contador + ' producto' + (contador !== 1 ? 's' : '') + ' encontrado' + (contador !== 1 ? 's' : '');
+        }
+    }
+    
+    function filtrarProductosDebounced() {
+        clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(filtrarProductos, 250);
+    }
+    
+    function limpiarFiltros() {
+        document.getElementById('filtroCategoria').value = '';
+        document.getElementById('buscarProducto').value = '';
+        filtrarProductos();
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const filtroCategoria = document.getElementById('filtroCategoria');
+        const buscarProducto = document.getElementById('buscarProducto');
+        const btnLimpiar = document.getElementById('btnLimpiar');
+        
+        if (filtroCategoria) filtroCategoria.addEventListener('change', filtrarProductos);
+        if (buscarProducto) buscarProducto.addEventListener('keyup', filtrarProductosDebounced);
+        if (btnLimpiar) btnLimpiar.addEventListener('click', limpiarFiltros);
+    });
+    
+    if ('ontouchstart' in window) {
+        document.querySelectorAll('.btn-card, .btn').forEach(element => {
+            element.addEventListener('touchstart', function() {
+                this.style.transform = 'scale(0.95)';
+            });
+            element.addEventListener('touchend', function() {
+                this.style.transform = '';
+            });
+        });
+    }
+</script>
+{% endblock %}
