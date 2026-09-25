@@ -1,11 +1,11 @@
 # app/routes/api.py
 from flask import Blueprint, request, jsonify, url_for, session, flash, redirect, render_template
 from app import db
-from app.models import Producto, Venta, Cliente, RucEmpresa
+from app.models import Producto, Venta, Cliente, RucEmpresa, Categoria, Pedido
 from app.utils import login_required, login_required_cliente
 from app.config import Config
-from sqlalchemy import func, text
-from datetime import datetime
+from sqlalchemy import func, text, or_
+from datetime import datetime, timedelta
 import requests
 
 api_bp = Blueprint('api', __name__)
@@ -493,3 +493,358 @@ def microservicios_dashboard():
                            total_productos=total_productos,
                            productos_bajo_stock=productos_bajo_stock,
                            productos_agotados=productos_agotados)
+
+
+def _solo_fecha(valor):
+    if not valor:
+        return None
+    try:
+        return datetime.strptime(valor, "%Y-%m-%d")
+    except ValueError:
+        raise ValueError("Fecha inválida '%s'. Usa el formato YYYY-MM-DD" % valor)
+
+
+def _solo_fecha_fin(valor):
+    fecha = _solo_fecha(valor)
+    if fecha:
+        fecha = fecha.replace(hour=23, minute=59, second=59)
+    return fecha
+
+
+def _venta_json(v):
+    producto = v.producto
+    precio = float(producto.precio) if producto and producto.precio else 0.0
+    cliente = " ".join(x for x in [v.cliente_nombres, v.cliente_apellidos] if x)
+    return {
+        "id": v.id,
+        "fecha_venta": v.fecha_venta.isoformat() if v.fecha_venta else None,
+        "producto_id": v.producto_id,
+        "producto_nombre": producto.nombre if producto else None,
+        "cantidad": v.cantidad,
+        "precio_unitario": precio,
+        "monto": round(precio * (v.cantidad or 0), 2),
+        "tipo_comprobante": v.tipo_comprobante,
+        "numero_comprobante": v.numero_comprobante,
+        "cliente": cliente or None,
+        "estado": v.estado,
+    }
+
+
+@api_bp.route('/api/categorias')
+def api_listar_categorias():
+    try:
+        filas = (
+            db.session.query(
+                Categoria.id_categoria,
+                Categoria.nombre,
+                Categoria.descripcion,
+                func.count(Producto.id).label("total_productos"),
+            )
+            .outerjoin(Producto, Producto.id_categoria == Categoria.id_categoria)
+            .filter(Categoria.activo == True)
+            .group_by(Categoria.id_categoria)
+            .order_by(Categoria.nombre)
+            .all()
+        )
+        return jsonify([
+            {
+                "id": f.id_categoria,
+                "nombre": f.nombre,
+                "descripcion": f.descripcion,
+                "total_productos": int(f.total_productos or 0),
+            }
+            for f in filas
+        ])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@api_bp.route('/api/productos/<int:producto_id>')
+def api_producto_detalle(producto_id):
+    producto = Producto.query.get(producto_id)
+    if not producto:
+        return jsonify({"error": "Producto no encontrado"}), 404
+    categoria = getattr(producto, "categoria_rel", None)
+    return jsonify({
+        "id": producto.id,
+        "nombre": producto.nombre,
+        "descripcion": producto.descripcion,
+        "precio": float(producto.precio) if producto.precio else 0,
+        "precio_oferta": float(producto.precio_oferta) if producto.precio_oferta else None,
+        "stock": producto.cantidad,
+        "destacado": producto.destacado,
+        "codigo_barras": producto.codigo_barras,
+        "categoria": {
+            "id": categoria.id_categoria,
+            "nombre": categoria.nombre,
+        } if categoria else None,
+        "imagen_url": url_for("static", filename=f"img/productos/{producto.imagen}") if producto.imagen else None,
+    })
+
+
+@api_bp.route('/api/clientes')
+@login_required
+def api_listar_clientes():
+    try:
+        q = request.args.get("q", "").strip()
+        limite = min(request.args.get("limit", type=int) or 50, 200)
+        query = Cliente.query
+        if q:
+            like = f"%{q}%"
+            query = query.filter(or_(
+                Cliente.nombres.like(like),
+                Cliente.apellidos.like(like),
+                Cliente.correo.like(like),
+                Cliente.dni.like(like),
+            ))
+        clientes = query.order_by(Cliente.fecha_registro.desc()).limit(limite).all()
+        return jsonify([
+            {
+                "id": c.id,
+                "dni": c.dni,
+                "nombres": c.nombres,
+                "apellidos": c.apellidos,
+                "correo": c.correo,
+                "telefono": c.telefono,
+                "direccion": c.direccion,
+                "puntos": c.puntos,
+                "estado": c.estado,
+                "fecha_registro": c.fecha_registro.isoformat() if c.fecha_registro else None,
+            }
+            for c in clientes
+        ])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@api_bp.route('/api/clientes/<int:cliente_id>')
+@login_required
+def api_cliente_detalle(cliente_id):
+    cliente = Cliente.query.get(cliente_id)
+    if not cliente:
+        return jsonify({"error": "Cliente no encontrado"}), 404
+    return jsonify({
+        "id": cliente.id,
+        "dni": cliente.dni,
+        "nombres": cliente.nombres,
+        "apellidos": cliente.apellidos,
+        "correo": cliente.correo,
+        "telefono": cliente.telefono,
+        "direccion": cliente.direccion,
+        "puntos": cliente.puntos,
+        "estado": cliente.estado,
+        "fecha_registro": cliente.fecha_registro.isoformat() if cliente.fecha_registro else None,
+        "total_pedidos": len(cliente.pedidos or []),
+    })
+
+
+@api_bp.route('/api/ventas')
+@login_required
+def api_listar_ventas():
+    try:
+        desde = _solo_fecha(request.args.get("desde"))
+        hasta = _solo_fecha_fin(request.args.get("hasta"))
+        limite = min(request.args.get("limit", type=int) or 50, 200)
+        query = Venta.query
+        if desde:
+            query = query.filter(Venta.fecha_venta >= desde)
+        if hasta:
+            query = query.filter(Venta.fecha_venta <= hasta)
+        ventas = query.order_by(Venta.fecha_venta.desc()).limit(limite).all()
+        return jsonify([_venta_json(v) for v in ventas])
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@api_bp.route('/api/ventas/<int:venta_id>')
+@login_required
+def api_venta_detalle(venta_id):
+    venta = Venta.query.get(venta_id)
+    if not venta:
+        return jsonify({"error": "Venta no encontrada"}), 404
+    data = _venta_json(venta)
+    data["vendedor_id"] = venta.vendedor_id
+    data["cliente_id"] = venta.cliente_id
+    return jsonify(data)
+
+
+@api_bp.route('/api/ventas/resumen')
+@login_required
+def api_ventas_resumen():
+    try:
+        desde = _solo_fecha(request.args.get("desde"))
+        hasta = _solo_fecha_fin(request.args.get("hasta"))
+        query = db.session.query(
+            func.count(Venta.id),
+            func.coalesce(func.sum(Venta.cantidad * Producto.precio), 0),
+            func.coalesce(func.sum(Venta.cantidad), 0),
+        ).join(Producto, Venta.producto_id == Producto.id)
+        if desde:
+            query = query.filter(Venta.fecha_venta >= desde)
+        if hasta:
+            query = query.filter(Venta.fecha_venta <= hasta)
+        total_ventas, monto_total, unidades = query.one()
+        return jsonify({
+            "total_ventas": int(total_ventas or 0),
+            "monto_total": round(float(monto_total or 0), 2),
+            "unidades": int(unidades or 0),
+            "desde": request.args.get("desde"),
+            "hasta": request.args.get("hasta"),
+        })
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@api_bp.route('/api/pedidos')
+@login_required
+def api_listar_pedidos():
+    try:
+        estado = request.args.get("estado", "").strip()
+        limite = min(request.args.get("limit", type=int) or 50, 200)
+        query = Pedido.query
+        if estado:
+            query = query.filter(Pedido.estado == estado)
+        pedidos = query.order_by(Pedido.fecha_pedido.desc()).limit(limite).all()
+        return jsonify([
+            {
+                "id": p.id,
+                "cliente_id": p.cliente_id,
+                "cliente": f"{p.cliente.nombres} {p.cliente.apellidos}" if p.cliente else None,
+                "fecha_pedido": p.fecha_pedido.isoformat() if p.fecha_pedido else None,
+                "estado": p.estado,
+                "total": float(p.total) if p.total else 0.0,
+                "tipo_entrega": p.tipo_entrega,
+                "direccion_entrega": p.direccion_entrega,
+                "items": len(p.detalles or []),
+            }
+            for p in pedidos
+        ])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@api_bp.route('/api/pedidos/<int:pedido_id>')
+@login_required
+def api_pedido_detalle(pedido_id):
+    pedido = Pedido.query.get(pedido_id)
+    if not pedido:
+        return jsonify({"error": "Pedido no encontrado"}), 404
+    return jsonify({
+        "id": pedido.id,
+        "cliente_id": pedido.cliente_id,
+        "cliente": f"{pedido.cliente.nombres} {pedido.cliente.apellidos}" if pedido.cliente else None,
+        "fecha_pedido": pedido.fecha_pedido.isoformat() if pedido.fecha_pedido else None,
+        "estado": pedido.estado,
+        "total": float(pedido.total) if pedido.total else 0.0,
+        "tipo_entrega": pedido.tipo_entrega,
+        "direccion_entrega": pedido.direccion_entrega,
+        "nota": pedido.nota,
+        "detalles": [
+            {
+                "id": d.id,
+                "producto_id": d.producto_id,
+                "producto": d.producto.nombre if d.producto else None,
+                "cantidad": d.cantidad,
+                "precio_unitario": float(d.precio_unitario) if d.precio_unitario else 0.0,
+                "subtotal": float(d.subtotal) if d.subtotal else 0.0,
+            }
+            for d in (pedido.detalles or [])
+        ],
+    })
+
+
+@api_bp.route('/api/pedidos/resumen')
+@login_required
+def api_pedidos_resumen():
+    try:
+        filas = db.session.query(
+            Pedido.estado, func.count(Pedido.id)
+        ).group_by(Pedido.estado).all()
+        por_estado = {estado: int(total) for estado, total in filas}
+        return jsonify({
+            "total": sum(por_estado.values()),
+            "por_estado": por_estado,
+            "pendientes": por_estado.get("pendiente", 0),
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@api_bp.route('/api/stock/alertas')
+@login_required
+def api_stock_alertas():
+    try:
+        minimo = request.args.get("minimo", default=10, type=int)
+        productos = Producto.query.filter(
+            Producto.cantidad <= minimo
+        ).order_by(Producto.cantidad.asc()).all()
+        return jsonify({
+            "minimo": minimo,
+            "total": len(productos),
+            "agotados": sum(1 for p in productos if (p.cantidad or 0) == 0),
+            "productos": [
+                {
+                    "id": p.id,
+                    "nombre": p.nombre,
+                    "stock": p.cantidad,
+                    "precio": float(p.precio) if p.precio else 0,
+                    "estado": "agotado" if (p.cantidad or 0) == 0 else "bajo",
+                }
+                for p in productos
+            ],
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@api_bp.route('/api/dashboard/resumen')
+@login_required
+def api_dashboard_resumen():
+    try:
+        hoy = datetime.now().date()
+        inicio_mes = hoy.replace(day=1)
+        semana = datetime.now() - timedelta(days=7)
+
+        ventas_hoy = db.session.query(
+            func.count(Venta.id),
+            func.coalesce(func.sum(Venta.cantidad * Producto.precio), 0),
+        ).join(Producto, Venta.producto_id == Producto.id)\
+         .filter(func.date(Venta.fecha_venta) == hoy).one()
+
+        ventas_mes = db.session.query(
+            func.count(Venta.id),
+            func.coalesce(func.sum(Venta.cantidad * Producto.precio), 0),
+        ).join(Producto, Venta.producto_id == Producto.id)\
+         .filter(func.date(Venta.fecha_venta) >= inicio_mes).one()
+
+        return jsonify({
+            "fecha": datetime.now().isoformat(),
+            "ventas_hoy": {
+                "cantidad": int(ventas_hoy[0] or 0),
+                "monto": round(float(ventas_hoy[1] or 0), 2),
+            },
+            "ventas_mes": {
+                "cantidad": int(ventas_mes[0] or 0),
+                "monto": round(float(ventas_mes[1] or 0), 2),
+            },
+            "pedidos_pendientes": Pedido.query.filter_by(estado="pendiente").count(),
+            "pedidos_en_proceso": Pedido.query.filter(
+                Pedido.estado.in_(["confirmado", "preparando", "enviado", "listo_tienda"])
+            ).count(),
+            "clientes_total": Cliente.query.count(),
+            "clientes_nuevos_7d": Cliente.query.filter(
+                Cliente.fecha_registro >= semana
+            ).count(),
+            "productos_stock_bajo": Producto.query.filter(
+                Producto.cantidad > 0, Producto.cantidad <= 10
+            ).count(),
+            "productos_agotados": Producto.query.filter(
+                Producto.cantidad == 0
+            ).count(),
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
