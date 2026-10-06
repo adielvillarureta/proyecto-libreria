@@ -313,7 +313,7 @@ def limpiar_bloqueos_expirados():
 
 # ---- Funciones de correo ----
 def generar_comprobante_html(venta, producto, precio, cantidad, total, vendedor_nombre=""):
-    titulo = "LIBRERÍA SALESIANA DON BOSCO"
+    titulo = "LIBRERÍA SALESIANA HUANCAYO"
     gracias = "¡Gracias por su compra! Que Dios lo bendiga."
     if venta.tipo_comprobante == "factura":
         subtitulo = "FACTURA ELECTRÓNICA"
@@ -376,7 +376,7 @@ def enviar_comprobante_email(destinatario, cliente_nombre, tipo_comprobante, num
             td {{ padding: 8px; }}
         </style></head>
         <body>
-            <div class="header"><h2>📚 LIBRERÍA SALESIANA DON BOSCO</h2><h3>{tipo_comprobante.upper()} DE VENTA ELECTRÓNICA</h3><p><strong>N° {numero_comprobante}</strong></p></div>
+            <div class="header"><h2>📚 LIBRERÍA SALESIANA HUANCAYO</h2><h3>{tipo_comprobante.upper()} DE VENTA ELECTRÓNICA</h3><p><strong>N° {numero_comprobante}</strong></p></div>
             <div class="content">
                 <p><strong>📅 Fecha:</strong> {fecha.strftime('%d/%m/%Y %H:%M:%S')}</p>
                 <p><strong>👤 Cliente:</strong> {cliente_nombre or 'Consumidor Final'}</p>
@@ -391,7 +391,7 @@ def enviar_comprobante_email(destinatario, cliente_nombre, tipo_comprobante, num
                 <div class="total"><p><strong>TOTAL: S/. {total_venta:.2f}</strong></p></div>
                 <p style="text-align:center;margin-top:25px;"><strong>✨ ¡Gracias por su compra! ✨</strong><br><small>Este es un comprobante de venta electrónico válido</small></p>
             </div>
-            <div class="footer"><p>Librería Salesiana Don Bosco | Todos los derechos reservados</p><p>📧 ventas@librospe.alwaysdata.net | 📞 (01) 123-4567</p></div>
+            <div class="footer"><p>Librería Salesiana Huancayo | Todos los derechos reservados</p><p>📧 ventas@librospe.alwaysdata.net | 📞 (064) 247763</p></div>
         </body>
         </html>
         """
