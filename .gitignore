@@ -1,0 +1,30 @@
+# Entorno y secretos
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+venv/
+.venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+instance/
+
+# IDE / build
+.vscode/
+dist/
+build/
+
+# Imágenes de productos (se suben aparte)
+app/static/img/productos/*
+!app/static/img/productos/.gitkeep
+
+# Sistema
+Thumbs.db
+.DS_Store

@@ -1,0 +1,9 @@
+Flask
+Flask-SQLAlchemy
+Flask-Bcrypt
+Flask-Migrate
+PyMySQL
+python-dotenv
+requests
+pandas
+plotly
