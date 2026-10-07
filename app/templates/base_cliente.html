@@ -96,7 +96,8 @@
         .icon-link:hover { background: rgba(255, 255, 255, 0.15); color:#fff; }
         .icon-link i { display: block; font-size: 1.15rem; color: var(--salesiano-gold); }
         .icon-link small { font-size: 0.62rem; opacity: 0.9; line-height: 1; }
-        .icon-link .nombre-mini { font-size: 0.72rem; font-weight: 600; display: block; line-height: 1.1; }
+        .icon-link .nombre-mini { font-size: 0.72rem; font-weight: 600; display: block; line-height: 1.1; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-menu { min-width: 0; }
 
         /* ================= FILA DE CATEGORÍAS ================= */
         .cat-row {
@@ -235,7 +236,7 @@
                 </div>
 
                 <!-- BUSCADOR -->
-                <div class="col-12 col-md-6 order-3 order-md-2 mt-2 mt-md-0">
+                <div class="col-12 col-md-5 order-3 order-md-2 mt-2 mt-md-0">
                     <div class="search-wrap mx-auto">
                         <form class="search-form" onsubmit="buscarCatalogo(event)">
                             <input type="text" id="searchGlobal" placeholder="🔍 Buscar libros, cuadernos, útiles...">
@@ -245,7 +246,7 @@
                 </div>
 
                 <!-- ICONOS -->
-                <div class="col-6 col-md-3 order-2 order-md-3">
+                <div class="col-6 col-md-4 order-2 order-md-3">
                     <div class="d-flex align-items-center justify-content-end gap-1">
                         {% if session.cliente_id %}
                         <div class="dropdown user-menu d-none d-md-block">

@@ -24,10 +24,22 @@ def obtener_ip_cliente():
 
 def tabla_existe(nombre_tabla):
     try:
-        return db.session.execute(text("""
+        # Try MySQL/MariaDB syntax first
+        result = db.session.execute(text("""
             SELECT COUNT(*) FROM information_schema.tables
             WHERE table_schema = DATABASE() AND table_name = :t
-        """), {"t": nombre_tabla}).scalar() > 0
+        """), {"t": nombre_tabla}).scalar()
+        if result is not None:
+            return result > 0
+    except Exception:
+        pass
+    try:
+        # Fallback for SQLite
+        result = db.session.execute(text("""
+            SELECT COUNT(*) FROM sqlite_master
+            WHERE type='table' AND name = :t
+        """), {"t": nombre_tabla}).scalar()
+        return result > 0
     except Exception:
         return False
 
@@ -306,9 +318,17 @@ def limpiar_bloqueos_expirados():
         IntentosLogin.ips_bloqueadas < ahora,
         IntentosLogin.ips_bloqueadas.isnot(None)
     ).update({IntentosLogin.ips_bloqueadas: None})
-    db.session.execute(
-        text("UPDATE bloqueos SET estado = 0, fecha_desbloqueo = NOW() WHERE permanente = 0 AND estado = 1 AND fecha_bloqueo < DATE_SUB(NOW(), INTERVAL minutos_bloqueo MINUTE)")
-    )
+    try:
+        # MySQL/MariaDB syntax
+        db.session.execute(
+            text("UPDATE bloqueos SET estado = 0, fecha_desbloqueo = NOW() WHERE permanente = 0 AND estado = 1 AND fecha_bloqueo < DATE_SUB(NOW(), INTERVAL minutos_bloqueo MINUTE)")
+        )
+    except Exception:
+        # Fallback for SQLite - use Python datetime comparison
+        from sqlalchemy import func
+        db.session.execute(
+            text("UPDATE bloqueos SET estado = 0, fecha_desbloqueo = CURRENT_TIMESTAMP WHERE permanente = 0 AND estado = 1 AND fecha_bloqueo < datetime(fecha_bloqueo, '+' || minutos_bloqueo || ' minutes')")
+        )
     db.session.commit()
 
 # ---- Funciones de correo ----

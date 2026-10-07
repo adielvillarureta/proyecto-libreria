@@ -455,14 +455,12 @@ def api_health():
 
         comercial_existe = db.session.execute(text("""
             SELECT COUNT(*) FROM information_schema.tables
-            WHERE table_schema = 'librospe_db'
-            AND table_name = 'comercial_pedidos'
+            WHERE table_schema = DATABASE() AND table_name = 'comercial_pedidos'
         """)).scalar()
 
         inventario_existe = db.session.execute(text("""
             SELECT COUNT(*) FROM information_schema.tables
-            WHERE table_schema = 'librospe_db'
-            AND table_name = 'inventario_productos'
+            WHERE table_schema = DATABASE() AND table_name = 'inventario_productos'
         """)).scalar()
 
         return jsonify({

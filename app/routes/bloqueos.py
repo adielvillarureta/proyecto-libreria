@@ -211,8 +211,13 @@ def desbloquear_usuario_admin(bloqueo_id):
         if not bloqueo:
             return jsonify({"success": False, "error": "Bloqueo no encontrado"}), 404
 
-        db.session.execute(text("CALL desbloquear_usuario(:bloqueo_id, :admin_id)"),
-                           {"bloqueo_id": bloqueo_id, "admin_id": session["usuario_id"]})
+        db.session.execute(text("""
+            UPDATE bloqueos
+            SET estado = 0,
+                fecha_desbloqueo = NOW(),
+                desbloqueado_por = :admin_id
+            WHERE id = :bloqueo_id
+        """), {"bloqueo_id": bloqueo_id, "admin_id": session["usuario_id"]})
         db.session.commit()
         return jsonify({"success": True, "message": "Usuario desbloqueado exitosamente"})
     except Exception as e:
@@ -232,8 +237,13 @@ def desbloquear_usuario_form():
         return redirect(url_for("bloqueos.ver_bloqueos"))
 
     try:
-        db.session.execute(text("CALL desbloquear_usuario(:bloqueo_id, :admin_id)"),
-                           {"bloqueo_id": bloqueo_id, "admin_id": session["usuario_id"]})
+        db.session.execute(text("""
+            UPDATE bloqueos
+            SET estado = 0,
+                fecha_desbloqueo = NOW(),
+                desbloqueado_por = :admin_id
+            WHERE id = :bloqueo_id
+        """), {"bloqueo_id": bloqueo_id, "admin_id": session["usuario_id"]})
         db.session.commit()
         flash("✅ Usuario desbloqueado exitosamente", "success")
     except Exception as e:

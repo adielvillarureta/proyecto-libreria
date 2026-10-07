@@ -5,7 +5,7 @@ from . import db
 class Bloqueo(db.Model):
     __tablename__ = "bloqueos"
     id = db.Column(db.Integer, primary_key=True)
-    tipo_usuario = db.Column(db.Enum('sistema', 'cliente'), nullable=False)
+    tipo_usuario = db.Column(db.String(20), nullable=False)
     usuario_sistema_id = db.Column(db.Integer, db.ForeignKey("usuarios_sistema.id"), nullable=True)
     cliente_id = db.Column(db.Integer, db.ForeignKey("clientes.id"), nullable=True)
     motivo = db.Column(db.String(255), nullable=True)
@@ -67,7 +67,6 @@ class UsuarioSistema(db.Model):
     apellidos = db.Column(db.String(100), nullable=False)
     clave = db.Column(db.String(255), nullable=False)
     estado = db.Column(db.Integer, default=1)
-    rol_id = db.Column(db.Integer, db.ForeignKey("roles.id"), nullable=False)
     rol = db.Column(db.String(20), nullable=False)  
     ventas = db.relationship("Venta", back_populates="vendedor")
 

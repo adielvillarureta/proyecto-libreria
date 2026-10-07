@@ -6,17 +6,21 @@ load_dotenv()
 
 _DB_URI = os.getenv("DATABASE_URL")
 if not _DB_URI:
-    _DB_URI = (
-        f"mysql+pymysql://{os.getenv('DB_USER', '')}:{os.getenv('DB_PASSWORD', '')}"
-        f"@{os.getenv('DB_HOST', 'localhost')}/{os.getenv('DB_NAME', '')}"
-    )
+    db_user = os.getenv('DB_USER', '')
+    db_password = os.getenv('DB_PASSWORD', '')
+    db_host = os.getenv('DB_HOST', 'localhost')
+    db_name = os.getenv('DB_NAME', '')
+    if db_user and db_name:
+        _DB_URI = f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}"
+    else:
+        _DB_URI = "sqlite:///libreria.db"
 
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-cambiar-en-produccion")
     SQLALCHEMY_DATABASE_URI = _DB_URI
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ENGINE_OPTIONS = {"connect_args": {"ssl": {"ssl_mode": "REQUIRED"}}}
+    SQLALCHEMY_ENGINE_OPTIONS = {"connect_args": {"ssl": {"ssl_mode": "PREFERRED"}}}
 
     UPLOAD_FOLDER = os.getenv(
         "UPLOAD_FOLDER",
