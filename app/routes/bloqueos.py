@@ -8,6 +8,38 @@ from datetime import datetime
 
 bloqueos_bp = Blueprint('bloqueos', __name__)
 
+
+def _now_func():
+    """Retorna la función NOW compatible con el dialecto actual."""
+    db_uri = db.engine.url.drivername
+    return "NOW()" if 'mysql' in db_uri or 'mariadb' in db_uri else "datetime('now')"
+
+
+def _concat_func(col1, col2, sep=" "):
+    """Retorna la expresión CONCAT compatible con el dialecto actual."""
+    db_uri = db.engine.url.drivername
+    if 'mysql' in db_uri or 'mariadb' in db_uri:
+        return f"CONCAT({col1}, '{sep}', {col2})"
+    return f"{col1} || '{sep}' || {col2}"
+
+
+def _date_add(date_col, interval_col, unit="MINUTE"):
+    """Retorna DATE_ADD compatible."""
+    db_uri = db.engine.url.drivername
+    if 'mysql' in db_uri or 'mariadb' in db_uri:
+        return f"DATE_ADD({date_col}, INTERVAL {interval_col} {unit})"
+    # SQLite: datetime(date_col, '+' || interval_col || ' minutes')
+    return f"datetime({date_col}, '+' || CAST({interval_col} AS TEXT) || ' {unit.lower()}s')"
+
+
+def _date_sub(date_col, interval_col, unit="MINUTE"):
+    """Retorna DATE_SUB compatible."""
+    db_uri = db.engine.url.drivername
+    if 'mysql' in db_uri or 'mariadb' in db_uri:
+        return f"DATE_SUB({date_col}, INTERVAL {interval_col} {unit})"
+    return f"datetime({date_col}, '-' || CAST({interval_col} AS TEXT) || ' {unit.lower()}s')"
+
+
 @bloqueos_bp.route('/bloqueos')
 @login_required
 def ver_bloqueos():
@@ -16,7 +48,10 @@ def ver_bloqueos():
         return redirect(url_for("main.dashboard"))
 
     try:
-        bloqueos_permanentes = db.session.execute(text("""
+        concat_bloq = _concat_func("bloq.nombres", "bloq.apellidos")
+        date_add = _date_add("b.fecha_bloqueo", "b.minutos_bloqueo")
+
+        bloqueos_permanentes = db.session.execute(text(f"""
             SELECT
                 b.id,
                 b.cliente_id,
@@ -28,7 +63,7 @@ def ver_bloqueos():
                 c.correo AS cliente_correo,
                 c.nombres AS cliente_nombres,
                 c.apellidos AS cliente_apellidos,
-                CONCAT(bloq.nombres, ' ', bloq.apellidos) AS bloqueado_por_nombre
+                {concat_bloq} AS bloqueado_por_nombre
             FROM bloqueos b
             LEFT JOIN clientes c ON b.cliente_id = c.id
             LEFT JOIN usuarios_sistema bloq ON b.bloqueado_por = bloq.id
@@ -36,7 +71,7 @@ def ver_bloqueos():
             ORDER BY b.fecha_bloqueo DESC
         """)).mappings().all()
 
-        bloqueos_temporales = db.session.execute(text("""
+        bloqueos_temporales = db.session.execute(text(f"""
             SELECT
                 b.id,
                 b.cliente_id,
@@ -49,8 +84,8 @@ def ver_bloqueos():
                 c.correo AS cliente_correo,
                 c.nombres AS cliente_nombres,
                 c.apellidos AS cliente_apellidos,
-                CONCAT(bloq.nombres, ' ', bloq.apellidos) AS bloqueado_por_nombre,
-                DATE_ADD(b.fecha_bloqueo, INTERVAL b.minutos_bloqueo MINUTE) AS fecha_desbloqueo
+                {concat_bloq} AS bloqueado_por_nombre,
+                {date_add} AS fecha_desbloqueo
             FROM bloqueos b
             LEFT JOIN clientes c ON b.cliente_id = c.id
             LEFT JOIN usuarios_sistema bloq ON b.bloqueado_por = bloq.id
@@ -93,6 +128,7 @@ def ver_bloqueos():
         flash(f"Error al cargar bloqueos: {e}", "danger")
         return render_template("bloqueos.html", bloqueos=[])
 
+
 @bloqueos_bp.route('/bloqueos-sistema')
 @login_required
 def ver_bloqueos_sistema():
@@ -101,7 +137,10 @@ def ver_bloqueos_sistema():
         return redirect(url_for("main.dashboard"))
 
     try:
-        bloqueos_sistema = db.session.execute(text("""
+        concat_bloq = _concat_func("bloq.nombres", "bloq.apellidos")
+        now_func = _now_func()
+
+        bloqueos_sistema = db.session.execute(text(f"""
             SELECT
                 b.id,
                 b.usuario_sistema_id,
@@ -113,7 +152,7 @@ def ver_bloqueos_sistema():
                 u.nombres AS usuario_nombres,
                 u.apellidos AS usuario_apellidos,
                 u.rol AS usuario_rol,
-                CONCAT(bloq.nombres, ' ', bloq.apellidos) AS bloqueado_por_nombre
+                {concat_bloq} AS bloqueado_por_nombre
             FROM bloqueos b
             LEFT JOIN usuarios_sistema u ON b.usuario_sistema_id = u.id
             LEFT JOIN usuarios_sistema bloq ON b.bloqueado_por = bloq.id
@@ -121,7 +160,7 @@ def ver_bloqueos_sistema():
             ORDER BY b.fecha_bloqueo DESC
         """)).mappings().all()
 
-        intentos_sistema = db.session.execute(text("""
+        intentos_sistema = db.session.execute(text(f"""
             SELECT
                 i.id,
                 i.email,
@@ -134,7 +173,7 @@ def ver_bloqueos_sistema():
                 u.rol AS usuario_rol
             FROM intentos_login i
             JOIN usuarios_sistema u ON i.email = u.correo
-            WHERE i.email_bloqueado IS NOT NULL AND i.email_bloqueado > NOW()
+            WHERE i.email_bloqueado IS NOT NULL AND i.email_bloqueado > {now_func}
             ORDER BY i.email_bloqueado DESC
         """)).mappings().all()
 
@@ -175,6 +214,7 @@ def ver_bloqueos_sistema():
         flash(f"Error al cargar bloqueos: {e}", "danger")
         return render_template("bloqueos_sistema.html", bloqueos=[])
 
+
 @bloqueos_bp.route('/desbloquear-intento-login', methods=['POST'])
 @login_required
 def desbloquear_intento_login():
@@ -200,6 +240,7 @@ def desbloquear_intento_login():
         flash(f"❌ Error al desbloquear: {e}", "danger")
     return redirect(url_for("bloqueos.ver_bloqueos"))
 
+
 @bloqueos_bp.route('/bloqueos/desbloquear/<int:bloqueo_id>', methods=['POST'])
 @login_required
 def desbloquear_usuario_admin(bloqueo_id):
@@ -211,10 +252,10 @@ def desbloquear_usuario_admin(bloqueo_id):
         if not bloqueo:
             return jsonify({"success": False, "error": "Bloqueo no encontrado"}), 404
 
-        db.session.execute(text("""
+        db.session.execute(text(f"""
             UPDATE bloqueos
             SET estado = 0,
-                fecha_desbloqueo = NOW(),
+                fecha_desbloqueo = {_now_func()},
                 desbloqueado_por = :admin_id
             WHERE id = :bloqueo_id
         """), {"bloqueo_id": bloqueo_id, "admin_id": session["usuario_id"]})
@@ -223,6 +264,7 @@ def desbloquear_usuario_admin(bloqueo_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 500
+
 
 @bloqueos_bp.route('/bloqueos/desbloquear', methods=['POST'])
 @login_required
@@ -237,10 +279,10 @@ def desbloquear_usuario_form():
         return redirect(url_for("bloqueos.ver_bloqueos"))
 
     try:
-        db.session.execute(text("""
+        db.session.execute(text(f"""
             UPDATE bloqueos
             SET estado = 0,
-                fecha_desbloqueo = NOW(),
+                fecha_desbloqueo = {_now_func()},
                 desbloqueado_por = :admin_id
             WHERE id = :bloqueo_id
         """), {"bloqueo_id": bloqueo_id, "admin_id": session["usuario_id"]})
@@ -251,12 +293,16 @@ def desbloquear_usuario_form():
         flash(f"❌ Error al desbloquear: {str(e)}", "danger")
     return redirect(url_for("bloqueos.ver_bloqueos"))
 
+
 @bloqueos_bp.route('/api/bloqueos')
 @login_required
 def api_bloqueos():
     try:
         limpiar_bloqueos_expirados()
-        bloqueos_bd = db.session.execute(text("""
+        now_func = _now_func()
+        date_sub = _date_sub(now_func, "b.minutos_bloqueo")
+
+        bloqueos_bd = db.session.execute(text(f"""
             SELECT
                 b.id,
                 b.cliente_id,
@@ -273,12 +319,12 @@ def api_bloqueos():
             AND b.estado = 1
             AND (
                 b.permanente = 1
-                OR b.fecha_bloqueo > DATE_SUB(NOW(), INTERVAL b.minutos_bloqueo MINUTE)
+                OR b.fecha_bloqueo > {date_sub}
             )
             ORDER BY b.fecha_bloqueo DESC
         """)).mappings().all()
 
-        intentos_bloqueados = db.session.execute(text("""
+        intentos_bloqueados = db.session.execute(text(f"""
             SELECT
                 i.id,
                 i.email,
@@ -291,7 +337,7 @@ def api_bloqueos():
             FROM intentos_login i
             JOIN clientes c ON i.email = c.correo
             WHERE i.email_bloqueado IS NOT NULL
-            AND i.email_bloqueado > NOW()
+            AND i.email_bloqueado > {now_func}
             ORDER BY i.email_bloqueado DESC
         """)).mappings().all()
 
@@ -330,6 +376,7 @@ def api_bloqueos():
         return jsonify(resultado)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 @bloqueos_bp.route('/ips-bloqueadas')
 @login_required

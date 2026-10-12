@@ -119,9 +119,16 @@ def login_cliente():
         if bcrypt.check_password_hash(cliente.clave, clave):
             limpiar_intentos_exitosos(email, ip_cliente)
 
-            db.session.execute(text("""
+            # Usar fecha compatible con SQLite/MySQL
+            db_uri = db.engine.url.drivername
+            if 'mysql' in db_uri or 'mariadb' in db_uri:
+                now_sql = "NOW()"
+            else:
+                now_sql = "datetime('now')"
+            
+            db.session.execute(text(f"""
                 UPDATE bloqueos
-                SET estado = 0, fecha_desbloqueo = NOW()
+                SET estado = 0, fecha_desbloqueo = {now_sql}
                 WHERE cliente_id = :cliente_id
                 AND tipo_usuario = 'cliente'
                 AND permanente = 0

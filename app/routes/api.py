@@ -453,15 +453,28 @@ def api_health():
     try:
         db.session.execute(text("SELECT 1"))
 
-        comercial_existe = db.session.execute(text("""
-            SELECT COUNT(*) FROM information_schema.tables
-            WHERE table_schema = DATABASE() AND table_name = 'comercial_pedidos'
-        """)).scalar()
-
-        inventario_existe = db.session.execute(text("""
-            SELECT COUNT(*) FROM information_schema.tables
-            WHERE table_schema = DATABASE() AND table_name = 'inventario_productos'
-        """)).scalar()
+        # Verificar tablas de microservicios de forma compatible con SQLite y MySQL
+        db_uri = db.engine.url.drivername
+        if 'mysql' in db_uri or 'mariadb' in db_uri:
+            # MySQL/MariaDB
+            comercial_existe = db.session.execute(text("""
+                SELECT COUNT(*) FROM information_schema.tables
+                WHERE table_schema = DATABASE() AND table_name = 'comercial_pedidos'
+            """)).scalar()
+            inventario_existe = db.session.execute(text("""
+                SELECT COUNT(*) FROM information_schema.tables
+                WHERE table_schema = DATABASE() AND table_name = 'inventario_productos'
+            """)).scalar()
+        else:
+            # SQLite
+            comercial_existe = db.session.execute(text("""
+                SELECT COUNT(*) FROM sqlite_master
+                WHERE type='table' AND name = 'comercial_pedidos'
+            """)).scalar()
+            inventario_existe = db.session.execute(text("""
+                SELECT COUNT(*) FROM sqlite_master
+                WHERE type='table' AND name = 'inventario_productos'
+            """)).scalar()
 
         return jsonify({
             "status": "OK",

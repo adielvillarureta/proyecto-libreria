@@ -65,12 +65,20 @@ def login():
                     flash("🔒 Contacta al administrador para desbloquear tu cuenta.", "warning")
                     return render_template("login.html")
 
-                bloqueo_auto = db.session.execute(text("""
+                # Usar función compatible con SQLite/MySQL para NOW()
+                from sqlalchemy import func
+                db_uri = db.engine.url.drivername
+                if 'mysql' in db_uri or 'mariadb' in db_uri:
+                    now_func = "NOW()"
+                else:
+                    now_func = "datetime('now')"
+                
+                bloqueo_auto = db.session.execute(text(f"""
                     SELECT email_bloqueado, intentos
                     FROM intentos_login
                     WHERE email = :email
                     AND email_bloqueado IS NOT NULL
-                    AND email_bloqueado > NOW()
+                    AND email_bloqueado > {now_func}
                 """), {"email": correo}).mappings().first()
 
                 if bloqueo_auto:
@@ -180,8 +188,8 @@ def bloquear_usuario_sistema(usuario_id):
         db.session.execute(text("""
             INSERT INTO bloqueos
             (tipo_usuario, usuario_sistema_id, motivo, fecha_bloqueo, bloqueado_por, estado)
-            VALUES ('sistema', :usuario_id, :motivo, NOW(), :admin_id, 1)
-        """), {"usuario_id": usuario_id, "motivo": motivo, "admin_id": session["usuario_id"]})
+            VALUES ('sistema', :usuario_id, :motivo, :ahora, :admin_id, 1)
+        """), {"usuario_id": usuario_id, "motivo": motivo, "admin_id": session["usuario_id"], "ahora": datetime.now()})
 
         db.session.commit()
         flash(f"✅ Usuario {usuario.nombres} bloqueado exitosamente", "success")
@@ -210,10 +218,10 @@ def desbloquear_usuario_sistema(usuario_id):
             db.session.execute(text("""
                 UPDATE bloqueos
                 SET estado = 0,
-                    fecha_desbloqueo = NOW(),
+                    fecha_desbloqueo = :ahora,
                     desbloqueado_por = :admin_id
                 WHERE id = :bloqueo_id
-            """), {"bloqueo_id": bloqueo[0], "admin_id": session["usuario_id"]})
+            """), {"bloqueo_id": bloqueo[0], "admin_id": session["usuario_id"], "ahora": datetime.now()})
             flash("✅ Usuario desbloqueado exitosamente", "success")
         else:
             usuario = UsuarioSistema.query.get(usuario_id)
@@ -271,7 +279,13 @@ def usuarios_sistema():
         return redirect(url_for("main.dashboard"))
 
     try:
-        usuarios = db.session.execute(text("""
+        # CONCAT es MySQL, en SQLite es ||
+        if 'mysql' in db_uri or 'mariadb' in db_uri:
+            concat_func = "CONCAT(bloq.nombres, ' ', bloq.apellidos)"
+        else:
+            concat_func = "bloq.nombres || ' ' || bloq.apellidos"
+        
+        usuarios = db.session.execute(text(f"""
             SELECT
                 u.id,
                 u.correo,
@@ -283,7 +297,7 @@ def usuarios_sistema():
                 b.motivo AS bloqueo_motivo,
                 b.fecha_bloqueo AS bloqueo_fecha,
                 b.bloqueado_por AS bloqueo_por,
-                CONCAT(bloq.nombres, ' ', bloq.apellidos) AS bloqueo_por_nombre
+                {concat_func} AS bloqueo_por_nombre
             FROM usuarios_sistema u
             LEFT JOIN bloqueos b ON u.id = b.usuario_sistema_id
                 AND b.tipo_usuario = 'sistema'
@@ -292,7 +306,15 @@ def usuarios_sistema():
             ORDER BY u.id ASC
         """)).mappings().all()
 
-        intentos_bloqueados = db.session.execute(text("""
+        # Usar función compatible con SQLite/MySQL para NOW()
+        from sqlalchemy import func
+        db_uri = db.engine.url.drivername
+        if 'mysql' in db_uri or 'mariadb' in db_uri:
+            now_func = "NOW()"
+        else:
+            now_func = "datetime('now')"
+        
+        intentos_bloqueados = db.session.execute(text(f"""
             SELECT
                 i.email,
                 i.intentos,
@@ -300,7 +322,7 @@ def usuarios_sistema():
                 u.id AS usuario_id
             FROM intentos_login i
             JOIN usuarios_sistema u ON i.email = u.correo
-            WHERE i.email_bloqueado IS NOT NULL AND i.email_bloqueado > NOW()
+            WHERE i.email_bloqueado IS NOT NULL AND i.email_bloqueado > {now_func}
         """)).mappings().all()
 
         bloqueos_automaticos = {i['usuario_id']: i for i in intentos_bloqueados}

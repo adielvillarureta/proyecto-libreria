@@ -31,6 +31,7 @@
         color: white !important;
         font-weight: 600;
         border: none;
+        white-space: nowrap;
     }
     .card-header.bg-primary {
         background: linear-gradient(135deg, #1e3a8a, #3b82f6) !important;
@@ -65,66 +66,160 @@
             transform: translateY(0);
         }
     }
+
+    /* ===== PAGINACIÓN ESTILO GOOGLE ===== */
+    .pagination-google {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
+        flex-wrap: wrap;
+        margin: 1rem 0;
+    }
+    .pagination-google .page-link {
+        min-width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e0e0e0;
+        border-radius: 50%;
+        color: #1e3a8a;
+        font-weight: 500;
+        font-size: 0.875rem;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        padding: 0;
+    }
+    .pagination-google .page-link:hover {
+        background: #eef2ff;
+        border-color: #d4af37;
+        color: #1e3a8a;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(212, 175, 55, 0.2);
+    }
+    .pagination-google .page-item.active .page-link {
+        background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+        border-color: #1e3a8a;
+        color: white;
+        box-shadow: 0 2px 8px rgba(30, 58, 138, 0.3);
+    }
+    .pagination-google .page-item.disabled .page-link {
+        color: #9ca3af;
+        pointer-events: none;
+        background: transparent;
+        border-color: #f3f4f6;
+    }
+    .pagination-google .page-ellipsis {
+        color: #9ca3af;
+        padding: 0 8px;
+        font-weight: 500;
+    }
+    .pagination-google .page-prev,
+    .pagination-google .page-next {
+        min-width: auto;
+        padding: 0 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+    .pagination-google .page-prev:hover,
+    .pagination-google .page-next:hover {
+        border-radius: 20px;
+    }
+    .pagination-info {
+        color: #6b7280;
+        font-size: 0.85rem;
+        margin-right: 1rem;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 576px) {
+        .pagination-google .page-link {
+            min-width: 32px;
+            height: 32px;
+            font-size: 0.8rem;
+        }
+        .pagination-google .page-prev,
+        .pagination-google .page-next {
+            padding: 0 8px;
+            font-size: 0.7rem;
+        }
+        .pagination-info {
+            display: block;
+            margin: 0 0 0.5rem 0;
+            text-align: center;
+            width: 100%;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block contenido %}
-<!-- ===== CONTENIDO ESPECÍFICO DE PRODUCTOS (sin el Panel Salesiano) ===== -->
+<!-- ===== CONTENIDO ESPECÍFICO DE PRODUCTOS ===== -->
 <div class="row">
     <div class="col-12">
-        <!-- FILTROS -->
+        <!-- FILTROS Y BÚSQUEDA -->
         <div class="card mb-4 shadow-sm border-0">
             <div class="card-body p-2 p-md-3">
-                <div class="row g-2 align-items-end">
-                    <div class="col-12 col-md-4 col-lg-3">
-                        <label class="form-label fw-semibold mb-1 small text-primary">
-                            <i class="fas fa-filter me-1 text-primary"></i>Categoría
-                        </label>
-                        <select id="filtroCategoria" class="form-select form-select-sm">
-                            <option value="">📂 Todas las categorías</option>
-                            {% for categoria in categorias %}
-                            <option value="{{ categoria.id_categoria }}" 
-                                {% if categoria_seleccionada == categoria.id_categoria %}selected{% endif %}>
-                                {% if categoria.nombre == 'cuadernos' %}📓
-                                {% elif categoria.nombre == 'lapiceros' %}✍️
-                                {% elif categoria.nombre == 'papeleria' %}📄
-                                {% elif categoria.nombre == 'arte' %}🎨
-                                {% elif categoria.nombre == 'oficina' %}📎
-                                {% elif categoria.nombre == 'herramientas' %}🔧
-                                {% else %}📂{% endif %}
-                                {{ categoria.nombre }}
-                            </option>
-                            {% endfor %}
-                        </select>
+                <form method="GET" action="{{ url_for('productos.listar_productos') }}" id="formFiltros">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-12 col-md-4 col-lg-3">
+                            <label class="form-label fw-semibold mb-1 small text-primary">
+                                <i class="fas fa-filter me-1 text-primary"></i>Categoría
+                            </label>
+                            <select name="categoria" id="filtroCategoria" class="form-select form-select-sm">
+                                <option value="">📂 Todas las categorías</option>
+                                {% for categoria in categorias %}
+                                <option value="{{ categoria.id_categoria }}" 
+                                    {% if categoria_seleccionada == categoria.id_categoria %}selected{% endif %}>
+                                    {% if categoria.nombre == 'cuadernos' %}📓
+                                    {% elif categoria.nombre == 'lapiceros' %}✍️
+                                    {% elif categoria.nombre == 'papeleria' %}📄
+                                    {% elif categoria.nombre == 'arte' %}🎨
+                                    {% elif categoria.nombre == 'oficina' %}📎
+                                    {% elif categoria.nombre == 'herramientas' %}🔧
+                                    {% else %}📂{% endif %}
+                                    {{ categoria.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-12 col-md-5 col-lg-4">
+                            <label class="form-label fw-semibold mb-1 small text-secondary">
+                                <i class="fas fa-search me-1 text-primary"></i>Buscar producto
+                            </label>
+                            <input type="text" name="busqueda" id="buscarProducto" class="form-control form-control-sm" 
+                                   placeholder="Nombre del producto..." value="{{ busqueda }}">
+                        </div>
+                        
+                        <div class="col-12 col-md-3 col-lg-2">
+                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-search me-1"></i>Filtrar
+                            </button>
+                        </div>
+                        
+                        <div class="col-12 col-lg-3 text-lg-end">
+                            {% if categoria_seleccionada or busqueda %}
+                            <a href="{{ url_for('productos.listar_productos') }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-times me-1"></i>Limpiar filtros
+                            </a>
+                            {% endif %}
+                        </div>
                     </div>
-                    
-                    <div class="col-12 col-md-4 col-lg-3">
-                        <label class="form-label fw-semibold mb-1 small text-secondary">
-                            <i class="fas fa-search me-1 text-primary"></i>Buscar producto
-                        </label>
-                        <input type="text" id="buscarProducto" class="form-control form-control-sm" 
-                               placeholder="Nombre del producto...">
-                    </div>
-                    
-                    <div class="col-12 col-md-4 col-lg-2">
-                        <button id="btnLimpiar" class="btn btn-outline-secondary btn-sm w-100">
-                            <i class="fas fa-times me-1"></i>Limpiar filtros
-                        </button>
-                    </div>
-                    
-                    <div class="col-12 col-lg-4 text-lg-end">
-                        <span class="badge bg-primary" id="contadorProductos">{{ productos|length }} productos encontrados</span>
-                    </div>
-                </div>
+                </form>
             </div>
         </div>
 
         <!-- TABLA DE PRODUCTOS -->
         <div class="card shadow-lg border-0 overflow-hidden">
-            <div class="card-header bg-primary text-white p-2 p-md-3">
+            <div class="card-header bg-primary text-white p-2 p-md-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
                 <h5 class="mb-0 fw-bold fs-6">
                     <i class="fas fa-th-list me-2"></i>Inventario
                 </h5>
+                <span class="badge bg-light text-primary fs-6 px-3 py-2">
+                    {{ paginacion.total }} producto{{ 's' if paginacion.total != 1 else '' }} total
+                </span>
             </div>
 
             <div class="table-responsive">
@@ -143,9 +238,7 @@
                     </thead>
                     <tbody>
                         {% for pr in productos %}
-                        <tr class="table-row-hover" 
-                            data-nombre="{{ pr.nombre.lower() }}" 
-                            data-categoria="{{ pr.id_categoria }}">
+                        <tr class="table-row-hover">
                             <td class="text-center">
                                 {% if pr.imagen %}
                                 <img src="{{ url_for('static', filename='img/productos/' + pr.imagen) }}" alt="{{ pr.nombre }}"
@@ -235,7 +328,7 @@
                         <tr class="no-data">
                             <td colspan="8" class="text-center py-4">
                                 <i class="fas fa-boxes fa-3x text-muted mb-2 opacity-50"></i>
-                                <h6 class="text-muted mb-3">No hay productos registrados</h6>
+                                <h6 class="text-muted mb-3">{% if busqueda or categoria_seleccionada %}No hay productos con esos filtros{% else %}No hay productos registrados{% endif %}</h6>
                                 {% if session.rol != 'vendedor' %}
                                 <a href="/productos/nuevo" class="btn btn-primary btn-sm px-3">
                                     <i class="fas fa-plus me-2"></i>Primer Producto
@@ -247,73 +340,97 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- ===== PAGINACIÓN ESTILO GOOGLE ===== -->
+            {% if paginacion.pages > 1 %}
+            <div class="card-footer bg-white border-top px-3 py-3">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                    <span class="pagination-info">
+                        Mostrando {{ ((paginacion.page - 1) * paginacion.per_page) + 1 }}–{{ [paginacion.page * paginacion.per_page, paginacion.total]|min }} de {{ paginacion.total }}
+                    </span>
+                    <nav aria-label="Paginación de productos">
+                        <ul class="pagination pagination-google mb-0">
+                            <!-- Anterior -->
+                            <li class="page-item {% if not paginacion.has_prev %}disabled{% endif %}">
+                                {% if paginacion.has_prev %}
+                                <a class="page-link page-prev" href="{{ url_for('productos.listar_productos', categoria=categoria_seleccionada, busqueda=busqueda, page=paginacion.prev_num) }}">
+                                    <i class="fas fa-chevron-left me-1"></i>Anterior
+                                </a>
+                                {% else %}
+                                <span class="page-link page-prev"><i class="fas fa-chevron-left me-1"></i>Anterior</span>
+                                {% endif %}
+                            </li>
+
+                            {% set current = paginacion.page %}
+                            {% set total = paginacion.pages %}
+                            {% set show_first = 2 %}
+                            {% set show_last = 2 %}
+                            {% set show_adjacent = 1 %}
+
+                            {# Páginas - usando lista precalculada #}
+                            {% set current = paginacion.page %}
+                            {% set total = paginacion.pages %}
+                            {% for p in pages_to_show %}
+                                {% if loop.index0 > 0 and p - pages_to_show[loop.index0 - 1] > 1 %}
+                                <li class="page-item disabled"><span class="page-link page-ellipsis">…</span></li>
+                                {% endif %}
+                                <li class="page-item {% if p == current %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('productos.listar_productos', categoria=categoria_seleccionada, busqueda=busqueda, page=p) }}">{{ p }}</a>
+                                </li>
+                            {% endfor %}
+
+                            <!-- Siguiente -->
+                            <li class="page-item {% if not paginacion.has_next %}disabled{% endif %}">
+                                {% if paginacion.has_next %}
+                                <a class="page-link page-next" href="{{ url_for('productos.listar_productos', categoria=categoria_seleccionada, busqueda=busqueda, page=paginacion.next_num) }}">
+                                    Siguiente<i class="fas fa-chevron-right ms-1"></i>
+                                </a>
+                                {% else %}
+                                <span class="page-link page-next">Siguiente<i class="fas fa-chevron-right ms-1"></i></span>
+                                {% endif %}
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
 
 <script>
-    let filterTimeout;
-    
-    function filtrarProductos() {
-        const categoriaId = document.getElementById('filtroCategoria').value;
-        const busqueda = document.getElementById('buscarProducto').value.toLowerCase().trim();
-        
-        const rows = document.querySelectorAll('#tablaProductos tbody tr:not(.no-data)');
-        let contador = 0;
-        
-        rows.forEach(row => {
-            const rowCategoria = row.getAttribute('data-categoria') || '';
-            const rowNombre = row.getAttribute('data-nombre') || '';
-            
-            let mostrar = true;
-            
-            if (categoriaId && rowCategoria !== categoriaId) mostrar = false;
-            if (busqueda && !rowNombre.includes(busqueda)) mostrar = false;
-            
-            if (mostrar) {
-                row.style.display = '';
-                contador++;
-            } else {
-                row.style.display = 'none';
-            }
-        });
-        
-        const contadorSpan = document.getElementById('contadorProductos');
-        if (contadorSpan) {
-            contadorSpan.innerHTML = contador + ' producto' + (contador !== 1 ? 's' : '') + ' encontrado' + (contador !== 1 ? 's' : '');
-        }
-    }
-    
-    function filtrarProductosDebounced() {
-        clearTimeout(filterTimeout);
-        filterTimeout = setTimeout(filtrarProductos, 250);
-    }
-    
-    function limpiarFiltros() {
-        document.getElementById('filtroCategoria').value = '';
-        document.getElementById('buscarProducto').value = '';
-        filtrarProductos();
-    }
-    
+    // Auto-submit form on category change (opcional, para UX más fluida)
     document.addEventListener('DOMContentLoaded', function() {
         const filtroCategoria = document.getElementById('filtroCategoria');
+        if (filtroCategoria) {
+            filtroCategoria.addEventListener('change', function() {
+                // Comentado: descomenta si quieres auto-submit al cambiar categoría
+                // this.form.submit();
+            });
+        }
+
+        // Enter en búsqueda = submit
         const buscarProducto = document.getElementById('buscarProducto');
-        const btnLimpiar = document.getElementById('btnLimpiar');
-        
-        if (filtroCategoria) filtroCategoria.addEventListener('change', filtrarProductos);
-        if (buscarProducto) buscarProducto.addEventListener('keyup', filtrarProductosDebounced);
-        if (btnLimpiar) btnLimpiar.addEventListener('click', limpiarFiltros);
+        if (buscarProducto) {
+            buscarProducto.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.form.submit();
+                }
+            });
+        }
+
+        // Touch feedback para móviles
+        if ('ontouchstart' in window) {
+            document.querySelectorAll('.btn, .page-link').forEach(element => {
+                element.addEventListener('touchstart', function() {
+                    this.style.transform = 'scale(0.95)';
+                });
+                element.addEventListener('touchend', function() {
+                    this.style.transform = '';
+                });
+            });
+        }
     });
-    
-    if ('ontouchstart' in window) {
-        document.querySelectorAll('.btn-card, .btn').forEach(element => {
-            element.addEventListener('touchstart', function() {
-                this.style.transform = 'scale(0.95)';
-            });
-            element.addEventListener('touchend', function() {
-                this.style.transform = '';
-            });
-        });
-    }
 </script>
 {% endblock %}

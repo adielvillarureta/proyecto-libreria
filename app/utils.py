@@ -282,16 +282,21 @@ def limpiar_intentos_exitosos(email, ip):
             registro.email_bloqueado = None
             registro.ultimo_intento = datetime.now()
             db.session.commit()
+        
+        # Helper para fecha compatible
+        db_uri = db.engine.url.drivername
+        now_sql = "NOW()" if 'mysql' in db_uri or 'mariadb' in db_uri else "datetime('now')"
+        
         cliente = Cliente.query.filter_by(correo=email).first()
         if cliente:
             db.session.execute(
-                text("UPDATE bloqueos SET estado = 0, fecha_desbloqueo = NOW() WHERE cliente_id = :cliente_id AND tipo_usuario = 'cliente' AND permanente = 0 AND estado = 1"),
+                text(f"UPDATE bloqueos SET estado = 0, fecha_desbloqueo = {now_sql} WHERE cliente_id = :cliente_id AND tipo_usuario = 'cliente' AND permanente = 0 AND estado = 1"),
                 {"cliente_id": cliente.id})
             db.session.commit()
         usuario = UsuarioSistema.query.filter_by(correo=email).first()
         if usuario:
             db.session.execute(
-                text("UPDATE bloqueos SET estado = 0, fecha_desbloqueo = NOW() WHERE usuario_sistema_id = :usuario_id AND tipo_usuario = 'sistema' AND permanente = 0 AND estado = 1"),
+                text(f"UPDATE bloqueos SET estado = 0, fecha_desbloqueo = {now_sql} WHERE usuario_sistema_id = :usuario_id AND tipo_usuario = 'sistema' AND permanente = 0 AND estado = 1"),
                 {"usuario_id": usuario.id})
             db.session.commit()
         ahora = datetime.now()
@@ -318,16 +323,19 @@ def limpiar_bloqueos_expirados():
         IntentosLogin.ips_bloqueadas < ahora,
         IntentosLogin.ips_bloqueadas.isnot(None)
     ).update({IntentosLogin.ips_bloqueadas: None})
-    try:
-        # MySQL/MariaDB syntax
+    
+    # Usar sintaxis compatible con SQLite y MySQL
+    from sqlalchemy import func
+    db_uri = db.engine.url.drivername
+    if 'mysql' in db_uri or 'mariadb' in db_uri:
+        # MySQL/MariaDB
         db.session.execute(
             text("UPDATE bloqueos SET estado = 0, fecha_desbloqueo = NOW() WHERE permanente = 0 AND estado = 1 AND fecha_bloqueo < DATE_SUB(NOW(), INTERVAL minutos_bloqueo MINUTE)")
         )
-    except Exception:
-        # Fallback for SQLite - use Python datetime comparison
-        from sqlalchemy import func
+    else:
+        # SQLite - usar datetime con modificadores
         db.session.execute(
-            text("UPDATE bloqueos SET estado = 0, fecha_desbloqueo = CURRENT_TIMESTAMP WHERE permanente = 0 AND estado = 1 AND fecha_bloqueo < datetime(fecha_bloqueo, '+' || minutos_bloqueo || ' minutes')")
+            text("UPDATE bloqueos SET estado = 0, fecha_desbloqueo = CURRENT_TIMESTAMP WHERE permanente = 0 AND estado = 1 AND fecha_bloqueo < datetime(fecha_bloqueo, '+' || CAST(minutos_bloqueo AS TEXT) || ' minutes')")
         )
     db.session.commit()
 

@@ -15,12 +15,16 @@ if not _DB_URI:
     else:
         _DB_URI = "sqlite:///libreria.db"
 
+# Engine options: SSL solo para MySQL, no para SQLite
+_is_mysql = _DB_URI.startswith("mysql")
+_engine_options = {"connect_args": {"ssl": {"ssl_mode": "PREFERRED"}}} if _is_mysql else {}
+
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-cambiar-en-produccion")
     SQLALCHEMY_DATABASE_URI = _DB_URI
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ENGINE_OPTIONS = {"connect_args": {"ssl": {"ssl_mode": "PREFERRED"}}}
+    SQLALCHEMY_ENGINE_OPTIONS = _engine_options
 
     UPLOAD_FOLDER = os.getenv(
         "UPLOAD_FOLDER",

@@ -19,19 +19,54 @@ productos_bp = Blueprint('productos', __name__)
 def listar_productos():
     categoria_id = request.args.get("categoria", type=int)
     destacado = request.args.get("destacado")
+    busqueda = request.args.get("busqueda", "").strip()
+    page = request.args.get("page", 1, type=int)
+    per_page = 10
 
     query = Producto.query
     if categoria_id:
         query = query.filter_by(id_categoria=categoria_id)
     if destacado:
         query = query.filter_by(destacado=1)
+    if busqueda:
+        query = query.filter(Producto.nombre.ilike(f"%{busqueda}%"))
 
-    productos_lista = query.order_by(Producto.destacado.desc(), Producto.nombre.asc()).all()
+    # Ordenar: destacados primero, luego por nombre
+    query = query.order_by(Producto.destacado.desc(), Producto.nombre.asc())
+    
+    # Paginación
+    paginacion = query.paginate(page=page, per_page=per_page, error_out=False)
+    productos_lista = paginacion.items
+    
+    # Calcular páginas a mostrar en la paginación (estilo Google)
+    pages_to_show = _get_pagination_pages(paginacion.page, paginacion.pages)
+    
     categorias = Categoria.query.filter_by(activo=True).all()
     return render_template("productos.html",
                            productos=productos_lista,
                            categorias=categorias,
-                           categoria_seleccionada=categoria_id)
+                           categoria_seleccionada=categoria_id,
+                           busqueda=busqueda,
+                           paginacion=paginacion,
+                           pages_to_show=pages_to_show)
+
+
+def _get_pagination_pages(current_page, total_pages, show_around=2):
+    """Retorna lista de números de página a mostrar (con elipsis implícitos)."""
+    if total_pages <= 1:
+        return []
+    
+    pages = set()
+    pages.add(1)  # Primera página
+    pages.add(total_pages)  # Última página
+    
+    # Páginas alrededor de la actual
+    start = max(2, current_page - show_around)
+    end = min(total_pages - 1, current_page + show_around)
+    for p in range(start, end + 1):
+        pages.add(p)
+    
+    return sorted(pages)
 
 
 @productos_bp.route('/productos/nuevo', methods=['GET'])
