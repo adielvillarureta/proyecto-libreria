@@ -206,6 +206,72 @@ def _consultar_apis_peru(ruta, timeout=10):
     return respuesta
 
 
+def _datos_dni_reniec(dni):
+    """Consulta el DNI en ApisPerú (RENIEC). Devuelve (payload_dict, status_code)."""
+    try:
+        print(f"🔍 Consultando DNI {dni} en ApisPerú...")
+        response = _consultar_apis_peru(f"dni/{dni}")
+        print(f"📡 Respuesta: {response.status_code}")
+
+        if response.status_code == 401:
+            return {
+                "success": False,
+                "error": "El token de API Perú es inválido o venció. Actualízalo en https://apisperu.com (variable API_PERU_TOKEN del .env)."
+            }, 401
+
+        if response.status_code == 404:
+            return {"success": False, "error": "DNI no encontrado en RENIEC"}, 404
+
+        if response.status_code != 200:
+            return {"success": False, "error": f"RENIEC no está disponible ahora ({response.status_code}). Inténtalo en unos segundos."}, 502
+
+        data = response.json()
+
+        # ApisPerú responde 200 pero con success=False cuando no encuentra el documento
+        if data.get("success") is False:
+            return {"success": False, "error": "DNI no encontrado en RENIEC"}, 404
+
+        if data.get("nombres"):
+            nombres = data.get("nombres", "")
+            apellidos = f"{data.get('apellidoPaterno', '')} {data.get('apellidoMaterno', '')}".strip()
+        elif data.get("Nombre"):
+            nombres = data.get("Nombre", "")
+            apellidos = f"{data.get('ApellidoPaterno', '')} {data.get('ApellidoMaterno', '')}".strip()
+        else:
+            return {"success": False, "error": "DNI no encontrado en RENIEC"}, 404
+
+        return {
+            "success": True,
+            "nombres": nombres,
+            "apellidos": apellidos,
+            "dni": dni,
+            "origen": "apis_peru"
+        }, 200
+
+    except requests.exceptions.Timeout:
+        return {"success": False, "error": "Tiempo de espera agotado. Inténtalo de nuevo."}, 503
+    except requests.exceptions.RequestException as e:
+        return {"success": False, "error": f"Error de conexión con RENIEC: {str(e)}"}, 502
+    except Exception as e:
+        return {"success": False, "error": f"Error inesperado: {str(e)}"}, 500
+
+
+# Límite simple de consultas públicas (antiabuso) por IP
+_dni_registro_rate = {}
+
+
+def _dni_rate_ok(ip, max_calls=15, window=60):
+    import time
+    ahora = time.time()
+    marcas = [t for t in _dni_registro_rate.get(ip, []) if ahora - t < window]
+    if len(marcas) >= max_calls:
+        _dni_registro_rate[ip] = marcas
+        return False
+    marcas.append(ahora)
+    _dni_registro_rate[ip] = marcas
+    return True
+
+
 @api_bp.route('/api/consultar-dni/<dni>')
 @login_required_cliente
 def api_consultar_dni_cliente(dni):
@@ -222,52 +288,23 @@ def api_consultar_dni_cliente(dni):
             "origen": "base_datos"
         })
 
-    try:
-        print(f"🔍 Consultando DNI {dni} en ApisPerú...")
-        response = _consultar_apis_peru(f"dni/{dni}")
-        print(f"📡 Respuesta: {response.status_code}")
+    payload, status = _datos_dni_reniec(dni)
+    return jsonify(payload), status
 
-        if response.status_code == 401:
-            return jsonify({
-                "success": False,
-                "error": "El token de API Perú es inválido o venció. Actualízalo en https://apisperu.com (variable API_PERU_TOKEN del .env)."
-            }), 401
 
-        if response.status_code == 404:
-            return jsonify({"success": False, "error": "DNI no encontrado en RENIEC"}), 404
+@api_bp.route('/api/consultar-dni-registro/<dni>')
+def api_consultar_dni_registro(dni):
+    """Consulta pública de DNI para el formulario de registro de clientes."""
+    if not dni.isdigit() or len(dni) != 8:
+        return jsonify({"success": False, "error": "DNI inválido"}), 400
 
-        if response.status_code != 200:
-            return jsonify({"success": False, "error": f"RENIEC no está disponible ahora ({response.status_code}). Inténtalo en unos segundos."}), 502
+    if not _dni_rate_ok(request.remote_addr or "anon"):
+        return jsonify({"success": False, "error": "Demasiadas consultas. Espera un momento."}), 429
 
-        data = response.json()
-
-        # ApisPerú responde 200 pero con success=False cuando no encuentra el documento
-        if data.get("success") is False:
-            return jsonify({"success": False, "error": "DNI no encontrado en RENIEC"}), 404
-
-        if data.get("nombres"):
-            nombres = data.get("nombres", "")
-            apellidos = f"{data.get('apellidoPaterno', '')} {data.get('apellidoMaterno', '')}".strip()
-        elif data.get("Nombre"):
-            nombres = data.get("Nombre", "")
-            apellidos = f"{data.get('ApellidoPaterno', '')} {data.get('ApellidoMaterno', '')}".strip()
-        else:
-            return jsonify({"success": False, "error": "DNI no encontrado en RENIEC"}), 404
-
-        return jsonify({
-            "success": True,
-            "nombres": nombres,
-            "apellidos": apellidos,
-            "dni": dni,
-            "origen": "apis_peru"
-        })
-
-    except requests.exceptions.Timeout:
-        return jsonify({"success": False, "error": "Tiempo de espera agotado. Inténtalo de nuevo."}), 503
-    except requests.exceptions.RequestException as e:
-        return jsonify({"success": False, "error": f"Error de conexión con RENIEC: {str(e)}"}), 502
-    except Exception as e:
-        return jsonify({"success": False, "error": f"Error inesperado: {str(e)}"}), 500
+    payload, status = _datos_dni_reniec(dni)
+    if payload.get("success"):
+        payload["ya_registrado"] = Cliente.query.filter_by(dni=dni).first() is not None
+    return jsonify(payload), status
 
 
 @api_bp.route('/api/consultar-ruc/<ruc>')

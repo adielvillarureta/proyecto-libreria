@@ -279,6 +279,7 @@ def usuarios_sistema():
         return redirect(url_for("main.dashboard"))
 
     try:
+        db_uri = db.engine.url.drivername
         # CONCAT es MySQL, en SQLite es ||
         if 'mysql' in db_uri or 'mariadb' in db_uri:
             concat_func = "CONCAT(bloq.nombres, ' ', bloq.apellidos)"
@@ -307,8 +308,6 @@ def usuarios_sistema():
         """)).mappings().all()
 
         # Usar función compatible con SQLite/MySQL para NOW()
-        from sqlalchemy import func
-        db_uri = db.engine.url.drivername
         if 'mysql' in db_uri or 'mariadb' in db_uri:
             now_func = "NOW()"
         else:

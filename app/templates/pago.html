@@ -546,13 +546,25 @@ async function confirmarPedido(){
             localStorage.removeItem('tipoEntrega');
             localStorage.removeItem('direccionEntrega');
             
-            Swal.fire({
+            const swalCfg = {
                 icon:'success',
                 title:'¡Pedido realizado!',
-                html:`✅ Pedido #${data.pedido_id}<br>Total: S/. ${total.toFixed(2)}<br><br>📧 El comprobante ha sido enviado a tu correo`,
+                html:`✅ Pedido #${data.pedido_id}<br>Total: S/. ${total.toFixed(2)}<br><br>📧 El comprobante ha sido enviado a tu correo`
+                     + (data.whatsapp_url ? '<br>📱 También puedes recibirlo por WhatsApp' : ''),
                 confirmButtonText:'Ver mis pedidos'
-            }).then(()=>{
-                window.location.href='/mis-pedidos';
+            };
+            if (data.whatsapp_url) {
+                swalCfg.showDenyButton = true;
+                swalCfg.denyButtonText = '📱 Enviar por WhatsApp';
+                swalCfg.denyButtonColor = '#25D366';
+            }
+            Swal.fire(swalCfg).then((result)=>{
+                if (result.isDenied && data.whatsapp_url) {
+                    window.open(data.whatsapp_url, '_blank');
+                    setTimeout(function(){ window.location.href='/mis-pedidos'; }, 700);
+                } else {
+                    window.location.href='/mis-pedidos';
+                }
             });
         }else{
             Swal.fire({icon:'error',title:'Error',text:data.error});

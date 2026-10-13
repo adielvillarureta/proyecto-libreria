@@ -2,7 +2,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from app import db
 from app.models import Pedido, DetallePedido, Producto, Cliente, Venta, Categoria, UsuarioSistema
-from app.utils import login_required, login_required_cliente, enviar_comprobante_email, tabla_existe, no_configurado
+from app.utils import login_required, login_required_cliente, enviar_comprobante_email, tabla_existe, no_configurado, generar_enlace_whatsapp_comprobante
 from datetime import datetime
 from sqlalchemy import func, text
 
@@ -276,7 +276,22 @@ def crear_pedido():
         except Exception as e:
             print(f"Error al enviar correo: {e}")
 
-        return jsonify({"success": True, "pedido_id": pedido.id})
+        # Enlace de WhatsApp para enviar el comprobante al teléfono del cliente
+        whatsapp_url = None
+        try:
+            whatsapp_url = generar_enlace_whatsapp_comprobante(
+                telefono=cliente_telefono,
+                cliente_nombre=f"{cliente_nombres} {cliente_apellidos}".strip(),
+                tipo_comprobante=tipo_comp,
+                numero_comprobante=f"ONLINE-{pedido.id}",
+                total=round(total_cliente, 2),
+                fecha=datetime.now(),
+                productos=productos_para_correo,
+            )
+        except Exception as e:
+            print(f"Error generando enlace WhatsApp: {e}")
+
+        return jsonify({"success": True, "pedido_id": pedido.id, "whatsapp_url": whatsapp_url})
 
     except Exception as e:
         db.session.rollback()

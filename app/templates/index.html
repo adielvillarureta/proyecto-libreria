@@ -215,11 +215,11 @@
             html += `
             <div class="col-6 col-lg-3">
                 <div class="card h-100 border-0 shadow-sm minicard rounded-4 overflow-hidden">
-                    <div class="mini-img" style="background:linear-gradient(135deg,#fff, ${coloresCategoria[p.categoria || 'papeleria']}22);">
+                    <div class="mini-img" style="background:linear-gradient(135deg,#fff, ${coloresCategoria[(p.categoria_nombre || '').toLowerCase()] || coloresCategoria['papeleria']}22);">
                         ${precioOferta ? `<span class="badge bg-danger position-absolute" style="top:10px;left:10px;">-${Math.round((1-precioOferta/p.precio)*100)}%</span>` : ''}
-                        ${p.imagen_url
-                            ? `<img src="${p.imagen_url}" onerror="this.style.display='none';">`
-                            : `<i class="fas fa-book-open"></i>`}
+                        <img src="${p.imagen_url || '/static/img/default-product.png'}"
+                             alt="${escapeHtml(p.nombre)}" loading="lazy"
+                             onerror="this.onerror=null; this.src='/static/img/default-product.png';">
                     </div>
                     <div class="card-body p-2 p-md-3">
                         <h6 class="fw-bold mb-1 text-truncate" style="font-size:0.82rem;">${escapeHtml(p.nombre)}</h6>

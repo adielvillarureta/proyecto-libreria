@@ -433,3 +433,62 @@ def enviar_comprobante_email(destinatario, cliente_nombre, tipo_comprobante, num
     except Exception as e:
         print(f"Error enviando correo: {e}")
         return False
+
+
+# ---- WhatsApp: enviar el comprobante (boleta/factura) al teléfono ----
+def normalizar_telefono_peru(telefono):
+    """Devuelve el número en formato 51XXXXXXXXX para wa.me, o None si es inválido."""
+    if not telefono:
+        return None
+    digitos = "".join(ch for ch in str(telefono) if ch.isdigit())
+    if not digitos:
+        return None
+    if digitos.startswith("51") and len(digitos) >= 11:
+        return digitos
+    if len(digitos) == 9:
+        return "51" + digitos
+    if len(digitos) >= 10 and digitos.startswith("0"):
+        return "51" + digitos[1:]
+    if len(digitos) >= 11:
+        return digitos
+    return None
+
+
+def generar_enlace_whatsapp_comprobante(telefono, cliente_nombre="", tipo_comprobante="boleta",
+                                        numero_comprobante="", total=None, fecha=None,
+                                        productos=None, negocio="Librería Salesiana Huancayo"):
+    """Construye un enlace wa.me con el mensaje del comprobante para enviarlo al teléfono."""
+    from urllib.parse import quote
+    numero = normalizar_telefono_peru(telefono)
+    if not numero:
+        return None
+
+    tipo = (tipo_comprobante or "boleta").upper()
+    lineas = [f"*{negocio}*"]
+    lineas.append(f"¡Hola {cliente_nombre}!" if cliente_nombre else "¡Hola!")
+    lineas.append(f"Gracias por tu compra. Te compartimos tu *{tipo}*:")
+    if numero_comprobante:
+        lineas.append(f"🧾 N° {numero_comprobante}")
+    if fecha is not None:
+        try:
+            lineas.append(f"📅 {fecha.strftime('%d/%m/%Y %H:%M')}")
+        except Exception:
+            pass
+    if total is not None:
+        try:
+            lineas.append(f"💰 Total: S/. {float(total):.2f}")
+        except (TypeError, ValueError):
+            pass
+    if productos:
+        lineas.append("")
+        lineas.append("🛒 Detalle:")
+        for p in productos:
+            try:
+                lineas.append(f"• {p.get('cantidad')} x {p.get('nombre')} = S/. {float(p.get('total', 0)):.2f}")
+            except Exception:
+                continue
+    lineas.append("")
+    lineas.append("¡Que Dios te bendiga! 🙏")
+
+    mensaje = "\n".join(lineas)
+    return f"https://wa.me/{numero}?text={quote(mensaje)}"
