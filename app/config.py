@@ -1,0 +1,74 @@
+# app/config.py
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+_DB_URI = os.getenv("DATABASE_URL")
+if not _DB_URI:
+    db_user = os.getenv('DB_USER', '')
+    db_password = os.getenv('DB_PASSWORD', '')
+    db_host = os.getenv('DB_HOST', 'localhost')
+    db_name = os.getenv('DB_NAME', '')
+    if db_user and db_name:
+        _DB_URI = f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}"
+    else:
+        _DB_URI = "sqlite:///libreria.db"
+
+# Engine options: SSL solo para MySQL, no para SQLite
+_is_mysql = _DB_URI.startswith("mysql")
+_engine_options = {"connect_args": {"ssl": {"ssl_mode": "PREFERRED"}}} if _is_mysql else {}
+
+
+class Config:
+    SECRET_KEY = os.getenv("SECRET_KEY", "dev-cambiar-en-produccion")
+    SQLALCHEMY_DATABASE_URI = _DB_URI
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = _engine_options
+
+    # Sin esto Flask guarda la plantilla compilada en memoria y seguiría
+    # sirviendo la versión vieja del HTML después de editar el archivo.
+    TEMPLATES_AUTO_RELOAD = True
+
+    UPLOAD_FOLDER = os.getenv(
+        "UPLOAD_FOLDER",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "img", "productos"),
+    )
+    ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB
+
+    # Email
+    EMAIL_HOST = os.getenv("EMAIL_HOST", "")
+    EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+    EMAIL_USER = os.getenv("EMAIL_USER", "")
+    EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "")
+    EMAIL_FROM = os.getenv("EMAIL_FROM", EMAIL_USER)
+
+    # API Perú (DNI/RUC)
+    API_PERU_TOKEN = os.getenv("API_PERU_TOKEN", "")
+
+    # Pasarela de pagos Culqi (Checkout Custom)
+    # Las llaves salen de CulqiPanel > Desarrollo > API Keys.
+    # sk_test_... en modo prueba, sk_live_... en producción.
+    CULQI_PK = os.getenv("CULQI_PK", "")
+    CULQI_SK = os.getenv("CULQI_SK", "")
+    CULQI_API_URL = os.getenv("CULQI_API_URL", "https://api.culqi.com")
+    # "test" o "live": solo se usa para saber contra qué entorno apuntamos.
+    CULQI_MODO = os.getenv("CULQI_MODO", "test")
+
+    # Pasarela de pagos Mercado Pago
+    MP_ACCESS_TOKEN = os.getenv("MP_ACCESS_TOKEN", "")
+    # Secreto del webhook, en Mercado Pago > Notificaciones > Webhooks.
+    MP_WEBHOOK_SECRET = os.getenv("MP_WEBHOOK_SECRET", "")
+
+    # URL pública de la aplicación (ngrok, dominio, etc.)
+    # Se usa para construir los links de OAuth y de correos.
+    BASE_URL = os.getenv("BASE_URL", "").rstrip("/")
+
+    # OAuth social
+    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+    GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+    GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "")
+    FACEBOOK_APP_ID = os.getenv("FACEBOOK_APP_ID", "")
+    FACEBOOK_APP_SECRET = os.getenv("FACEBOOK_APP_SECRET", "")
+    FACEBOOK_REDIRECT_URI = os.getenv("FACEBOOK_REDIRECT_URI", "")

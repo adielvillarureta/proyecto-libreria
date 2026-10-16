@@ -1,0 +1,436 @@
+{% extends 'base.html' %}
+
+{% block titulito %}📦 Productos Salesianos{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== ESTILOS ESPECÍFICOS DE PRODUCTOS ===== */
+    .badge-categoria {
+        display: inline-block;
+        font-size: 0.7rem;
+        font-weight: 600;
+        border-radius: 20px;
+        padding: 0.3rem 0.7rem;
+        color: white;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    .badge-categoria-cuadernos { background: #4F46E5; }
+    .badge-categoria-lapiceros { background: #DC2626; }
+    .badge-categoria-papeleria { background: #059669; }
+    .badge-categoria-arte { background: #7C3AED; }
+    .badge-categoria-oficina { background: #D97706; }
+    .badge-categoria-herramientas { background: #6B7280; }
+    .badge-categoria-default { background: #6B7280; }
+    
+    .table-row-hover:hover { 
+        background-color: rgba(212, 175, 55, 0.06);
+        transition: background-color 0.2s ease;
+    }
+    .table thead th {
+        background: linear-gradient(135deg, #1e3a8a, #3b82f6) !important;
+        color: white !important;
+        font-weight: 600;
+        border: none;
+        white-space: nowrap;
+    }
+    .card-header.bg-primary {
+        background: linear-gradient(135deg, #1e3a8a, #3b82f6) !important;
+        border: none;
+    }
+    .form-control-sm:focus,
+    .form-select-sm:focus {
+        border-color: #d4af37;
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25);
+    }
+    #filtroCategoria {
+        border: 2px solid #1e3a8a !important;
+        background-color: #eef2ff !important;
+        font-weight: 600 !important;
+        color: #1e3a8a !important;
+    }
+    #filtroCategoria:focus {
+        border-color: #d4af37 !important;
+        box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.3) !important;
+    }
+    .card, .dashboard-header {
+        animation: fadeInUp 0.5s ease-out;
+    }
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* ===== PAGINACIÓN ESTILO GOOGLE ===== */
+    .pagination-google {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
+        flex-wrap: wrap;
+        margin: 1rem 0;
+    }
+    .pagination-google .page-link {
+        min-width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e0e0e0;
+        border-radius: 50%;
+        color: #1e3a8a;
+        font-weight: 500;
+        font-size: 0.875rem;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        padding: 0;
+    }
+    .pagination-google .page-link:hover {
+        background: #eef2ff;
+        border-color: #d4af37;
+        color: #1e3a8a;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(212, 175, 55, 0.2);
+    }
+    .pagination-google .page-item.active .page-link {
+        background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+        border-color: #1e3a8a;
+        color: white;
+        box-shadow: 0 2px 8px rgba(30, 58, 138, 0.3);
+    }
+    .pagination-google .page-item.disabled .page-link {
+        color: #9ca3af;
+        pointer-events: none;
+        background: transparent;
+        border-color: #f3f4f6;
+    }
+    .pagination-google .page-ellipsis {
+        color: #9ca3af;
+        padding: 0 8px;
+        font-weight: 500;
+    }
+    .pagination-google .page-prev,
+    .pagination-google .page-next {
+        min-width: auto;
+        padding: 0 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+    .pagination-google .page-prev:hover,
+    .pagination-google .page-next:hover {
+        border-radius: 20px;
+    }
+    .pagination-info {
+        color: #6b7280;
+        font-size: 0.85rem;
+        margin-right: 1rem;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 576px) {
+        .pagination-google .page-link {
+            min-width: 32px;
+            height: 32px;
+            font-size: 0.8rem;
+        }
+        .pagination-google .page-prev,
+        .pagination-google .page-next {
+            padding: 0 8px;
+            font-size: 0.7rem;
+        }
+        .pagination-info {
+            display: block;
+            margin: 0 0 0.5rem 0;
+            text-align: center;
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block contenido %}
+<!-- ===== CONTENIDO ESPECÍFICO DE PRODUCTOS ===== -->
+<div class="row">
+    <div class="col-12">
+        <!-- FILTROS Y BÚSQUEDA -->
+        <div class="card mb-4 shadow-sm border-0">
+            <div class="card-body p-2 p-md-3">
+                <form method="GET" action="{{ url_for('productos.listar_productos') }}" id="formFiltros">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-12 col-md-4 col-lg-3">
+                            <label class="form-label fw-semibold mb-1 small text-primary">
+                                <i class="fas fa-filter me-1 text-primary"></i>Categoría
+                            </label>
+                            <select name="categoria" id="filtroCategoria" class="form-select form-select-sm">
+                                <option value="">📂 Todas las categorías</option>
+                                {% for categoria in categorias %}
+                                <option value="{{ categoria.id_categoria }}" 
+                                    {% if categoria_seleccionada == categoria.id_categoria %}selected{% endif %}>
+                                    {% if categoria.nombre == 'cuadernos' %}📓
+                                    {% elif categoria.nombre == 'lapiceros' %}✍️
+                                    {% elif categoria.nombre == 'papeleria' %}📄
+                                    {% elif categoria.nombre == 'arte' %}🎨
+                                    {% elif categoria.nombre == 'oficina' %}📎
+                                    {% elif categoria.nombre == 'herramientas' %}🔧
+                                    {% else %}📂{% endif %}
+                                    {{ categoria.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-12 col-md-5 col-lg-4">
+                            <label class="form-label fw-semibold mb-1 small text-secondary">
+                                <i class="fas fa-search me-1 text-primary"></i>Buscar producto
+                            </label>
+                            <input type="text" name="busqueda" id="buscarProducto" class="form-control form-control-sm" 
+                                   placeholder="Nombre del producto..." value="{{ busqueda }}">
+                        </div>
+                        
+                        <div class="col-12 col-md-3 col-lg-2">
+                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-search me-1"></i>Filtrar
+                            </button>
+                        </div>
+                        
+                        <div class="col-12 col-lg-3 text-lg-end">
+                            {% if categoria_seleccionada or busqueda %}
+                            <a href="{{ url_for('productos.listar_productos') }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-times me-1"></i>Limpiar filtros
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- TABLA DE PRODUCTOS -->
+        <div class="card shadow-lg border-0 overflow-hidden">
+            <div class="card-header bg-primary text-white p-2 p-md-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                <h5 class="mb-0 fw-bold fs-6">
+                    <i class="fas fa-th-list me-2"></i>Inventario
+                </h5>
+                <span class="badge bg-light text-primary fs-6 px-3 py-2">
+                    {{ paginacion.total }} producto{{ 's' if paginacion.total != 1 else '' }} total
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle table-sm" id="tablaProductos">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="text-center small" style="width: 60px;">Imagen</th>
+                            <th class="small">Producto</th>
+                            <th class="small">Categoría</th>
+                            <th class="small d-none d-md-table-cell">Descripción</th>
+                            <th class="text-center small" style="width: 70px;">Stock</th>
+                            <th class="text-center small" style="width: 90px;">Precio</th>
+                            <th class="small d-none d-lg-table-cell" style="width: 120px;">Proveedor</th>
+                            <th class="text-center small" style="width: 80px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pr in productos %}
+                        <tr class="table-row-hover">
+                            <td class="text-center">
+                                {% if pr.imagen %}
+                                <img src="{{ url_for('static', filename='img/productos/' + pr.imagen) }}" alt="{{ pr.nombre }}"
+                                    class="rounded-2 shadow-sm" style="width: 40px; height: 40px; object-fit: cover;"
+                                    onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<div class=\'d-flex align-items-center justify-content-center rounded-2\' style=\'width:40px;height:40px;background:#f8f9fa;\'><i class=\'fas fa-image text-muted fs-6\'></i></div>'"
+                                    loading="lazy">
+                                {% else %}
+                                <div class="bg-light d-flex align-items-center justify-content-center rounded-2"
+                                    style="width: 40px; height: 40px;">
+                                    <i class="fas fa-image text-muted fs-6"></i>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong class="d-block text-dark small">{{ pr.nombre|truncate(35) }}</strong>
+                                {% if pr.destacado %}
+                                <span class="badge bg-warning text-dark mt-1" style="font-size: 0.6rem;">
+                                    <i class="fas fa-star fa-xs"></i> Destacado
+                                </span>
+                                {% endif %}
+                                {% if pr.precio_oferta %}
+                                <span class="badge bg-danger mt-1 ms-1" style="font-size: 0.6rem;">
+                                    <i class="fas fa-tag fa-xs"></i> Oferta
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if pr.categoria_rel %}
+                                <span class="badge-categoria badge-categoria-{{ pr.categoria_rel.nombre }}">
+                                    {% if pr.categoria_rel.nombre == 'cuadernos' %}📓
+                                    {% elif pr.categoria_rel.nombre == 'lapiceros' %}✍️
+                                    {% elif pr.categoria_rel.nombre == 'papeleria' %}📄
+                                    {% elif pr.categoria_rel.nombre == 'arte' %}🎨
+                                    {% elif pr.categoria_rel.nombre == 'oficina' %}📎
+                                    {% elif pr.categoria_rel.nombre == 'herramientas' %}🔧
+                                    {% else %}📂{% endif %}
+                                    {{ pr.categoria_rel.nombre }}
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary px-2 py-1" style="font-size: 0.7rem;">📦 Sin categoría</span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-secondary d-none d-md-table-cell" style="font-size: 0.75rem;">
+                                {{ pr.descripcion[:40] }}{% if pr.descripcion|length > 40 %}...{% endif %}
+                            </td>
+                            <td class="text-center fw-bold small 
+                                    {% if pr.cantidad == 0 %}text-danger
+                                    {% elif pr.cantidad <= 5 %}text-warning
+                                    {% else %}text-success{% endif %}">
+                                {{ pr.cantidad }}
+                            </td>
+                            <td class="text-center">
+                                <div>
+                                    <strong class="text-success">S/. {{ "%.2f"|format(pr.precio|default(0)) }}</strong>
+                                    {% if pr.precio_oferta %}
+                                    <br><small class="text-danger text-decoration-line-through" style="font-size: 0.6rem;">S/. {{ "%.2f"|format(pr.precio_oferta) }}</small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="d-none d-lg-table-cell">
+                                {% if pr.proveedor %}
+                                <span class="badge bg-info px-2 py-1" style="font-size: 0.65rem;">{{ pr.proveedor.nombre[:18] }}{% if pr.proveedor.nombre|length > 18 %}...{% endif %}</span>
+                                {% else %}
+                                <span class="badge bg-secondary px-2 py-1" style="font-size: 0.65rem;">Sin proveedor</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if session.rol != 'vendedor' %}
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="/productos/editar/{{ pr.id }}" class="btn btn-sm btn-outline-warning py-0 px-2"
+                                        title="Editar" style="font-size: 0.7rem;">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="/productos/eliminar/{{ pr.id }}" class="btn btn-sm btn-outline-danger py-0 px-2"
+                                        onclick="return confirm('¿Eliminar {{ pr.nombre }}?')" title="Eliminar" style="font-size: 0.7rem;">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                                {% else %}
+                                <span class="text-muted" style="font-size: 0.7rem;">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr class="no-data">
+                            <td colspan="8" class="text-center py-4">
+                                <i class="fas fa-boxes fa-3x text-muted mb-2 opacity-50"></i>
+                                <h6 class="text-muted mb-3">{% if busqueda or categoria_seleccionada %}No hay productos con esos filtros{% else %}No hay productos registrados{% endif %}</h6>
+                                {% if session.rol != 'vendedor' %}
+                                <a href="/productos/nuevo" class="btn btn-primary btn-sm px-3">
+                                    <i class="fas fa-plus me-2"></i>Primer Producto
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ===== PAGINACIÓN ESTILO GOOGLE ===== -->
+            {% if paginacion.pages > 1 %}
+            <div class="card-footer bg-white border-top px-3 py-3">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                    <span class="pagination-info">
+                        Mostrando {{ ((paginacion.page - 1) * paginacion.per_page) + 1 }}–{{ [paginacion.page * paginacion.per_page, paginacion.total]|min }} de {{ paginacion.total }}
+                    </span>
+                    <nav aria-label="Paginación de productos">
+                        <ul class="pagination pagination-google mb-0">
+                            <!-- Anterior -->
+                            <li class="page-item {% if not paginacion.has_prev %}disabled{% endif %}">
+                                {% if paginacion.has_prev %}
+                                <a class="page-link page-prev" href="{{ url_for('productos.listar_productos', categoria=categoria_seleccionada, busqueda=busqueda, page=paginacion.prev_num) }}">
+                                    <i class="fas fa-chevron-left me-1"></i>Anterior
+                                </a>
+                                {% else %}
+                                <span class="page-link page-prev"><i class="fas fa-chevron-left me-1"></i>Anterior</span>
+                                {% endif %}
+                            </li>
+
+                            {% set current = paginacion.page %}
+                            {% set total = paginacion.pages %}
+                            {% set show_first = 2 %}
+                            {% set show_last = 2 %}
+                            {% set show_adjacent = 1 %}
+
+                            {# Páginas - usando lista precalculada #}
+                            {% set current = paginacion.page %}
+                            {% set total = paginacion.pages %}
+                            {% for p in pages_to_show %}
+                                {% if loop.index0 > 0 and p - pages_to_show[loop.index0 - 1] > 1 %}
+                                <li class="page-item disabled"><span class="page-link page-ellipsis">…</span></li>
+                                {% endif %}
+                                <li class="page-item {% if p == current %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('productos.listar_productos', categoria=categoria_seleccionada, busqueda=busqueda, page=p) }}">{{ p }}</a>
+                                </li>
+                            {% endfor %}
+
+                            <!-- Siguiente -->
+                            <li class="page-item {% if not paginacion.has_next %}disabled{% endif %}">
+                                {% if paginacion.has_next %}
+                                <a class="page-link page-next" href="{{ url_for('productos.listar_productos', categoria=categoria_seleccionada, busqueda=busqueda, page=paginacion.next_num) }}">
+                                    Siguiente<i class="fas fa-chevron-right ms-1"></i>
+                                </a>
+                                {% else %}
+                                <span class="page-link page-next">Siguiente<i class="fas fa-chevron-right ms-1"></i></span>
+                                {% endif %}
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-submit form on category change (opcional, para UX más fluida)
+    document.addEventListener('DOMContentLoaded', function() {
+        const filtroCategoria = document.getElementById('filtroCategoria');
+        if (filtroCategoria) {
+            filtroCategoria.addEventListener('change', function() {
+                // Comentado: descomenta si quieres auto-submit al cambiar categoría
+                // this.form.submit();
+            });
+        }
+
+        // Enter en búsqueda = submit
+        const buscarProducto = document.getElementById('buscarProducto');
+        if (buscarProducto) {
+            buscarProducto.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.form.submit();
+                }
+            });
+        }
+
+        // Touch feedback para móviles
+        if ('ontouchstart' in window) {
+            document.querySelectorAll('.btn, .page-link').forEach(element => {
+                element.addEventListener('touchstart', function() {
+                    this.style.transform = 'scale(0.95)';
+                });
+                element.addEventListener('touchend', function() {
+                    this.style.transform = '';
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

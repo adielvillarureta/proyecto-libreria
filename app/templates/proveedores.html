@@ -1,0 +1,637 @@
+{% extends "base.html" %}
+{% block titulito %}👥 Gestión de Proveedores{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== RESET DE APPEARANCE ===== */
+    button,
+    .btn,
+    a {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
+    
+    /* ===== MEDIDAS RESPONSIVE GLOBALES ===== */
+    * {
+        box-sizing: border-box;
+    }
+    
+    /* Móviles pequeños (menos de 576px) */
+    @media (max-width: 576px) {
+        .container-fluid {
+            padding: 0 12px;
+        }
+        
+        .bg-primary.p-5 {
+            padding: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
+        }
+        
+        .bg-primary h1 {
+            font-size: 1.35rem !important;
+        }
+        
+        .bg-primary p.h5 {
+            font-size: 0.85rem !important;
+        }
+        
+        .d-flex.justify-content-between.align-items-center {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 1rem !important;
+        }
+        
+        .btn-lg {
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.8rem !important;
+            min-height: 40px;
+        }
+        
+        /* Tabla responsiva */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .table {
+            min-width: 550px;
+        }
+        
+        .table td, 
+        .table th {
+            padding: 0.5rem 0.4rem !important;
+            font-size: 0.75rem !important;
+        }
+        
+        .table .fw-bold {
+            font-size: 0.75rem;
+        }
+        
+        .btn-group .btn-sm {
+            padding: 0.25rem 0.4rem !important;
+            font-size: 0.65rem !important;
+            min-width: 28px;
+        }
+        
+        .badge {
+            font-size: 0.65rem !important;
+            padding: 0.25rem 0.5rem !important;
+        }
+        
+        /* Empty state */
+        .bg-secondary.rounded-circle {
+            width: 100px !important;
+            height: 100px !important;
+            margin-bottom: 1.5rem !important;
+        }
+        
+        .bg-secondary.rounded-circle i {
+            font-size: 2.5rem !important;
+        }
+        
+        .display-6 {
+            font-size: 1.25rem !important;
+        }
+        
+        .py-8 {
+            padding-top: 2rem !important;
+            padding-bottom: 2rem !important;
+        }
+        
+        .btn-success.btn-lg {
+            padding: 0.5rem 1rem !important;
+            font-size: 0.85rem !important;
+        }
+        
+        i.fa-3x {
+            font-size: 2rem !important;
+        }
+    }
+    
+    /* Tablets (576px - 768px) */
+    @media (min-width: 576px) and (max-width: 768px) {
+        .bg-primary.p-5 {
+            padding: 2rem !important;
+        }
+        
+        .bg-primary h1 {
+            font-size: 1.5rem !important;
+        }
+        
+        .btn-lg {
+            padding: 0.5rem 1rem !important;
+            font-size: 0.85rem !important;
+        }
+        
+        .table td, 
+        .table th {
+            padding: 0.6rem 0.5rem !important;
+            font-size: 0.8rem !important;
+        }
+    }
+    
+    /* Tablets grandes (768px - 992px) */
+    @media (min-width: 768px) and (max-width: 992px) {
+        .bg-primary.p-5 {
+            padding: 2.5rem !important;
+        }
+        
+        .btn-lg {
+            padding: 0.6rem 1.25rem !important;
+            font-size: 0.9rem !important;
+        }
+    }
+    
+    /* Laptops (992px - 1200px) */
+    @media (min-width: 992px) and (max-width: 1200px) {
+        .container-fluid {
+            max-width: 95%;
+            margin: 0 auto;
+        }
+    }
+    
+    /* Pantallas grandes (1200px+) */
+    @media (min-width: 1200px) {
+        .container-fluid {
+            max-width: 1140px;
+            margin: 0 auto;
+        }
+    }
+    
+    /* Orientación landscape en móviles */
+    @media (max-width: 768px) and (orientation: landscape) {
+        .bg-primary.p-5 {
+            padding: 1rem !important;
+            margin-bottom: 1rem !important;
+        }
+        
+        .bg-primary h1 {
+            font-size: 1.1rem !important;
+        }
+        
+        .bg-primary p.h5 {
+            font-size: 0.7rem !important;
+        }
+        
+        .d-flex.justify-content-between {
+            flex-direction: row !important;
+            align-items: center !important;
+        }
+        
+        .btn-lg {
+            padding: 0.3rem 0.6rem !important;
+            font-size: 0.7rem !important;
+            min-height: 32px;
+        }
+        
+        .table-responsive {
+            max-height: 300px;
+        }
+    }
+    
+    /* Touch-friendly para móviles */
+    @media (hover: none) and (pointer: coarse) {
+        button, 
+        .btn,
+        a {
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .btn:active,
+        .hover-lift:active {
+            transform: scale(0.97);
+            transition: transform 0.1s;
+        }
+    }
+    
+    /* ===== ESTILOS ORIGINALES MEJORADOS ===== */
+    .btn-purple-gradient {
+        background: linear-gradient(135deg, #6f42c1, #a78bfa);
+        color: white;
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-purple-gradient:hover {
+        background: linear-gradient(135deg, #5a32a3, #8b5cf6);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(111, 66, 193, 0.4);
+        color: white;
+    }
+    
+    @media (max-width: 576px) {
+        .btn-purple-gradient:hover {
+            transform: translateY(-1px);
+        }
+    }
+
+    .shadow-purple-lg {
+        box-shadow: 0 10px 30px rgba(111, 66, 193, 0.25);
+    }
+
+    .hover-row {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .hover-row:hover {
+        background-color: rgba(212, 175, 55, 0.08);
+    }
+
+    .hover-lift {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    @media (max-width: 576px) {
+        .hover-lift:hover {
+            transform: translateY(-1px);
+        }
+    }
+
+    .text-shadow-primary {
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .rounded-4 {
+        border-radius: 1rem;
+    }
+
+    .py-8 {
+        padding-top: 4rem;
+        padding-bottom: 4rem;
+    }
+    
+    /* Header gradient */
+    .bg-primary {
+        background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%) !important;
+        position: relative;
+        overflow: hidden;
+        border-radius: 1rem;
+    }
+    
+    .bg-primary::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: pulseGlow 8s ease-in-out infinite;
+    }
+    
+    @keyframes pulseGlow {
+        0%, 100% {
+            opacity: 0.3;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.6;
+            transform: scale(1.05);
+        }
+    }
+    
+    /* Card y tabla */
+    .card {
+        border-radius: 16px;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    @media (min-width: 768px) {
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
+        }
+    }
+    
+    .table {
+        margin-bottom: 0;
+    }
+    
+    .table-dark {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    }
+    
+    .table-dark th {
+        border: none;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    
+    /* Badges y botones */
+    .btn-warning, .btn-danger, .btn-success {
+        transition: all 0.2s ease;
+        border-radius: 8px;
+    }
+    
+    .btn-warning:hover, .btn-danger:hover, .btn-success:hover {
+        transform: translateY(-1px);
+    }
+    
+    .badge.bg-secondary {
+        background: #6c757d !important;
+        border-radius: 20px;
+    }
+    
+    /* Animación de entrada */
+    .card, .bg-primary {
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Scroll suave */
+    html {
+        scroll-behavior: smooth;
+    }
+    
+    /* Iconos en tabla */
+    .table .fas {
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+    }
+    
+    .hover-row:hover .fas {
+        opacity: 1;
+    }
+    
+    /* Tooltips en móviles */
+    @media (max-width: 576px) {
+        [title] {
+            position: relative;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 0.25rem;
+        }
+    }
+    
+    /* Mejora para el contador */
+    .opacity-90 {
+        opacity: 0.9;
+    }
+</style>
+{% endblock %}
+
+{% block contenido %}
+<div class="container-fluid py-3 py-md-4">
+  <div class="row">
+    <div class="col-12">
+      <!-- HEADER DASHBOARD SALESIANO -->
+      <div class="bg-primary p-4 p-md-5 mb-4 mb-md-5 text-white position-relative overflow-hidden hover-lift rounded-4">
+        <div class="bg-overlay"></div>
+        <div class="position-relative z-3">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+              <h1 class="h2 fw-extrabold mb-2 text-shadow-primary">
+                <i class="fas fa-users me-3 text-warning"></i>
+                Gestión de Proveedores
+              </h1>
+              <p class="h5 mb-0 opacity-90">
+                <i class="fas fa-chart-line me-2"></i>
+                {{ proveedores|length }} proveedores registrados
+              </p>
+            </div>
+            {% if session.rol != 'vendedor' %}
+            <div class="d-flex gap-2 flex-wrap">
+              <a href="/proveedores/nuevo" class="btn btn-success btn-lg shadow-lg hover-lift">
+                <i class="fas fa-plus me-2"></i>Nuevo Proveedor
+              </a>
+              <a href="/productos" class="btn btn-warning btn-lg shadow-lg hover-lift">
+                <i class="fas fa-box me-2"></i>Productos
+              </a>
+              <a href="/ver_productos_proveedor" class="btn btn-purple-gradient btn-lg shadow-purple-lg hover-lift">
+                <i class="fas fa-chart-line me-2"></i>Por Proveedor
+              </a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLA PROVEEDORES PREMIUM -->
+      {% if proveedores %}
+      <div class="card shadow-3xl mb-0 border-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle" id="tablaProveedores">
+            <thead class="table-dark">
+              <tr>
+                <th style="width: 50px;">#</th>
+                <th>Nombre Completo</th>
+                <th>Empresa</th>
+                <th>Email</th>
+                <th class="text-center" style="width: 120px;">Contacto</th>
+                <th class="text-center" style="width: 100px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in proveedores %}
+              <tr class="hover-row" data-nombre="{{ p.nombre.lower() }}" data-empresa="{{ p.empresa.lower() if p.empresa else '' }}">
+                <td class="fw-bold text-primary">{{ loop.index }}</td>
+                <td class="fw-bold">
+                  <div class="d-flex align-items-center">
+                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2" 
+                         style="width: 32px; height: 32px;">
+                      <i class="fas fa-user-tie text-primary fs-6"></i>
+                    </div>
+                    {{ p.nombre }}
+                  </div>
+                </td>
+                <td class="fw-semibold">
+                  {% if p.empresa %}
+                  <span class="badge bg-success bg-opacity-10 text-success px-2 py-1">
+                    <i class="fas fa-building me-1"></i>{{ p.empresa }}
+                  </span>
+                  {% else %}
+                  <span class="text-muted">—</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <i class="fas fa-envelope text-info me-1"></i>
+                  <a href="mailto:{{ p.email }}" class="text-decoration-none">{{ p.email }}</a>
+                </td>
+                <td class="text-center">
+                  <i class="fas fa-phone text-warning me-1"></i>
+                  <strong>{{ p.contacto }}</strong>
+                </td>
+                <td class="text-center">
+                  {% if session.rol != 'vendedor' %}
+                  <div class="btn-group" role="group">
+                    <a href="/proveedores/editar/{{ p.id }}" class="btn btn-warning btn-sm shadow-sm hover-lift me-1"
+                      title="Editar proveedor">
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="/proveedores/eliminar/{{ p.id }}" class="btn btn-danger btn-sm shadow-sm hover-lift"
+                      onclick="return confirmarEliminacion('{{ p.nombre }}')" title="Eliminar proveedor">
+                      <i class="fas fa-trash"></i>
+                    </a>
+                  </div>
+                  {% else %}
+                  <span class="badge bg-secondary px-3 py-2">
+                    <i class="fas fa-lock me-1"></i>Solo lectura
+                  </span>
+                  {% endif %}
+                 </td>
+               </tr>
+              {% endfor %}
+            </tbody>
+           </table>
+        </div>
+      </div>
+      
+      <!-- Contador adicional al final -->
+      <div class="mt-3 text-end">
+        <small class="text-muted">
+          <i class="fas fa-database me-1"></i>
+          Total: {{ proveedores|length }} proveedores
+        </small>
+      </div>
+      
+      {% else %}
+      <!-- EMPTY STATE PREMIUM -->
+      <div class="text-center py-8">
+        <div class="bg-secondary bg-opacity-25 rounded-circle mx-auto mb-5 p-5 d-inline-flex align-items-center justify-content-center shadow-lg"
+          style="width: 150px; height: 150px;">
+          <i class="fas fa-users-slash fa-4x text-secondary"></i>
+        </div>
+        <h3 class="display-6 fw-extrabold text-muted mb-4">No hay proveedores registrados</h3>
+        <p class="text-muted mb-4">Comienza agregando tu primer proveedor para gestionar el inventario</p>
+        {% if session.rol != 'vendedor' %}
+        <a href="/proveedores/nuevo" class="btn btn-success btn-lg px-5 py-3 shadow-lg hover-lift">
+          <i class="fas fa-plus-circle me-2"></i>Registrar Primer Proveedor
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  // Función de confirmación mejorada para eliminación
+  function confirmarEliminacion(nombre) {
+    return confirm(`¿Estás seguro de que deseas eliminar al proveedor "${nombre}"?\n\nEsta acción no se puede deshacer.`);
+  }
+  
+  // Función para filtrar proveedores (opcional, si se añade búsqueda)
+  function filtrarProveedores() {
+    const busqueda = document.getElementById('buscarProveedor');
+    if (!busqueda) return;
+    
+    const termino = busqueda.value.toLowerCase().trim();
+    const rows = document.querySelectorAll('#tablaProveedores tbody tr');
+    let contador = 0;
+    
+    rows.forEach(row => {
+      const nombre = row.getAttribute('data-nombre') || '';
+      const empresa = row.getAttribute('data-empresa') || '';
+      
+      if (termino === '' || nombre.includes(termino) || empresa.includes(termino)) {
+        row.style.display = '';
+        contador++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+    
+    const contadorSpan = document.getElementById('contadorProveedores');
+    if (contadorSpan) {
+      contadorSpan.textContent = contador;
+    }
+  }
+  
+  // Event listeners con debounce si se añade búsqueda
+  let searchTimeout;
+  const buscarInput = document.getElementById('buscarProveedor');
+  if (buscarInput) {
+    buscarInput.addEventListener('keyup', function() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(filtrarProveedores, 250);
+    });
+  }
+  
+  // Mejorar experiencia táctil en móviles
+  if ('ontouchstart' in window) {
+    document.querySelectorAll('.btn, .hover-lift').forEach(element => {
+      element.addEventListener('touchstart', function() {
+        if (this.classList && this.classList.contains('btn') && !this.disabled) {
+          this.style.transform = 'scale(0.97)';
+        }
+      });
+      element.addEventListener('touchend', function() {
+        this.style.transform = '';
+      });
+    });
+  }
+  
+  // Animación al cargar la página
+  document.addEventListener('DOMContentLoaded', function() {
+    // Agregar tooltips dinámicos en móviles
+    if (window.innerWidth <= 576) {
+      document.querySelectorAll('[title]').forEach(el => {
+        const title = el.getAttribute('title');
+        if (title && !el.getAttribute('data-bs-toggle')) {
+          // No hacer nada, mantener title nativo
+        }
+      });
+    }
+  });
+</script>
+
+<!-- Estilos adicionales para badges dinámicos -->
+<style>
+  .bg-success.bg-opacity-10 {
+    background-color: rgba(25, 135, 84, 0.1) !important;
+  }
+  
+  .bg-secondary.bg-opacity-25 {
+    background-color: rgba(108, 117, 125, 0.25) !important;
+  }
+  
+  @media (max-width: 576px) {
+    .table .btn-group .btn-sm {
+      padding: 0.3rem 0.5rem;
+    }
+    
+    .table .badge {
+      font-size: 0.6rem;
+    }
+    
+    .table a {
+      word-break: break-all;
+    }
+  }
+  
+  /* Mejora para el email en móvil */
+  @media (max-width: 576px) {
+    .table td:nth-child(4) {
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .table td:nth-child(4) a {
+      font-size: 0.7rem;
+    }
+  }
+</style>
+{% endblock %}

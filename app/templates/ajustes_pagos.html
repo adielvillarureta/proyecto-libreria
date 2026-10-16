@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block titulito %}⚙️ Ajustes de pago{% endblock %}
+
+{% block contenido %}
+<div class="container-fluid py-3 py-md-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h4 class="mb-1"><i class="fas fa-credit-card me-2"></i>Ajustes de pago</h4>
+            <p class="text-muted small mb-0">Datos que cambian seguido. Las llaves de las pasarelas viven en el <code>.env</code>.</p>
+        </div>
+        <a href="/pedidos" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-2"></i>Volver a pedidos
+        </a>
+    </div>
+
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+        {% if mensajes %}
+            {% for categoria, mensaje in mensajes %}
+                <div class="alert alert-{{ categoria if categoria != 'message' else 'info' }} py-2 small">{{ mensaje }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" enctype="multipart/form-data">
+        <div class="row g-3">
+
+            <!-- Culqi -->
+            <div class="col-12 col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="fas fa-shield-halved me-2 text-success"></i>Culqi</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" name="culqi_activo" id="culqi_activo"
+                                   {% if valores.culqi_activo.valor == '1' %}checked{% endif %}>
+                            <label class="form-check-label small" for="culqi_activo">Habilitar pasarela Culqi</label>
+                        </div>
+                        <p class="text-muted small mb-0">
+                            Tarjeta, Yape, Plin, PagoEfectivo, banca móvil, agentes y Cuotéalo.
+                            Requiere <code>CULQI_PK</code> y <code>CULQI_SK</code> en el <code>.env</code>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PagoEfectivo -->
+            <div class="col-12 col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="fas fa-qrcode me-2 text-success"></i>PagoEfectivo</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" name="pago_efectivo_activo" id="pago_efectivo_activo"
+                                   {% if valores.pago_efectivo_activo.valor == '1' %}checked{% endif %}>
+                            <label class="form-check-label small" for="pago_efectivo_activo">Ofrecer QR y código CIP</label>
+                        </div>
+                        <p class="text-muted small mb-0">
+                            El cliente paga en agentes, banca móvil o bodegas y nos llega el aviso por webhook.
+                            También necesita las llaves de Culqi.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Yape -->
+            <div class="col-12 col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="fas fa-mobile-screen me-2 text-primary"></i>Yape / Plin</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" name="yape_activo" id="yape_activo"
+                                   {% if valores.yape_activo.valor == '1' %}checked{% endif %}>
+                            <label class="form-check-label small" for="yape_activo">Ofrecer pago con nuestro QR</label>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label small mb-1">Titular</label>
+                            <input type="text" class="form-control form-control-sm" name="yape_titular"
+                                   value="{{ valores.yape_titular.valor }}">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small mb-1">Número Yape / Plin</label>
+                            <input type="text" class="form-control form-control-sm" name="yape_numero"
+                                   value="{{ valores.yape_numero.valor }}" placeholder="9XX XXX XXX">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small mb-1">Instrucción para el cliente</label>
+                            <textarea class="form-control form-control-sm" name="yape_instruccion" rows="2">{{ valores.yape_instruccion.valor }}</textarea>
+                        </div>
+                        <div>
+                            <label class="form-label small mb-1">Imagen del QR</label>
+                            <input type="file" class="form-control form-control-sm" name="yape_qr_archivo" accept="image/*">
+                            {% if valores.yape_qr.valor %}
+                                <img src="/static/{{ valores.yape_qr.valor }}" alt="QR actual" class="img-thumbnail mt-2" style="max-width:120px">
+                                <input type="hidden" name="yape_qr" value="{{ valores.yape_qr.valor }}">
+                            {% endif %}
+                            <p class="form-text mb-0">PNG, JPG o GIF. Máx. 16 MB.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transferencia -->
+            <div class="col-12 col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="fas fa-building-columns me-2 text-primary"></i>Transferencia bancaria</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" name="transferencia_activo" id="transferencia_activo"
+                                   {% if valores.transferencia_activo.valor == '1' %}checked{% endif %}>
+                            <label class="form-check-label small" for="transferencia_activo">Ofrecer transferencia</label>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label small mb-1">Banco</label>
+                            <input type="text" class="form-control form-control-sm" name="transferencia_banco"
+                                   value="{{ valores.transferencia_banco.valor }}">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small mb-1">Titular</label>
+                            <input type="text" class="form-control form-control-sm" name="transferencia_titular"
+                                   value="{{ valores.transferencia_titular.valor }}">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small mb-1">Cuenta soles</label>
+                            <input type="text" class="form-control form-control-sm" name="transferencia_cuenta"
+                                   value="{{ valores.transferencia_cuenta.valor }}">
+                        </div>
+                        <div>
+                            <label class="form-label small mb-1">CCI interbancaria</label>
+                            <input type="text" class="form-control form-control-sm" name="transferencia_cci"
+                                   value="{{ valores.transferencia_cci.valor }}">
+                        </div>
+                        <p class="text-muted small mt-2 mb-0">
+                            La opción solo se muestra si hay cuenta o CCI.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contraentrega -->
+            <div class="col-12 col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="fas fa-hand-holding-usd me-2 text-warning"></i>Contraentrega</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" name="contraentrega_activo" id="contraentrega_activo"
+                                   {% if valores.contraentrega_activo.valor == '1' %}checked{% endif %}>
+                            <label class="form-check-label small" for="contraentrega_activo">Ofrecer pago contraentrega</label>
+                        </div>
+                        <div>
+                            <label class="form-label small mb-1">Cargo adicional (S/.)</label>
+                            <input type="number" step="0.01" min="0" class="form-control form-control-sm"
+                                   name="contraentrega_cargo" value="{{ valores.contraentrega_cargo.valor }}">
+                            <p class="form-text mb-0">Solo para envíos a domicilio.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mercado Pago -->
+            <div class="col-12 col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="fas fa-hand-holding-dollar me-2 text-info"></i>Mercado Pago</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" name="mercadopago_activo" id="mercadopago_activo"
+                                   {% if valores.mercadopago_activo.valor == '1' %}checked{% endif %}>
+                            <label class="form-check-label small" for="mercadopago_activo">Habilitar Mercado Pago</label>
+                        </div>
+                        <p class="text-muted small mb-0">
+                            Requiere <code>MP_ACCESS_TOKEN</code> en el <code>.env</code> y el webhook en
+                            Mercado Pago. Tarjeta, Yape/Plin y billetera MP.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-3">
+            <a href="/pedidos" class="btn btn-outline-secondary btn-sm">Cancelar</a>
+            <button type="submit" class="btn btn-success btn-sm">
+                <i class="fas fa-save me-2"></i>Guardar ajustes
+            </button>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

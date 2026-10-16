@@ -1,0 +1,679 @@
+{% extends "base_cliente.html" %}
+{% block titulito %}💳 Método de pago - Librería Salesiana{% endblock %}
+
+
+{% block contenido %}
+<div class="container py-3 py-md-4">
+    <div class="row mb-3 mb-md-4">
+        <div class="col-12">
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
+                <h3 class="fs-4 fs-md-3 mb-0"><i class="fas fa-credit-card me-2"></i>Método de pago</h3>
+                <div class="d-flex align-items-center gap-1 gap-md-2">
+                    <span class="badge bg-success">1. Carrito ✓</span>
+                    <i class="fas fa-arrow-right mx-1 mx-md-2 text-muted d-none d-sm-inline"></i>
+                    <span class="badge bg-success">2. Datos ✓</span>
+                    <i class="fas fa-arrow-right mx-1 mx-md-2 text-muted d-none d-sm-inline"></i>
+                    <span class="badge bg-primary">3. Pago</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-lg-8">
+            <div class="card mb-3 border-0 shadow-sm rounded-3">
+                <div class="card-header bg-white py-2 py-md-3">
+                    <h6 class="mb-0 fs-6 fs-md-5"><i class="fas fa-credit-card me-2"></i>Selecciona tu método de pago</h6>
+                </div>
+                <div class="card-body p-3 p-md-4">
+
+                    <!-- Pago en línea (Culqi) -->
+                    {% if metodos.culqi %}
+                    <div class="payment-method-card" data-metodo="culqi" onclick="selectPaymentMethod('culqi')">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="payment-icon">
+                                    <i class="fas fa-shield-halved fa-2x fa-md-3x text-success"></i>
+                                </div>
+                                <div>
+                                    <strong class="small">Pago en línea</strong>
+                                    <p class="text-muted small mb-0">Tarjeta, Yape, Plin, PagoEfectivo, banca móvil, agentes y Cuotéalo</p>
+                                </div>
+                            </div>
+                            <div class="payment-radio">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="metodoPago" id="culqiRadio" value="culqi">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="payment-form mt-3" id="culqiForm" style="display:none">
+                            <div id="culqiAviso" class="alert alert-warning py-2 small mb-2" style="display:none"></div>
+                            <div class="d-flex flex-wrap gap-2 align-items-center small text-muted mb-2">
+                                <span>Paga con:</span>
+                                <span class="badge bg-light text-dark border"><i class="fab fa-cc-visa me-1"></i>Visa</span>
+                                <span class="badge bg-light text-dark border"><i class="fab fa-cc-mastercard me-1"></i>Mastercard</span>
+                                <span class="badge bg-light text-dark border"><i class="fab fa-cc-amex me-1"></i>Amex</span>
+                                <span class="badge bg-light text-dark border">Yape</span>
+                                <span class="badge bg-light text-dark border">Plin</span>
+                                <span class="badge bg-light text-dark border">PagoEfectivo</span>
+                            </div>
+                            <div class="alert alert-success py-2 small mb-0">
+                                <i class="fas fa-lock me-2"></i>Los datos de tu tarjeta los procesa Culqi de forma segura.
+                                Nunca pasan por nuestro servidor.
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- PagoEfectivo -->
+                    {% if metodos.pago_efectivo %}
+                    <div class="payment-method-card" data-metodo="pago_efectivo" onclick="selectPaymentMethod('pago_efectivo')">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="payment-icon"><i class="fas fa-store fa-2x fa-md-3x text-success"></i></div>
+                                <div>
+                                    <strong class="small">PagoEfectivo</strong>
+                                    <p class="text-muted small mb-0">Escanea el QR o usa el código CIP en agentes y banca móvil</p>
+                                </div>
+                            </div>
+                            <div class="payment-radio">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="metodoPago" id="pago_efectivoRadio" value="pago_efectivo">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Yape / Plin con nuestro QR -->
+                    {% if metodos.yape %}
+                    <div class="payment-method-card" data-metodo="yape" onclick="selectPaymentMethod('yape')">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="payment-icon"><i class="fas fa-mobile-screen fa-2x fa-md-3x text-primary"></i></div>
+                                <div>
+                                    <strong class="small">Yape / Plin</strong>
+                                    <p class="text-muted small mb-0">Escanea nuestro QR y sube tu comprobante</p>
+                                </div>
+                            </div>
+                            <div class="payment-radio">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="metodoPago" id="yapeRadio" value="yape">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="payment-form mt-3" id="yapeForm" style="display:none">
+                            <div class="d-flex gap-3 align-items-center">
+                                {% if datos_pago.yape_qr %}
+                                <img src="/static/{{ datos_pago.yape_qr }}" alt="QR de Yape" class="img-thumbnail" style="max-width:110px">
+                                {% endif %}
+                                <div class="small">
+                                    <p class="mb-1"><strong>Titular:</strong> {{ datos_pago.yape_titular }}</p>
+                                    <p class="mb-1"><strong>Número:</strong> {{ datos_pago.yape_numero or 'sin configurar' }}</p>
+                                    <p class="text-muted mb-0">{{ datos_pago.yape_instruccion }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if metodos.mercadopago %}
+                    <div class="payment-method-card" data-metodo="mercadopago" onclick="selectPaymentMethod('mercadopago')">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="payment-icon"><i class="fas fa-hand-holding-dollar fa-2x fa-md-3x text-info"></i></div>
+                                <div>
+                                    <strong class="small">Mercado Pago</strong>
+                                    <p class="text-muted small mb-0">Tarjeta, Yape, Plin y billetera Mercado Pago</p>
+                                </div>
+                            </div>
+                            <div class="payment-radio">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="metodoPago" id="mercadopagoRadio" value="mercadopago">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Contraentrega -->
+                    {% if metodos.contraentrega %}
+                    <div class="payment-method-card" id="contraentregaCard" data-metodo="contraentrega" onclick="selectPaymentMethod('contraentrega')">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="payment-icon"><i class="fas fa-hand-holding-usd fa-2x fa-md-3x text-warning"></i></div>
+                                <div>
+                                    <strong class="small">Pago contraentrega</strong>
+                                    <p class="text-muted small mb-0">Pagas cuando recibas tu pedido</p>
+                                </div>
+                            </div>
+                            <div class="payment-radio">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="metodoPago" id="contraentregaRadio" value="contraentrega">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="payment-form mt-3" id="contraentregaForm" style="display: none;">
+                            <div class="alert alert-success py-2"><i class="fas fa-check-circle me-2"></i>Pagas en efectivo al recibir. <strong>Costo adicional: S/. {{ '%.2f'|format(datos_pago.contraentrega_cargo) }}</strong></div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Transferencia -->
+                    {% if metodos.transferencia %}
+                    <div class="payment-method-card" data-metodo="transferencia" onclick="selectPaymentMethod('transferencia')">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="payment-icon"><i class="fas fa-building-columns fa-2x fa-md-3x text-primary"></i></div>
+                                <div>
+                                    <strong class="small">Transferencia bancaria</strong>
+                                    <p class="text-muted small mb-0">{{ datos_pago.transferencia_banco }}</p>
+                                </div>
+                            </div>
+                            <div class="payment-radio">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="metodoPago" id="transferenciaRadio" value="transferencia">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="payment-form mt-3" id="transferenciaForm" style="display: none;">
+                            <div class="alert alert-warning py-2 small"><strong>Datos para transferencia:</strong></div>
+                            <div class="p-2 p-md-3 bg-light rounded small">
+                                <p class="mb-1"><strong>Banco:</strong> {{ datos_pago.transferencia_banco }}</p>
+                                <p class="mb-1"><strong>Titular:</strong> {{ datos_pago.transferencia_titular }}</p>
+                                {% if datos_pago.transferencia_cuenta %}<p class="mb-1"><strong>Cuenta soles:</strong> {{ datos_pago.transferencia_cuenta }}</p>{% endif %}
+                                {% if datos_pago.transferencia_cci %}<p class="mb-0"><strong>CCI:</strong> {{ datos_pago.transferencia_cci }}</p>{% endif %}
+                            </div>
+                            <p class="text-muted small mt-2 mb-0">Después de transferir, confirma tu pago en “Mis pedidos”.</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between gap-2 mt-3">
+                <a href="/pasarela-pagos" class="btn btn-outline-secondary btn-sm btn-md-normal">
+                    <i class="fas fa-arrow-left me-2"></i>Métodos
+                </a>
+                <button class="btn btn-success btn-sm btn-md-normal" onclick="confirmarPedido()" id="btnConfirmar">
+                    <i class="fas fa-check-circle me-2"></i>Confirmar pedido
+                </button>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-sm sticky-top" style="top:20px">
+                <div class="card-header bg-primary text-white py-2 py-md-3">
+                    <h6 class="mb-0 fs-6"><i class="fas fa-shopping-cart me-2"></i>Resumen del pedido</h6>
+                </div>
+                <div class="card-body p-3 p-md-4">
+                    <div id="resumenProductos" class="small"></div>
+                    <hr class="my-2 my-md-3">
+                    <div class="d-flex justify-content-between mb-2 small">
+                        <span>Subtotal:</span><span id="subtotalTexto">S/. 0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 small" id="descuentoResumen" style="display:none">
+                        <span class="text-success">Descuento:</span><span class="text-success" id="descuentoTexto">-S/. 0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 small" id="envioRow" style="display:none">
+                        <span>Envío:</span><span id="envioTexto">S/. 0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 small" id="contraentregaCosto" style="display:none">
+                        <span>Cargo contraentrega:</span><span>S/. 3.00</span>
+                    </div>
+                    <hr class="my-2 my-md-3">
+                    <div class="d-flex justify-content-between fs-6 fs-md-5 fw-bold">
+                        <span>Total a pagar:</span><span class="text-primary" id="totalFinal">S/. 0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.payment-method-card{
+    border:2px solid #e0e0e0;
+    border-radius:12px;
+    padding:12px;
+    margin-bottom:12px;
+    cursor:pointer;
+    transition:all 0.3s ease
+}
+.payment-method-card:hover{
+    border-color:#0d6efd;
+    background-color:#f8f9fa
+}
+.payment-method-card.selected{
+    border-color:#28a745;
+    background-color:#f0fff4
+}
+.payment-icon{
+    width:80px;
+}
+.payment-radio{
+    width:30px
+}
+</style>
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://js.culqi.com/checkout-js"></script>
+<script>
+let carrito = [];
+let checkoutData = {};
+let subtotal = 0, descuento = 0, costoEnvio = 0, cargoContraentrega = 0, total = 0;
+let metodoSeleccionado = null;
+let culqi = null;          // instancia de CulqiCheckout
+let culqiPublicKey = '';
+let culqiHabilitado = false;
+let pedidoAbierto = null;  // { pedido_id, culqi_order_id }
+
+function escapeHtml(text){
+    const div = document.createElement('div');
+    div.textContent = text == null ? '' : text;
+    return div.innerHTML;
+}
+
+function verificarTipoEntrega(){
+    const tipoEntrega = localStorage.getItem('tipoEntrega');
+    const contraentregaCard = document.getElementById('contraentregaCard');
+    const envioRow = document.getElementById('envioRow');
+    if(tipoEntrega !== 'delivery'){
+        if(contraentregaCard){ contraentregaCard.style.opacity='0.5'; contraentregaCard.style.pointerEvents='none' }
+        if(envioRow) envioRow.style.display='none';
+        selectPaymentMethod(metodoSeleccionado === 'contraentrega' ? 'culqi' : metodoSeleccionado);
+    }else{
+        if(contraentregaCard){ contraentregaCard.style.opacity='1'; contraentregaCard.style.pointerEvents='auto' }
+        if(envioRow) envioRow.style.display='flex';
+    }
+}
+
+function cargarDatos(){
+    const g = localStorage.getItem('carritoCliente');
+    carrito = g ? JSON.parse(g) : [];
+
+    const chk = localStorage.getItem('checkoutData');
+    checkoutData = chk ? JSON.parse(chk) : {};
+
+    const tipoEntrega = localStorage.getItem('tipoEntrega') || 'recojo';
+    if(tipoEntrega === 'delivery'){
+        costoEnvio = 5;
+        document.getElementById('envioRow').style.display = 'flex';
+        document.getElementById('envioTexto').innerHTML = 'S/. 5.00';
+    }else{
+        costoEnvio = 0;
+        document.getElementById('envioRow').style.display = 'none';
+    }
+
+    subtotal = carrito.reduce((s,i) => s + (i.precio * i.cantidad), 0);
+    descuento = parseFloat(localStorage.getItem('descuento') || 0);
+    document.getElementById('subtotalTexto').innerHTML = `S/. ${subtotal.toFixed(2)}`;
+    if(descuento > 0){
+        document.getElementById('descuentoResumen').style.display = 'flex';
+        document.getElementById('descuentoTexto').innerHTML = `-S/. ${descuento.toFixed(2)}`;
+    }
+
+    actualizarTotal();
+
+    let html = '';
+    carrito.forEach(i => {
+        html += `<div class="d-flex justify-content-between mb-2">
+            <span class="small">${escapeHtml(i.nombre)} x${i.cantidad}</span>
+            <span class="small">S/. ${(i.precio * i.cantidad).toFixed(2)}</span>
+        </div>`;
+    });
+    document.getElementById('resumenProductos').innerHTML = html;
+
+    if(!carrito.length || !checkoutData.email){
+        Swal.fire({
+            icon:'warning',
+            title:'Tu carrito está vacío',
+            text:'Vuelve al catálogo para agregar productos.',
+            confirmButtonText:'Ir al catálogo'
+        }).then(() => { window.location.href = '/catalogo' });
+    }
+}
+
+function actualizarTotal(){
+    total = subtotal - descuento + costoEnvio + cargoContraentrega;
+    document.getElementById('totalFinal').innerHTML = `S/. ${total.toFixed(2)}`;
+}
+
+function selectPaymentMethod(metodo){
+    metodoSeleccionado = metodo;
+    document.querySelectorAll('.payment-method-card').forEach(c => c.classList.remove('selected'));
+    const card = document.querySelector(`.payment-method-card[data-metodo="${metodo}"]`);
+    if(card) card.classList.add('selected');
+    const radio = document.getElementById(`${metodo}Radio`);
+    if(radio) radio.checked = true;
+    document.querySelectorAll('.payment-form').forEach(f => f.style.display='none');
+    const form = document.getElementById(`${metodo}Form`);
+    if(form) form.style.display='block';
+
+    const cCosto = document.getElementById('contraentregaCosto');
+    const tipo = localStorage.getItem('tipoEntrega') || 'recojo';
+    if(metodo === 'contraentrega' && tipo === 'delivery'){
+        cargoContraentrega = CARGO_CONTRAENTREGA;
+        cCosto.style.display = 'flex';
+    }else{
+        cargoContraentrega = 0;
+        cCosto.style.display = 'none';
+    }
+    actualizarTotal();
+}
+
+function limpiarCarrito(){
+    ['carritoCliente','checkoutData','cuponAplicado','descuento','tipoEntrega','direccionEntrega']
+        .forEach(k => localStorage.removeItem(k));
+}
+
+function cuerpoPedido(){
+    return {
+        items: carrito.map(i => ({
+            id: parseInt(i.id),
+            nombre: i.nombre,
+            precio: parseFloat(i.precio),
+            cantidad: parseInt(i.cantidad)
+        })),
+        total: total,
+        tipo_entrega: localStorage.getItem('tipoEntrega') || 'recojo',
+        direccion: checkoutData.direccion || '',
+        comprobante: { tipo: checkoutData.tipo_comprobante || 'boleta' },
+        metodo_pago: metodoSeleccionado,
+        descuento: descuento,
+        cliente: {
+            nombres: checkoutData.nombres || '',
+            apellidos: checkoutData.apellidos || '',
+            email: checkoutData.email || '',
+            telefono: checkoutData.telefono || '',
+            documento: checkoutData.documento || '',
+            razon_social: checkoutData.razon_social || '',
+            direccion_fiscal: checkoutData.direccion_fiscal || ''
+        }
+    };
+}
+
+function primerMetodo(){
+    const orden = ['culqi','pago_efectivo','yape','mercadopago','contraentrega','transferencia'];
+    for(const m of orden){
+        if(document.querySelector(`.payment-method-card[data-metodo="${m}"]`)) return m;
+    }
+    return null;
+}
+
+async function configPasarela(){
+    try{
+        const res = await fetch('/api/pagos/config');
+        const data = await res.json();
+        culqiPublicKey = data.public_key || '';
+        culqiHabilitado = !!data.habilitado;
+    }catch(e){
+        culqiHabilitado = false;
+    }
+
+    const cardCulqi = document.querySelector('.payment-method-card[data-metodo="culqi"]');
+    const aviso = document.getElementById('culqiAviso');
+    if(!culqiHabilitado && cardCulqi){
+        aviso.style.display = 'block';
+        aviso.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>El pago con tarjeta no está disponible en este momento. Usa PagoEfectivo, Yape u otro método.';
+        cardCulqi.style.opacity = '0.5';
+        cardCulqi.style.pointerEvents = 'none';
+        if(metodoSeleccionado === 'culqi'){
+            selectPaymentMethod(primerMetodo());
+        }
+    }
+}
+
+// ---------------- CONFIRMAR PEDIDO ----------------
+const CARGO_CONTRAENTREGA = {{ datos_pago.contraentrega_cargo }};
+
+async function confirmarPedido(){
+    if(!metodoSeleccionado){
+        Swal.fire({icon:'warning', title:'Selecciona método de pago'});
+        return;
+    }
+    if(!checkoutData.email){
+        Swal.fire({icon:'error', title:'Error', text:'No hay email. Regresa a checkout'});
+        return;
+    }
+    if(metodoSeleccionado === 'culqi' && !culqiHabilitado){
+        Swal.fire({icon:'error', title:'Pago en línea no disponible', text:'Elige otro método de pago.'});
+        return;
+    }
+
+    const tipoEntrega = localStorage.getItem('tipoEntrega') || 'recojo';
+    if(metodoSeleccionado === 'contraentrega' && tipoEntrega !== 'delivery'){
+        Swal.fire({icon:'warning', title:'No disponible', text:'Contraentrega solo para delivery'});
+        return;
+    }
+
+    const btn = document.getElementById('btnConfirmar');
+    const original = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Procesando...';
+    btn.disabled = true;
+
+    try{
+        const cuerpo = cuerpoPedido();
+        // Cada método de pago abre un flujo distinto en el backend.
+        cuerpo.modo = ['culqi', 'pago_efectivo', 'yape', 'mercadopago'].includes(metodoSeleccionado)
+            ? metodoSeleccionado
+            : 'manual';
+
+        const res = await fetch('/api/pedidos/crear', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(cuerpo)
+        });
+        const data = await res.json();
+
+        if(!data.success){
+            Swal.fire({icon:'error', title:'Error', text: data.error});
+            return;
+        }
+
+        // PagoEfectivo, Yape y Mercado Pago mandan a su propia pantalla.
+        if(data.redirect){
+            limpiarCarrito();
+            window.location.href = data.redirect;
+            return;
+        }
+
+        if(metodoSeleccionado === 'culqi'){
+            pedidoAbierto = { pedido_id: data.pedido_id, culqi_order_id: data.culqi_order_id };
+            abrirCheckoutCulqi(data);
+        }else{
+            limpiarCarrito();
+            Swal.fire({
+                icon:'success',
+                title:'¡Pedido realizado!',
+                html:`Pedido #${data.pedido_id}<br>Total: S/. ${total.toFixed(2)}<br><br>El comprobante ha sido enviado a tu correo.`,
+                confirmButtonText:'Ver mis pedidos'
+            }).then(() => { window.location.href = '/mis-pedidos' });
+        }
+    }catch(e){
+        console.error(e);
+        Swal.fire({icon:'error', title:'Error', text:'No se pudo conectar con el servidor'});
+    }finally{
+        btn.innerHTML = original;
+        btn.disabled = false;
+    }
+}
+
+// ---------------- CHECKOUT CULQI ----------------
+function abrirCheckoutCulqi(pedido){
+    const settings = {
+        title: 'Librería Salesiana',
+        currency: 'PEN',
+        amount: pedido.amount,
+        order: pedido.culqi_order_id
+    };
+
+    const paymentMethods = {
+        tarjeta: true,
+        yape: true,
+        billetera: true,
+        bancaMovil: true,
+        agente: true,
+        cuotealo: true
+    };
+
+    const options = {
+        lang: 'es',
+        installments: true,
+        modal: true,
+        paymentMethods: paymentMethods,
+        paymentMethodsSort: Object.keys(paymentMethods)
+    };
+
+    const client = {
+        email: checkoutData.email || '',
+        firstName: checkoutData.nombres || '',
+        lastName: checkoutData.apellidos || ''
+    };
+
+    const appearance = {
+        theme: 'default',
+        menuType: 'sidebar',
+        buttonCardPayText: `Pagar S/. ${total.toFixed(2)}`,
+        defaultStyle: {
+            buttonBackground: '#0d6efd',
+            buttonTextColor: '#ffffff'
+        }
+    };
+
+    try{
+        culqi = new CulqiCheckout(culqiPublicKey, { settings, options, client, appearance });
+    }catch(e){
+        console.error(e);
+        Swal.fire({icon:'error', title:'No se pudo abrir el pago', text:'Intenta de nuevo en unos minutos.'});
+        return;
+    }
+
+    culqi.culqi = handleCulqiAction;
+    culqi.open();
+}
+
+function handleCulqiAction(){
+    if(culqi.token){
+        const tokenId = culqi.token.id;
+        const installments = (culqi.token.installments || '1');
+        culqi.close();
+        cobrarToken(tokenId, installments);
+    }else if(culqi.order){
+        culqi.close();
+        // PagoEfectivo / billeteras: el pago se confirma por webhook,
+        // no al instante.
+        esperarConfirmacion();
+    }else if(culqi.error){
+        console.error(culqi.error);
+        Swal.fire({icon:'error', title:'Pago rechazado', text: culqi.error.user_message || 'No se pudo procesar el pago.'});
+    }
+}
+
+async function cobrarToken(tokenId, installments){
+    Swal.fire({
+        title:'Confirmando pago',
+        html:'No cierres esta ventana...',
+        allowOutsideClick:false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    try{
+        const res = await fetch('/api/pagos/culqi/cobrar', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({
+                pedido_id: pedidoAbierto.pedido_id,
+                token_id: tokenId,
+                installments: installments
+            })
+        });
+        const data = await res.json();
+
+        if(data.success){
+            Swal.close();
+            limpiarCarrito();
+            Swal.fire({
+                icon:'success',
+                title:'¡Pago realizado!',
+                html:`Pedido #${data.pedido_id}<br>Total: S/. ${total.toFixed(2)}<br><br>El comprobante fue enviado a tu correo.`,
+                confirmButtonText:'Ver mis pedidos'
+            }).then(() => { window.location.href = '/mis-pedidos' });
+        }else if(data.pending){
+            Swal.close();
+            esperarConfirmacion();
+        }else{
+            Swal.close();
+            Swal.fire({
+                icon:'error',
+                title:'Pago no completado',
+                text: data.error || 'No se pudo procesar el pago. Intenta otra vez.'
+            });
+        }
+    }catch(e){
+        Swal.close();
+        Swal.fire({icon:'error', title:'Error de conexión', text:'No pudimos confirmar tu pago. Revisa tu pedido en unos minutos.'});
+    }
+}
+
+function esperarConfirmacion(){
+    Swal.fire({
+        title:'Procesando tu pago',
+        html:'Te avisamos en un momento. No cierres esta ventana.',
+        allowOutsideClick:false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    let intentos = 0;
+    const intervalo = setInterval(async () => {
+        intentos += 1;
+        if(intentos > 30){
+            clearInterval(intervalo);
+            Swal.close();
+            Swal.fire({
+                icon:'info',
+                title:'Tu pago sigue en proceso',
+                text:'Te enviaremos la confirmación por correo en cuanto se confirme.'
+            }).then(() => { window.location.href = '/mis-pedidos' });
+            return;
+        }
+
+        try{
+            const res = await fetch(`/api/pagos/${pedidoAbierto.pedido_id}/estado`);
+            const data = await res.json();
+            if(data.success && data.estado_pago === 'pagado'){
+                clearInterval(intervalo);
+                Swal.close();
+                limpiarCarrito();
+                Swal.fire({
+                    icon:'success',
+                    title:'¡Pago confirmado!',
+                    html:`Pedido #${data.pedido_id}<br>Total: S/. ${total.toFixed(2)}<br><br>El comprobante fue enviado a tu correo.`,
+                    confirmButtonText:'Ver mis pedidos'
+                }).then(() => { window.location.href = '/mis-pedidos' });
+            }
+        }catch(e){
+            console.error(e);
+        }
+    }, 3000);
+}
+
+// ---------------- ARRANQUE ----------------
+const METODO_ELEGIDO = '{{ metodo_elegido }}';
+
+document.addEventListener('DOMContentLoaded', () => {
+    cargarDatos();
+    verificarTipoEntrega();
+    selectPaymentMethod(METODO_ELEGIDO || primerMetodo());
+    configPasarela().then(() => {
+        // Si vinimos del índice, abrimos el pago directo.
+        if (METODO_ELEGIDO && METODO_ELEGIDO !== 'contraentrega' && METODO_ELEGIDO !== 'transferencia') {
+            confirmarPedido();
+        }
+    });
+});
+</script>
+{% endblock %}

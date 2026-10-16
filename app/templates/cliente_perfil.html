@@ -1,0 +1,283 @@
+{% extends 'base_cliente.html' %}
+{% block titulito %}Mi Cuenta — Librería Salesiana{% endblock %}
+
+{% block contenido %}
+<div class="row g-4">
+    <!-- ===== SIDEBAR TIPO AMAZON ===== -->
+    <div class="col-12 col-md-4 col-lg-3">
+        <div class="account-sidebar">
+            <!-- Tarjeta de usuario -->
+            <div class="user-card rounded-4 p-3 mb-3 text-center position-relative overflow-hidden">
+                <div class="user-card-bg"></div>
+                <img src="https://ui-avatars.com/api/?name={{ cliente.nombres }}+{{ cliente.apellidos }}&background=0d2b6e&color=d4af37&bold=true&size=128"
+                     alt="Avatar" class="profile-avatar mb-2">
+                <h5 class="mb-0 fw-bold text-white">{{ cliente.nombres }} {{ cliente.apellidos }}</h5>
+                <small class="text-white-50">{{ cliente.correo }}</small>
+                <div class="d-flex justify-content-center gap-3 mt-3">
+                    <div class="puntos-chip">
+                        <i class="fas fa-star me-1"></i><strong>{{ cliente.puntos or 0 }}</strong> puntos
+                    </div>
+                </div>
+            </div>
+
+            <nav class="nav flex-column account-menu rounded-4">
+                <a class="nav-link" href="{{ url_for('pedidos.mis_pedidos') }}">
+                    <i class="fas fa-box"></i>Mis pedidos
+                    <span class="badge bg-primary ms-auto">{{ total_pedidos }}</span>
+                </a>
+                <a class="nav-link" href="{{ url_for('pedidos.mis_pedidos') }}"><i class="fas fa-download"></i>Facturas / detalles</a>
+                <a class="nav-link active" href="{{ url_for('clientes.cliente_perfil') }}"><i class="fas fa-user-cog"></i>Tu perfil y preferencias</a>
+
+                <div class="menu-sup-label">Preferencias de compra</div>
+                <a class="nav-link" href="#" onclick="avisoProximo('Cupones y ofertas'); return false;"><i class="fas fa-ticket-alt"></i>Cupones y ofertas</a>
+                <a class="nav-link" href="#" onclick="avisoProximo('Direcciones guardadas'); return false;"><i class="fas fa-map-marker-alt"></i>Mis direcciones</a>
+                <a class="nav-link" href="#" onclick="avisoProximo('Métodos de pago'); return false;"><i class="fas fa-credit-card"></i>Métodos de pago</a>
+                <a class="nav-link" href="#" onclick="avisoProximo('Historial de navegación'); return false;"><i class="far fa-clock"></i>Historial de navegación</a>
+
+                <div class="menu-sup-label">Pago y seguridad</div>
+                <a class="nav-link" href="{{ url_for('clientes.cliente_cambiar_contrasena') }}"><i class="fas fa-shield-alt"></i>Cambiar contraseña</a>
+                <a class="nav-link" href="#" onclick="avisoProximo('Notificaciones'); return false;"><i class="far fa-bell"></i>Notificaciones</a>
+                <a class="nav-link" href="#" onclick="avisoProximo('Permisos'); return false;"><i class="fas fa-user-shield"></i>Permisos</a>
+                <hr>
+                <a class="nav-link text-danger" href="{{ url_for('clientes.logout_cliente') }}"><i class="fas fa-sign-out-alt"></i>Cerrar sesión</a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- ===== CONTENIDO PRINCIPAL ===== -->
+    <div class="col-12 col-md-8 col-lg-9">
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb small mb-0">
+                <li class="breadcrumb-item"><a href="{{ url_for('main.inicio') }}" class="text-decoration-none">Inicio</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Mi cuenta</li>
+            </ol>
+        </nav>
+
+        <!-- Estadísticas -->
+        <div class="row g-3">
+            <div class="col-6 col-lg-3">
+                <div class="stat-mini rounded-4 p-3">
+                    <i class="fas fa-box-open text-warning"></i>
+                    <h4 class="fw-bold mb-0">{{ total_pedidos }}</h4>
+                    <small>Total pedidos</small>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-mini rounded-4 p-3">
+                    <i class="fas fa-spinner text-primary"></i>
+                    <h4 class="fw-bold mb-0">{{ en_proceso }}</h4>
+                    <small>En proceso</small>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-mini rounded-4 p-3">
+                    <i class="fas fa-check-circle text-success"></i>
+                    <h4 class="fw-bold mb-0">{{ completados }}</h4>
+                    <small>Completados</small>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-mini rounded-4 p-3">
+                    <i class="fas fa-coins text-danger"></i>
+                    <h4 class="fw-bold mb-0">S/. {{ "%.2f"|format(total_gastado) }}</h4>
+                    <small>Total invertido</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Miembro desde -->
+        <div class="member-banner rounded-4 p-3 mt-3 d-flex align-items-center gap-3 flex-wrap">
+            <div class="member-icon"><i class="fas fa-user-check"></i></div>
+            <div>
+                <strong>Cliente Salesiano</strong>
+                <small class="d-block text-muted">Miembro desde
+                    {{ cliente.fecha_registro.strftime('%d/%m/%Y') if cliente.fecha_registro else '—' }}</small>
+            </div>
+            <div class="ms-auto d-flex gap-2">
+                <span class="badge rounded-pill p-2 px-3" style="background:#fdf0e0;color:#b45309;"><i class="fas fa-star me-1"></i>{{ cliente.puntos or 0 }} puntos ganados</span>
+            </div>
+        </div>
+
+        <!-- Aviso de seguridad -->
+        <div class="security-banner rounded-3 p-2 px-3 mt-3 d-flex align-items-center gap-2">
+            <i class="fas fa-lock text-success"></i>
+            <span class="text-success small">Tu información y privacidad se mantendrán seguras y fuera de riesgo.</span>
+        </div>
+
+        <div class="row g-4 mt-1">
+            <!-- Información personal -->
+            <div class="col-12 col-xl-7">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3 fs-6"><i class="fas fa-address-card me-2 text-primary"></i>Información personal</h5>
+                        <form method="POST" action="{{ url_for('clientes.cliente_actualizar_perfil') }}">
+                            <div class="row g-3 mb-3">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label small fw-bold">Nombres</label>
+                                    <input type="text" name="nombres" class="form-control custom-input" value="{{ cliente.nombres }}" required>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label small fw-bold">Apellidos</label>
+                                    <input type="text" name="apellidos" class="form-control custom-input" value="{{ cliente.apellidos }}" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Correo Electrónico</label>
+                                <input type="email" name="correo" class="form-control custom-input" value="{{ cliente.correo }}" required>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label small fw-bold">DNI</label>
+                                    <input type="text" name="dni" class="form-control custom-input" value="{{ cliente.dni or '' }}" maxlength="8">
+                                    <span class="text-muted small">Opcional, máximo 8 dígitos</span>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label small fw-bold">Teléfono</label>
+                                    <input type="text" name="telefono" class="form-control custom-input" value="{{ cliente.telefono or '' }}">
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label small fw-bold">Dirección de envío</label>
+                                <textarea name="direccion" class="form-control custom-input" rows="2">{{ cliente.direccion or '' }}</textarea>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="submit" class="btn btn-gold-perfil px-4 py-2 fw-bold rounded-pill">
+                                    <i class="fas fa-save me-2"></i>Guardar cambios
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pedidos recientes -->
+            <div class="col-12 col-xl-5">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3 fs-6"><i class="fas fa-clock me-2 text-warning"></i>Pedidos recientes</h5>
+                        {% if pedidos %}
+                        {% for pedido in pedidos %}
+                        <a href="{{ url_for('pedidos.mis_pedidos') }}" class="pedido-mini text-decoration-none rounded-3 p-3 mb-2 d-block">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong class="text-dark">Pedido #{{ pedido.id }}</strong>
+                                    <small class="d-block text-muted">{{ pedido.fecha_pedido.strftime('%d/%m/%Y') }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <strong class="text-primary">S/. {{ "%.2f"|format(pedido.total) }}</strong>
+                                    <span class="badge d-block mt-1
+                                        {% if pedido.estado == 'entregado' or pedido.estado == 'recogido' %}text-bg-success
+                                        {% elif pedido.estado == 'cancelado' %}text-bg-danger
+                                        {% elif pedido.estado == 'pendiente' %}text-bg-warning
+                                        {% else %}text-bg-info{% endif %}">
+                                        {{ pedido.estado|replace('_',' ')|upper }}
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                        <a href="{{ url_for('pedidos.mis_pedidos') }}" class="btn btn-outline-primary w-100 rounded-pill btn-sm">
+                            <i class="fas fa-box me-2"></i>Ver todos mis pedidos
+                        </a>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                            <p class="text-muted mb-3">Aún no has realizado compras.</p>
+                            <a href="{{ url_for('pedidos.catalogo_cliente') }}" class="btn btn-primary rounded-pill px-4">Ir a la tienda</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function avisoProximo(nombre) {
+    const toast = document.createElement('div');
+    toast.className = 'position-fixed bottom-0 end-0 p-3 m-3 rounded-4 shadow-lg bg-info text-white d-flex align-items-center gap-2';
+    toast.innerHTML = `<i class="fas fa-info-circle"></i><span>${nombre} estará disponible pronto 😊</span>`;
+    toast.style.zIndex = '9999';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+}
+</script>
+
+<style>
+    :root { --salesiano-gold: #D4AF37; --salesiano-blue: #0d2b6e; }
+
+    body { background: #f5f6fa; }
+
+    /* ===== SIDEBAR ===== */
+    .account-sidebar { position: sticky; top: 20px; }
+    .user-card { background: linear-gradient(135deg, #0d2b6e, #1d4ed8); }
+    .user-card-bg {
+        position: absolute; top: -30px; right: -30px; width: 120px; height: 120px;
+        border-radius: 50%; background: rgba(212, 175, 55, 0.25); filter: blur(4px);
+    }
+    .puntos-chip {
+        background: rgba(212, 175, 55, 0.25);
+        color: #fff;
+        border: 1px solid var(--salesiano-gold);
+        border-radius: 50px;
+        padding: 0.35rem 0.9rem;
+        font-size: 0.78rem;
+    }
+    .profile-avatar { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 3px solid var(--salesiano-gold); }
+
+    .account-menu {
+        background: #fff;
+        padding: 0.6rem;
+        box-shadow: 0 4px 16px rgba(13, 43, 110, 0.06);
+    }
+    .account-menu .nav-link {
+        color: #333;
+        font-size: 0.84rem;
+        font-weight: 500;
+        padding: 0.55rem 0.7rem;
+        border-radius: 10px;
+        display: flex;
+        gap: 10px;
+        transition: all 0.15s;
+    }
+    .account-menu .nav-link i { width: 20px; text-align: center; color: #667; }
+    .account-menu .nav-link:hover { background: #f1f3ff; color: var(--salesiano-blue); }
+    .account-menu .nav-link.active { background: linear-gradient(90deg, #fff7e6, #fff); color: #b8860b; font-weight: 700; border-left: 4px solid var(--salesiano-gold); }
+    .account-menu .nav-link.active i { color: #b8860b; }
+    .menu-sup-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1px; color: #9aa3b2; font-weight: 700; padding: 0.7rem 0.7rem 0.2rem; }
+
+    /* ===== STATS ===== */
+    .stat-mini { background: #fff; box-shadow: 0 4px 14px rgba(13, 43, 110, 0.05); border-bottom: 3px solid var(--salesiano-gold); }
+    .stat-mini i { font-size: 1.2rem; }
+    .stat-mini h4 { color: var(--salesiano-blue); font-size: 1.3rem; }
+    .stat-mini small { color: #7a8296; }
+
+    .member-banner { background: linear-gradient(90deg, #fffdf5, #fff6df); border: 1px dashed #e8c764; }
+    .member-icon {
+        width: 42px; height: 42px; border-radius: 50%;
+        background: linear-gradient(135deg, var(--salesiano-gold), #f0c94a);
+        color: #251d00; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    }
+    .security-banner { background-color: #f0fdf4; border: 1px solid #dcfce7; }
+
+    .custom-input { background: #fff; border: 1px solid #d5dae3; border-radius: 10px; font-size: 0.85rem; padding: 0.55rem 0.8rem; }
+    .custom-input:focus { border-color: var(--salesiano-blue); box-shadow: 0 0 0 0.15rem rgba(13, 43, 110, 0.1); }
+    .btn-gold-perfil {
+        background: linear-gradient(135deg, var(--salesiano-gold), #f0c94a);
+        color: #251d00; border: none;
+    }
+    .btn-gold-perfil:hover { color: #251d00; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(212, 175, 55, 0.4); }
+
+    .pedido-mini { background: #f8f9fb; transition: all 0.2s; }
+    .pedido-mini:hover { background: #eef2ff; }
+
+    @media (max-width: 768px) {
+        .account-sidebar { position: static; }
+    }
+</style>
+{% endblock %}
