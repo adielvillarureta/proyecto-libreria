@@ -51,6 +51,8 @@ def create_app(config_class=Config):
     from .routes.productos import productos_bp
     from .routes.ventas import ventas_bp
     from .routes.pedidos import pedidos_bp
+    from .routes.pagos import pagos_bp
+    from .routes.configuracion import configuracion_bp
     from .routes.bloqueos import bloqueos_bp
     from .routes.api import api_bp
 
@@ -61,6 +63,8 @@ def create_app(config_class=Config):
     app.register_blueprint(productos_bp)
     app.register_blueprint(ventas_bp)
     app.register_blueprint(pedidos_bp)
+    app.register_blueprint(pagos_bp)
+    app.register_blueprint(configuracion_bp)
     app.register_blueprint(bloqueos_bp)
     app.register_blueprint(api_bp)
 
@@ -74,11 +78,30 @@ def create_app(config_class=Config):
         except Exception:
             return dict(categorias=[])
 
-    # 8) Crear tablas si no existen (opcional)
+    # 8) Crear tablas y columnas que falten, más los ajustes por defecto
     with app.app_context():
         try:
             db.create_all()
+            # db.create_all() no agrega columnas a tablas ya existentes.
+            from .esquema import sincronizar_columnas
+            sincronizar_columnas()
         except Exception as e:
+            db.session.rollback()
             print(f"⚠️ No se pudieron crear las tablas: {e}")
+
+        try:
+            from .ajustes_pago import asegurar_defaults
+            asegurar_defaults()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"⚠️ No se pudieron crear los ajustes de pago: {e}")
+
+    # 9) Lo guardado en el panel de configuración manda sobre el .env
+    try:
+        from .config_sistema import aplicar_a_app
+        aplicar_a_app(app)
+    except Exception as e:
+        print(f"⚠️ No se pudo aplicar la configuración guardada: {e}")
 
     return app

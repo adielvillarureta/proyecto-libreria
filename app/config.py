@@ -26,6 +26,10 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = _engine_options
 
+    # Sin esto Flask guarda la plantilla compilada en memoria y seguiría
+    # sirviendo la versión vieja del HTML después de editar el archivo.
+    TEMPLATES_AUTO_RELOAD = True
+
     UPLOAD_FOLDER = os.getenv(
         "UPLOAD_FOLDER",
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "img", "productos"),
@@ -42,6 +46,20 @@ class Config:
 
     # API Perú (DNI/RUC)
     API_PERU_TOKEN = os.getenv("API_PERU_TOKEN", "")
+
+    # Pasarela de pagos Culqi (Checkout Custom)
+    # Las llaves salen de CulqiPanel > Desarrollo > API Keys.
+    # sk_test_... en modo prueba, sk_live_... en producción.
+    CULQI_PK = os.getenv("CULQI_PK", "")
+    CULQI_SK = os.getenv("CULQI_SK", "")
+    CULQI_API_URL = os.getenv("CULQI_API_URL", "https://api.culqi.com")
+    # "test" o "live": solo se usa para saber contra qué entorno apuntamos.
+    CULQI_MODO = os.getenv("CULQI_MODO", "test")
+
+    # Pasarela de pagos Mercado Pago
+    MP_ACCESS_TOKEN = os.getenv("MP_ACCESS_TOKEN", "")
+    # Secreto del webhook, en Mercado Pago > Notificaciones > Webhooks.
+    MP_WEBHOOK_SECRET = os.getenv("MP_WEBHOOK_SECRET", "")
 
     # URL pública de la aplicación (ngrok, dominio, etc.)
     # Se usa para construir los links de OAuth y de correos.

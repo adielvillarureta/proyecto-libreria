@@ -17,6 +17,12 @@
             <a href="/productos" class="btn btn-light shadow-sm btn-sm btn-md-normal">
                 <i class="fas fa-box me-1 me-md-2 text-primary"></i><span class="d-none d-sm-inline">Productos</span>
             </a>
+            <a href="/ajustes-pagos" class="btn btn-light shadow-sm btn-sm btn-md-normal">
+                <i class="fas fa-credit-card me-1 me-md-2 text-success"></i><span class="d-none d-sm-inline">Ajustes de pago</span>
+            </a>
+            <button class="btn btn-light shadow-sm btn-sm btn-md-normal" onclick="expirarPagos(this)">
+                <i class="fas fa-rotate me-1 me-md-2 text-warning"></i><span class="d-none d-sm-inline">Liberar pendientes</span>
+            </button>
         </div>
     </div>
 
@@ -160,6 +166,7 @@
                                     data-old-value="{{ pedido.estado }}"
                                     onchange="cambiarEstado(event, this)">
                                 <option value="pendiente" {% if pedido.estado=='pendiente' %}selected{% endif %}>⏳ Pendiente</option>
+                                <option value="pendiente_pago" {% if pedido.estado=='pendiente_pago' %}selected{% endif %}>💳 Esperando pago</option>
                                 <option value="confirmado" {% if pedido.estado=='confirmado' %}selected{% endif %}>✅ Confirmado</option>
                                 <option value="preparando" {% if pedido.estado=='preparando' %}selected{% endif %}>📦 Preparando</option>
                                 
@@ -176,6 +183,7 @@
                             {% else %}
                             <span class="badge estado-badge 
                                 {% if pedido.estado == 'pendiente' %}bg-warning
+                                {% elif pedido.estado == 'pendiente_pago' %}bg-info
                                 {% elif pedido.estado == 'confirmado' %}bg-info
                                 {% elif pedido.estado == 'preparando' %}bg-primary
                                 {% elif pedido.estado == 'enviado' %}bg-info
@@ -185,6 +193,7 @@
                                 {% elif pedido.estado == 'cancelado' %}bg-danger
                                 {% else %}bg-secondary{% endif %} fs-6 px-2 px-md-3 py-1 py-md-2">
                                 {% if pedido.estado == 'pendiente' %}⏳ Pendiente
+                                {% elif pedido.estado == 'pendiente_pago' %}💳 Esperando pago
                                 {% elif pedido.estado == 'confirmado' %}✅ Confirmado
                                 {% elif pedido.estado == 'preparando' %}📦 Preparando
                                 {% elif pedido.estado == 'enviado' %}🚚 Enviado
@@ -420,6 +429,7 @@
                     if (badge) {
                         const estadosMap = {
                             'pendiente': { text: '⏳ Pendiente', class: 'bg-warning' },
+                            'pendiente_pago': { text: '💳 Esperando pago', class: 'bg-info' },
                             'confirmado': { text: '✅ Confirmado', class: 'bg-info' },
                             'preparando': { text: '📦 Preparando', class: 'bg-primary' },
                             'enviado': { text: '🚚 Enviado', class: 'bg-info' },
@@ -490,7 +500,8 @@
             const badge = fila.querySelector('.estado-badge');
             if (badge) {
                 const texto = badge.textContent.trim();
-                if (texto.includes('Pendiente') || texto.includes('⏳ Pendiente')) {
+                if (texto.includes('Pendiente') || texto.includes('⏳ Pendiente') ||
+                   texto.includes('Esperando pago') || texto.includes('💳 Esperando pago')) {
                     pendientes++;
                 } else if (texto.includes('Entregado') || texto.includes('🎁 Entregado') || texto.includes('Recogido') || texto.includes('🙌 Recogido')) {
                     completados++;
@@ -515,6 +526,37 @@
         if (completadosPedidos) completadosPedidos.textContent = completados;
         if (procesoPedidos) procesoPedidos.textContent = enProceso;
         if (totalRegistros) totalRegistros.textContent = total + ' registros';
+    }
+
+    // Suelta el stock de los pedidos cuyo pago se abandonó
+    async function expirarPagos(boton) {
+        const original = boton.innerHTML;
+        boton.disabled = true;
+        boton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>';
+
+        try {
+            const res = await fetch('/api/pagos/expirar', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            });
+            const data = await res.json();
+
+            await Swal.fire({
+                icon: data.expirados ? 'success' : 'info',
+                title: data.expirados ? `${data.expirados} pedido(s) liberado(s)` : 'Nada pendiente',
+                text: data.expirados
+                    ? 'El stock de los pedidos sin pagar volvió al inventario.'
+                    : 'No hay pagos vencidos por ahora.',
+                confirmButtonColor: '#D4AF37'
+            });
+
+            if (data.expirados) window.location.reload();
+        } catch (e) {
+            Swal.fire({icon: 'error', title: 'Error de conexión', confirmButtonColor: '#D4AF37'});
+        }
+
+        boton.disabled = false;
+        boton.innerHTML = original;
     }
 </script>
 {% endblock %}

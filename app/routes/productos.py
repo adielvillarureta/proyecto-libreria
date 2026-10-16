@@ -88,6 +88,13 @@ def guardar_producto():
         precio_oferta = request.form.get("precio_oferta")
         precio_oferta = float(precio_oferta) if precio_oferta and precio_oferta.strip() else None
 
+        # Una oferta mayor o igual al precio normal es un error de captura.
+        # Si se guarda así, catálogo y cobro muestran precios distintos.
+        precio_base = float(request.form["precio"])
+        if precio_oferta and precio_oferta >= precio_base:
+            flash("El precio de oferta debe ser menor que el precio normal. Se guardó sin oferta.", "warning")
+            precio_oferta = None
+
         destacado = 1 if request.form.get("destacado") else 0
 
         id_categoria = request.form.get("id_categoria")
@@ -155,6 +162,11 @@ def actualizar_producto(id):
     try:
         precio_oferta = request.form.get("precio_oferta")
         precio_oferta = float(precio_oferta) if precio_oferta and precio_oferta.strip() else None
+
+        precio_base = float(request.form["precio"])
+        if precio_oferta and precio_oferta >= precio_base:
+            flash("El precio de oferta debe ser menor que el precio normal. Se guardó sin oferta.", "warning")
+            precio_oferta = None
 
         id_categoria = request.form.get("id_categoria")
         id_categoria = int(id_categoria) if id_categoria and id_categoria.strip() else None

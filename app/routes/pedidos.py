@@ -1,10 +1,14 @@
 # app/routes/pedidos.py
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from app import db
-from app.models import Pedido, DetallePedido, Producto, Cliente, Venta, Categoria, UsuarioSistema
+from app import culqi
+from app import mercadopago
+from app.config import Config
+from app.models import Pedido, DetallePedido, Producto, Cliente, Venta, Pago, Categoria, UsuarioSistema
 from app.utils import login_required, login_required_cliente, enviar_comprobante_email, tabla_existe, no_configurado, generar_enlace_whatsapp_comprobante
 from datetime import datetime
 from sqlalchemy import func, text
+import json
 
 pedidos_bp = Blueprint('pedidos', __name__)
 
@@ -56,7 +60,31 @@ def checkout():
 @pedidos_bp.route('/pago')
 @login_required_cliente
 def pago():
-    return render_template("pago.html", datetime=datetime)
+    from app import ajustes_pago
+    metodos = ajustes_pago.metodos_disponibles()
+
+    # El cliente llega desde el índice con el método ya escogido.
+    elegido = str(request.args.get("metodo") or "").strip().lower()
+    if elegido not in metodos:
+        elegido = ""
+
+    return render_template(
+        "pago.html",
+        datetime=datetime,
+        metodos=metodos,
+        metodo_elegido=elegido,
+        datos_pago={
+            "yape_titular": ajustes_pago.obtener("yape_titular"),
+            "yape_numero": ajustes_pago.obtener("yape_numero"),
+            "yape_qr": ajustes_pago.obtener("yape_qr"),
+            "yape_instruccion": ajustes_pago.obtener("yape_instruccion"),
+            "transferencia_banco": ajustes_pago.obtener("transferencia_banco"),
+            "transferencia_titular": ajustes_pago.obtener("transferencia_titular"),
+            "transferencia_cuenta": ajustes_pago.obtener("transferencia_cuenta"),
+            "transferencia_cci": ajustes_pago.obtener("transferencia_cci"),
+            "contraentrega_cargo": ajustes_pago.obtener_numero("contraentrega_cargo", 3.0),
+        },
+    )
 
 
 # ---------------- MIS PEDIDOS (CLIENTE) ----------------
@@ -112,6 +140,238 @@ def api_mis_pedidos():
 
 
 # ---------------- CREAR PEDIDO ----------------
+def finalizar_pedido_pagado(pedido, info, comprobante_tipo):
+    """Cierra el pedido una vez confirmado el pago: genera las ventas, envía el
+    comprobante por correo y arma el enlace de WhatsApp.
+
+    El stock se descuenta al crear el pedido (reserva), no aquí. Esta función
+    es idempotente: si el pedido ya no está en `pendiente_pago` o `pendiente`
+    no vuelve a generar ventas.
+    """
+    if pedido.estado not in ("pendiente", "pendiente_pago"):
+        return None
+
+    if comprobante_tipo == "factura" and not info.get("razon_social"):
+        comprobante_tipo = "boleta"
+
+    vendedor = db.session.query(UsuarioSistema.id).order_by(UsuarioSistema.id).first()
+    if not vendedor:
+        return None
+
+    numero = f"ONLINE-{pedido.id}"
+    productos_para_correo = []
+
+    for detalle in pedido.detalles or []:
+        producto = detalle.producto
+        venta = Venta(
+            producto_id=producto.id,
+            cantidad=detalle.cantidad,
+            vendedor_id=vendedor[0],
+            fecha_venta=datetime.now(),
+            tipo_comprobante=comprobante_tipo,
+            numero_comprobante=numero,
+            cliente_nombres=info.get("nombres", ""),
+            cliente_apellidos=info.get("apellidos", ""),
+            cliente_documento=info.get("documento", ""),
+            cliente_email=info.get("email", ""),
+            cliente_direccion=info.get("direccion", ""),
+            cliente_direccion_fiscal=info.get("direccion_fiscal", ""),
+            cliente_razon_social=info.get("razon_social", ""),
+        )
+        db.session.add(venta)
+        productos_para_correo.append({
+            "nombre": producto.nombre,
+            "cantidad": detalle.cantidad,
+            "precio_unitario": detalle.precio_unitario,
+            "total": detalle.subtotal,
+        })
+
+    db.session.commit()
+
+    try:
+        enviar_comprobante_email(
+            destinatario=info.get("email", ""),
+            cliente_nombre=f"{info.get('nombres', '')} {info.get('apellidos', '')}".strip(),
+            tipo_comprobante=comprobante_tipo,
+            numero_comprobante=numero,
+            fecha=datetime.now(),
+            productos=productos_para_correo,
+            total_venta=round(pedido.total or 0, 2),
+        )
+        print(f"Correo enviado a {info.get('email', '')}")
+    except Exception as e:
+        print(f"Error al enviar correo: {e}")
+
+    whatsapp_url = None
+    try:
+        whatsapp_url = generar_enlace_whatsapp_comprobante(
+            telefono=info.get("telefono", ""),
+            cliente_nombre=f"{info.get('nombres', '')} {info.get('apellidos', '')}".strip(),
+            tipo_comprobante=comprobante_tipo,
+            numero_comprobante=numero,
+            total=round(pedido.total or 0, 2),
+            fecha=datetime.now(),
+            productos=productos_para_correo,
+        )
+    except Exception as e:
+        print(f"Error generando enlace WhatsApp: {e}")
+
+    return whatsapp_url
+
+
+def _abrir_pago_culqi(pedido, info, tipo_comp, total_cliente):
+    """Crea la orden en Culqi y deja el pedido esperando el cobro.
+
+    La orden es lo que habilita PagoEfectivo, billeteras (Yape/Plin) y
+    Cuotéalo en el checkout; sin ella Culqi solo ofrece tarjeta.
+    """
+    monto = int(round(total_cliente * 100))
+
+    try:
+        orden = culqi.crear_orden(
+            monto=monto,
+            order_number=f"PEDIDO-{pedido.id}",
+            descripcion=f"Pedido #{pedido.id} - Libreria Salesiana",
+            cliente=info,
+            expiracion_segundos=1800,
+            metadata={"pedido_id": pedido.id},
+        )
+    except culqi.CulqiError as exc:
+        db.session.rollback()
+        print(f"Error creando orden Culqi: {exc.mensaje}")
+        return jsonify({"success": False, "error": exc.mensaje}), 502
+
+    pago = Pago(
+        pedido_id=pedido.id,
+        proveedor="culqi",
+        orden_id=orden.get("id"),
+        codigo_pago=orden.get("payment_code"),
+        monto=monto,
+        estado="pendiente",
+        respuesta=json.dumps(orden, ensure_ascii=False),
+        datos=json.dumps({"cliente": info, "comprobante": tipo_comp}, ensure_ascii=False),
+    )
+    db.session.add(pago)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "pedido_id": pedido.id,
+        "culqi_order_id": orden.get("id"),
+        "payment_code": orden.get("payment_code"),
+        "amount": monto,
+        "public_key": culqi.llave_publica(),
+    })
+
+
+def _abrir_pago_efectivo(pedido, info, tipo_comp, total_cliente):
+    """Orden de Culqi para PagoEfectivo: el cliente paga con QR o código CIP
+    en agentes, banca móvil o bodegas. El webhook confirma el cobro."""
+    monto = int(round(total_cliente * 100))
+
+    try:
+        orden = culqi.crear_orden(
+            monto=monto,
+            order_number=f"PEDIDO-{pedido.id}",
+            descripcion=f"Pedido #{pedido.id} - Libreria Salesiana",
+            cliente=info,
+            expiracion_segundos=86400,
+            metadata={"pedido_id": pedido.id},
+        )
+    except culqi.CulqiError as exc:
+        db.session.rollback()
+        print(f"Error creando orden PagoEfectivo: {exc.mensaje}")
+        return jsonify({"success": False, "error": exc.mensaje}), 502
+
+    pago = Pago(
+        pedido_id=pedido.id,
+        proveedor="culqi",
+        orden_id=orden.get("id"),
+        codigo_pago=orden.get("payment_code"),
+        monto=monto,
+        estado="pendiente",
+        respuesta=json.dumps(orden, ensure_ascii=False),
+        datos=json.dumps({"cliente": info, "comprobante": tipo_comp}, ensure_ascii=False),
+    )
+    db.session.add(pago)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "pedido_id": pedido.id,
+        "redirect": url_for("pagos.pago_efectivo", pedido_id=pedido.id),
+    })
+
+
+def _abrir_pago_yape(pedido, info, tipo_comp, total_cliente):
+    """Pago por el QR de Yape/Plin de la librería.
+
+    No hay cobro automático: el cliente paga a mano y sube su comprobante.
+    El personal lo valida desde el panel y ahí se confirma el pedido.
+    """
+    monto = int(round(total_cliente * 100))
+
+    pago = Pago(
+        pedido_id=pedido.id,
+        proveedor="yape",
+        monto=monto,
+        estado="pendiente",
+        metodo="yape",
+        datos=json.dumps({"cliente": info, "comprobante": tipo_comp}, ensure_ascii=False),
+    )
+    db.session.add(pago)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "pedido_id": pedido.id,
+        "redirect": url_for("pagos.pago_yape", pedido_id=pedido.id),
+    })
+
+
+def _abrir_pago_mercadopago(pedido, info, tipo_comp, total_cliente):
+    """Preferencia de Mercado Pago y redirección a su checkout."""
+    from app import mercadopago
+
+    monto = int(round(total_cliente * 100))
+
+    pago = Pago(
+        pedido_id=pedido.id,
+        proveedor="mercadopago",
+        monto=monto,
+        estado="pendiente",
+        datos=json.dumps({"cliente": info, "comprobante": tipo_comp}, ensure_ascii=False),
+    )
+    db.session.add(pago)
+    db.session.commit()
+
+    base = Config.BASE_URL.rstrip("/") or request.url_root.rstrip("/")
+
+    try:
+        preferencia = mercadopago.crear_preferencia(
+            monto=monto,
+            referencia=f"PEDIDO-{pedido.id}",
+            descripcion=f"Pedido #{pedido.id} - Libreria Salesiana",
+            payer={"email": info.get("email", "")},
+            url_ok=f"{base}/pago/mp-retorno/{pedido.id}",
+            url_fail=f"{base}/pago/mp-retorno/{pedido.id}",
+            url_pending=f"{base}/webhooks/mercadopago",
+        )
+    except mercadopago.MpError as exc:
+        db.session.rollback()
+        print(f"Error creando preferencia Mercado Pago: {exc.mensaje}")
+        return jsonify({"success": False, "error": exc.mensaje}), 502
+
+    pago.respuesta = json.dumps(preferencia, ensure_ascii=False)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "pedido_id": pedido.id,
+        "redirect": preferencia.get("url"),
+    })
+
+
 @pedidos_bp.route('/api/pedidos/crear', methods=['POST'])
 @login_required_cliente
 def crear_pedido():
@@ -162,7 +422,12 @@ def crear_pedido():
                 return jsonify({"success": False, "error": f'Producto no encontrado: {item.get("nombre", pid)}'}), 404
             if (producto.cantidad or 0) < cant:
                 return jsonify({"success": False, "error": f'Stock insuficiente: {producto.nombre}. Disponible: {producto.cantidad}'}), 409
-            precio_server = float(producto.precio_oferta or producto.precio or 0)
+            # Nunca cobramos de más: si el precio de oferta viniera mal
+            # guardado (mayor que el normal), se cobra el menor de los dos.
+            precio_normal = float(producto.precio or 0)
+            precio_oferta = float(producto.precio_oferta) if producto.precio_oferta else None
+            precio_server = precio_oferta if (precio_oferta and precio_oferta > 0
+                                              and precio_oferta < precio_normal) else precio_normal
             lineas.append({"producto": producto, "cantidad": cant, "precio": precio_server,
                            "subtotal": round(precio_server * cant, 2)})
 
@@ -203,94 +468,68 @@ def crear_pedido():
         if tipo_comp == "factura" and not cliente_razon_social:
             return jsonify({"success": False, "error": "Factura requiere razón social"}), 400
 
-        vendedor = db.session.query(UsuarioSistema.id).order_by(UsuarioSistema.id).first()
-        if not vendedor:
+        # Cada modo deja el pedido en un estado distinto:
+        #   culqi           -> pendiente_pago, cierra el webhook o el token
+        #   pago_efectivo   -> pendiente_pago, cierra el webhook (QR / CIP)
+        #   yape            -> pendiente_pago, lo valida el personal
+        #   manual          -> pendiente, se cierra de una (contraentrega,
+        #                      transferencia)
+        modo = str(data.get("modo") or "manual").strip().lower()
+        if modo not in ("culqi", "pago_efectivo", "yape", "mercadopago", "manual"):
+            modo = "manual"
+        if modo in ("culqi", "pago_efectivo") and not culqi.esta_configurado():
+            return jsonify({"success": False, "error": "La pasarela de pagos no está configurada"}), 503
+        if modo == "mercadopago" and not mercadopago.esta_configurado():
+            return jsonify({"success": False, "error": "Mercado Pago no está configurado"}), 503
+
+        if not db.session.query(UsuarioSistema.id).order_by(UsuarioSistema.id).first():
             return jsonify({"success": False, "error": "Sin vendedor configurado"}), 500
+
+        info = {
+            "nombres": cliente_nombres,
+            "apellidos": cliente_apellidos,
+            "documento": cliente_documento,
+            "email": cliente_email,
+            "telefono": cliente_telefono,
+            "direccion": cliente_direccion,
+            "direccion_fiscal": cliente_direccion_fiscal,
+            "razon_social": cliente_razon_social,
+        }
 
         pedido = Pedido(
             cliente_id=session["cliente_id"],
             total=round(total_cliente, 2),
             tipo_entrega=tipo_entrega,
             direccion_entrega=cliente_direccion if tipo_entrega == "delivery" else "",
+            nota=_s(data.get("nota")),
+            estado="pendiente_pago" if modo != "manual" else "pendiente",
         )
         db.session.add(pedido)
         db.session.flush()
 
-        productos_para_correo = []
-
         for linea in lineas:
-            producto = linea["producto"]
-            cant = linea["cantidad"]
-            precio = linea["precio"]
-            subtotal = linea["subtotal"]
-
-            detalle = DetallePedido(
+            db.session.add(DetallePedido(
                 pedido_id=pedido.id,
-                producto_id=producto.id,
-                cantidad=cant,
-                precio_unitario=precio,
-                subtotal=subtotal,
-            )
-            db.session.add(detalle)
-
-            producto.cantidad = (producto.cantidad or 0) - cant
-
-            venta = Venta(
-                producto_id=producto.id,
-                cantidad=cant,
-                vendedor_id=vendedor[0],
-                fecha_venta=datetime.now(),
-                tipo_comprobante=tipo_comp,
-                numero_comprobante=f"ONLINE-{pedido.id}",
-                cliente_nombres=cliente_nombres,
-                cliente_apellidos=cliente_apellidos,
-                cliente_documento=cliente_documento,
-                cliente_email=cliente_email,
-                cliente_direccion=cliente_direccion,
-                cliente_direccion_fiscal=cliente_direccion_fiscal,
-                cliente_razon_social=cliente_razon_social,
-            )
-            db.session.add(venta)
-
-            productos_para_correo.append({
-                'nombre': producto.nombre,
-                'cantidad': cant,
-                'precio_unitario': precio,
-                'total': subtotal
-            })
+                producto_id=linea["producto"].id,
+                cantidad=linea["cantidad"],
+                precio_unitario=linea["precio"],
+                subtotal=linea["subtotal"],
+            ))
+            # Reserva de stock: se descuenta ya y se devuelve si el pago falla.
+            linea["producto"].cantidad = (linea["producto"].cantidad or 0) - linea["cantidad"]
 
         db.session.commit()
 
-        # Enviar correo
-        try:
-            enviar_comprobante_email(
-                destinatario=cliente_email,
-                cliente_nombre=f"{cliente_nombres} {cliente_apellidos}".strip(),
-                tipo_comprobante=tipo_comp,
-                numero_comprobante=f"ONLINE-{pedido.id}",
-                fecha=datetime.now(),
-                productos=productos_para_correo,
-                total_venta=round(total_cliente, 2)
-            )
-            print(f"Correo enviado a {cliente_email}")
-        except Exception as e:
-            print(f"Error al enviar correo: {e}")
+        if modo == "culqi":
+            return _abrir_pago_culqi(pedido, info, tipo_comp, total_cliente)
+        if modo == "pago_efectivo":
+            return _abrir_pago_efectivo(pedido, info, tipo_comp, total_cliente)
+        if modo == "yape":
+            return _abrir_pago_yape(pedido, info, tipo_comp, total_cliente)
+        if modo == "mercadopago":
+            return _abrir_pago_mercadopago(pedido, info, tipo_comp, total_cliente)
 
-        # Enlace de WhatsApp para enviar el comprobante al teléfono del cliente
-        whatsapp_url = None
-        try:
-            whatsapp_url = generar_enlace_whatsapp_comprobante(
-                telefono=cliente_telefono,
-                cliente_nombre=f"{cliente_nombres} {cliente_apellidos}".strip(),
-                tipo_comprobante=tipo_comp,
-                numero_comprobante=f"ONLINE-{pedido.id}",
-                total=round(total_cliente, 2),
-                fecha=datetime.now(),
-                productos=productos_para_correo,
-            )
-        except Exception as e:
-            print(f"Error generando enlace WhatsApp: {e}")
-
+        whatsapp_url = finalizar_pedido_pagado(pedido, info, tipo_comp)
         return jsonify({"success": True, "pedido_id": pedido.id, "whatsapp_url": whatsapp_url})
 
     except Exception as e:
@@ -307,13 +546,20 @@ def crear_pedido():
 def ver_pedidos():
     es_admin = session.get("rol") == "administrador"
 
+    # Al abrir el panel soltamos el stock de los pagos que el cliente abandonó.
+    try:
+        from app.routes.pagos import expirar_pagos_pendientes
+        expirar_pagos_pendientes()
+    except Exception as e:
+        print(f"No se pudieron expirar los pagos pendientes: {e}")
+
     search = request.args.get('search', '').strip()
     estado_filter = request.args.get('estado', '').strip()
     fecha_desde = request.args.get('fecha_desde', '').strip()
     fecha_hasta = request.args.get('fecha_hasta', '').strip()
 
     total_pedidos = db.session.execute(text("SELECT COUNT(*) FROM pedidos WHERE estado != 'cancelado'")).scalar() or 0
-    pedidos_pendientes = db.session.execute(text("SELECT COUNT(*) FROM pedidos WHERE estado = 'pendiente'")).scalar() or 0
+    pedidos_pendientes = db.session.execute(text("SELECT COUNT(*) FROM pedidos WHERE estado IN ('pendiente', 'pendiente_pago')")).scalar() or 0
     pedidos_completados = db.session.execute(text("SELECT COUNT(*) FROM pedidos WHERE estado IN ('entregado', 'recogido')")).scalar() or 0
     pedidos_en_proceso = db.session.execute(text("SELECT COUNT(*) FROM pedidos WHERE estado IN ('confirmado', 'preparando', 'enviado', 'listo_tienda')")).scalar() or 0
 
@@ -405,12 +651,14 @@ def detalle_pedido(pedido_id):
     cliente = Cliente.query.get(pedido.cliente_id)
     venta = Venta.query.filter_by(numero_comprobante=f"ONLINE-{pedido_id}").first()
     es_admin = session.get("rol") == "administrador"
+    pagos = pedido.pagos.order_by(Pago.id.desc()).all()
 
     return render_template("pedido_detalle.html",
                            pedido=pedido,
                            detalles=detalles,
                            cliente=cliente,
                            venta=venta,
+                           pagos=pagos,
                            es_admin=es_admin)
 
 
@@ -428,12 +676,13 @@ def cambiar_estado_pedido(pedido_id):
     pedido = Pedido.query.get_or_404(pedido_id)
     nuevo_estado = request.form.get("estado")
     estados_validos = [
-        "pendiente", "confirmado", "preparando", "enviado",
+        "pendiente", "pendiente_pago", "confirmado", "preparando", "enviado",
         "entregado", "listo_tienda", "recogido", "cancelado"
     ]
 
     mensajes = {
         "pendiente": "⏳ Pedido marcado como pendiente",
+        "pendiente_pago": "💳 Pedido esperando pago",
         "confirmado": "✅ Pedido confirmado",
         "preparando": "📦 Pedido en preparación",
         "enviado": "🚚 Pedido enviado a domicilio",
@@ -444,8 +693,33 @@ def cambiar_estado_pedido(pedido_id):
     }
 
     if nuevo_estado in estados_validos:
+        estado_anterior = pedido.estado
         pedido.estado = nuevo_estado
         db.session.commit()
+
+        # Si el admin confirma un pedido que esperaba pago, el pago queda
+        # saldado... pero solo si el cliente subió su comprobante. El
+        # comprobante es la única prueba válida.
+        if estado_anterior == "pendiente_pago" and nuevo_estado in ("confirmado", "entregado", "recogido"):
+            pago = pedido.pagos.order_by(Pago.id.desc()).first()
+
+            if pago is not None and pago.estado == "pendiente":
+                if not pago.comprobante:
+                    db.session.rollback()
+                    pedido.estado = estado_anterior
+                    db.session.commit()
+                    aviso = ("El cliente todavía no subió su comprobante. "
+                             "Pídele la captura del Yape antes de confirmar.")
+                    if is_ajax:
+                        return jsonify({"success": False, "error": aviso}), 400
+                    flash(f"⚠️ {aviso}", "danger")
+                    return redirect(url_for("pedidos.detalle_pedido", pedido_id=pedido_id))
+
+                pago.estado = "pagado"
+                pago.fecha_pago = datetime.now()
+                pago.mensaje_error = None
+                db.session.commit()
+                print(f"Pago #{pago.id} saldado con comprobante {pago.comprobante} al confirmar el pedido #{pedido_id}")
 
         mensaje = mensajes.get(nuevo_estado, f"✅ Pedido #{pedido_id} actualizado a: {nuevo_estado}")
 

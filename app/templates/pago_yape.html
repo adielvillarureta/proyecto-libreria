@@ -1,0 +1,233 @@
+{% extends "base_cliente.html" %}
+{% block titulito %}📱 Pago con Yape / Plin - Librería Salesiana{% endblock %}
+
+{% block contenido %}
+<div class="container py-3 py-md-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-7">
+
+            <div class="card border-0 shadow-sm rounded-3 mb-3">
+                <div class="card-body p-3 p-md-4 text-center">
+                    <h5 class="mb-1"><i class="fas fa-mobile-screen me-2 text-primary"></i>Paga con Yape o Plin</h5>
+                    <p class="text-muted small mb-3">Pedido #{{ pedido.id }}</p>
+
+                    <div class="display-6 fw-bold text-primary mb-1">S/. {{ '%.2f'|format(total) }}</div>
+                    <p class="text-muted small mb-3">Ingresa este monto exacto para que reconozcamos tu pago.</p>
+
+                    {% if pago.estado == 'pagado' %}
+                        <div class="alert alert-success py-3">
+                            <i class="fas fa-check-circle fa-2x me-2"></i>
+                            <strong>Pago confirmado</strong><br>
+                            <span class="small">Tu comprobante ya fue enviado a tu correo.</span>
+                        </div>
+                    {% else %}
+                        {% if not yape_qr and not yape_numero %}
+                        <div class="alert alert-warning py-2 small text-start">
+                            <i class="fas fa-triangle-exclamation me-1"></i>
+                            Todavía no tenemos un QR de Yape publicado. Escríbenos por
+                            WhatsApp al <strong>{{ yape_titular }}</strong> con el número de
+                            pedido y coordinamos el pago.
+                        </div>
+                        {% endif %}
+
+                        <div class="row g-3 justify-content-center">
+                            <div class="col-12 col-sm-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <div class="fw-semibold small mb-2"><i class="fas fa-qrcode me-1"></i>QR de Yape/Plin</div>
+                                    {% if yape_qr %}
+                                        <img src="/static/{{ yape_qr }}" alt="QR de Yape" class="img-fluid rounded" style="max-width:220px">
+                                    {% else %}
+                                        <div class="py-4 text-muted small">
+                                            <i class="fas fa-image d-block fa-2x mb-2 opacity-50"></i>
+                                            QR no disponible
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <div class="border rounded-3 p-3 h-100 text-start">
+                                    <div class="fw-semibold small mb-2">Datos para pagar</div>
+                                    <p class="small mb-1"><strong>Titular:</strong> {{ yape_titular }}</p>
+                                    <p class="small mb-1"><strong>Número:</strong>
+                                        {% if yape_numero %}{{ yape_numero }}{% else %}<span class="text-muted">no configurado</span>{% endif %}
+                                    </p>
+                                    <p class="small mb-0"><strong>Monto a pagar:</strong> S/. {{ '%.2f'|format(total) }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info py-2 small mt-3 mb-0 text-start">
+                            <i class="fas fa-circle-info me-1"></i>{{ yape_instruccion }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if pago.estado != 'pagado' %}
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body p-3 p-md-4">
+                    <h6 class="mb-1"><i class="fas fa-camera me-2"></i>Sube tu comprobante</h6>
+
+                    {% if pago.comprobante %}
+                    <div class="alert alert-success py-2 small">
+                        <i class="fas fa-check-circle me-1"></i>
+                        Recibimos tu comprobante. Estamos verificando el pago.
+                        Puedes enviar una foto más clara si quieres.
+                    </div>
+                    {% else %}
+                    <p class="text-muted small">
+                        El comprobante es obligatorio: es lo único que revisamos para
+                        confirmar tu pedido. Toma una captura donde se vea el monto y tu nombre.
+                    </p>
+                    {% endif %}
+
+                    <div id="zonaSube" class="border border-2 border-dashed rounded-3 p-4 text-center"
+                         style="border-color:#dee2e6; cursor:pointer" onclick="document.getElementById('comprobante').click()">
+                        <i class="fas fa-cloud-arrow-up fa-2x text-muted mb-2"></i>
+                        <p class="small text-muted mb-0">Toca aquí o arrastra una imagen<br>PNG, JPG o GIF · máx. 5 MB</p>
+                    </div>
+                    <input type="file" id="comprobante" accept="image/png,image/jpeg,image/gif" class="d-none" onchange="previsualizar(this)">
+                    <div id="previa" class="mt-3 d-none text-center">
+                        <img id="previaImg" class="img-fluid rounded border" style="max-height:220px">
+                    </div>
+
+                    <!-- Verificación de seguridad -->
+                    <div class="mt-3">
+                        <label class="form-label small mb-1" for="captcha">
+                            <i class="fas fa-shield-halved me-1"></i>Verificación de seguridad
+                        </label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text" id="preguntaCaptcha">…</span>
+                            <input type="text" id="captcha" class="form-control" inputmode="numeric"
+                                   placeholder="Resuelve la operación" autocomplete="off">
+                        </div>
+                        <div class="form-text">Vence en <span id="captchaExpira">10</span> minutos.</div>
+                    </div>
+
+                    <button class="btn btn-success w-100 mt-3" onclick="enviarComprobante({{ pedido.id }})" id="btnSubir">
+                        <i class="fas fa-paper-plane me-2"></i>Enviar comprobante
+                    </button>
+                    <p class="text-muted small text-center mt-2 mb-0">
+                        También lo puedes validar mostrando este pedido en caja.
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="d-flex justify-content-center gap-2 mt-3">
+                <a href="/mis-pedidos" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-2"></i>Mis pedidos
+                </a>
+                <button class="btn btn-primary btn-sm" onclick="refrescarEstado({{ pedido.id }})" id="btnRefrescar">
+                    <i class="fas fa-rotate me-2"></i>Ya pagué, verificar
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function cargarCaptcha(){
+    const campo = document.getElementById('captcha');
+    if(!campo) return;
+    try{
+        const res = await fetch('/api/pagos/yape/captcha');
+        const data = await res.json();
+        document.getElementById('preguntaCaptcha').textContent = data.pregunta + ' =';
+        document.getElementById('captchaExpira').textContent = Math.round((data.expira_en || 600) / 60);
+        campo.value = '';
+    }catch(e){
+        document.getElementById('preguntaCaptcha').textContent = '—';
+    }
+}
+
+function previsualizar(input){
+    const archivo = input.files[0];
+    if(!archivo) return;
+
+    if(archivo.size > 5 * 1024 * 1024){
+        Swal.fire({icon:'warning', title:'Imagen muy pesada', text:'El máximo es 5 MB. Tómale una captura más liviana.'});
+        input.value = '';
+        return;
+    }
+    if(!['image/png','image/jpeg','image/gif'].includes(archivo.type)){
+        Swal.fire({icon:'warning', title:'Formato no válido', text:'Solo PNG, JPG o GIF.'});
+        input.value = '';
+        return;
+    }
+
+    document.getElementById('previaImg').src = URL.createObjectURL(archivo);
+    document.getElementById('previa').classList.remove('d-none');
+}
+
+async function enviarComprobante(pedidoId){
+    const input = document.getElementById('comprobante');
+    if(!input.files[0]){
+        Swal.fire({icon:'warning', title:'Adjunta tu comprobante', text:'Tómale una captura a tu Yape o Plin.'});
+        return;
+    }
+
+    const captcha = document.getElementById('captcha');
+    if(!captcha.value.trim()){
+        Swal.fire({icon:'warning', title:'Falta la verificación', text:'Resuelve la operación de seguridad.'});
+        captcha.focus();
+        return;
+    }
+
+    const btn = document.getElementById('btnSubir');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
+
+    const datos = new FormData();
+    datos.append('pedido_id', pedidoId);
+    datos.append('comprobante', input.files[0]);
+    datos.append('captcha', captcha.value);
+
+    try{
+        const res = await fetch('/api/pagos/yape/comprobante', { method:'POST', body: datos });
+        const data = await res.json();
+
+        if(data.success){
+            Swal.fire({
+                icon:'success',
+                title:'Comprobante recibido',
+                text:'Revisamos tu pago y te confirmamos por correo.',
+                confirmButtonText:'Ver mis pedidos'
+            }).then(() => { window.location.href = '/mis-pedidos' });
+        }else{
+            // El captcha es de un solo uso: siempre hay que pedir uno nuevo.
+            await cargarCaptcha();
+            Swal.fire({icon:'error', title:'No pudimos recibirlo', text:data.error});
+        }
+    }catch(e){
+        await cargarCaptcha();
+        Swal.fire({icon:'error', title:'Error de conexión', text:'Intenta de nuevo en unos minutos.'});
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar comprobante';
+}
+
+async function refrescarEstado(pedidoId){
+    const btn = document.getElementById('btnRefrescar');
+    btn.disabled = true;
+    try{
+        const res = await fetch(`/api/pagos/${pedidoId}/estado`);
+        const data = await res.json();
+        if(data.success && data.estado_pago === 'pagado'){
+            Swal.fire({icon:'success', title:'¡Pago confirmado!', text:'Tu comprobante fue enviado a tu correo.'})
+                .then(() => { window.location.href = '/mis-pedidos' });
+            return;
+        }
+        Swal.fire({icon:'info', title:'Todavía no lo vemos', text:'Si ya pagaste, puede tardar unos minutos.'});
+    }catch(e){
+        Swal.fire({icon:'error', title:'Error de conexión', text:'Intenta de nuevo en unos minutos.'});
+    }
+    btn.disabled = false;
+}
+
+document.addEventListener('DOMContentLoaded', cargarCaptcha);
+</script>
+{% endblock %}

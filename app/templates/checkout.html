@@ -468,9 +468,7 @@
 </div>
 
 <!-- ============================================ -->
-<!-- SWEETALERT2 CDN -->
 <!-- ============================================ -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
 // ============================================
@@ -731,6 +729,7 @@ function procesarPago() {
     var telefono = document.getElementById('clienteTelefono').value.trim();
     var documento = document.getElementById('documentoInput').value.trim();
     var direccion = document.getElementById('direccionEntrega').value.trim();
+    var direccionFiscal = (document.getElementById('direccionFiscal') || {}).value || '';
     
     // Solo validar campos obligatorios (email y documento)
     if (!email || !documento) {
@@ -822,59 +821,26 @@ function procesarPago() {
         }
     };
     
-    console.log('📦 Enviando pedido:', datosPedido);
-    
-    // ===== ENVIAR AL SERVIDOR =====
-    fetch('/api/pedidos/crear', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(datosPedido)
-    })
-    .then(response => {
-        console.log('📡 Respuesta:', response.status);
-        if (!response.ok) {
-            throw new Error('Error en el servidor: ' + response.status);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('✅ Datos recibidos:', data);
-        if (data.success) {
-            localStorage.removeItem('carritoCliente');
-            
-            Swal.fire({
-                icon: 'success',
-                title: '✅ ¡Pedido realizado!',
-                text: 'Tu pedido ha sido registrado exitosamente.',
-                confirmButtonColor: '#D4AF37',
-                confirmButtonText: 'Ver mis pedidos'
-            }).then(() => {
-                window.location.href = '/mis-pedidos';
-            });
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: '❌ Error al procesar',
-                text: data.error || 'Hubo un problema al procesar tu pedido.',
-                confirmButtonColor: '#D4AF37'
-            });
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Continuar con el pago';
-        }
-    })
-    .catch(error => {
-        console.error('❌ Error:', error);
-        Swal.fire({
-            icon: 'error',
-            title: '❌ Error de conexión',
-            text: 'No se pudo conectar con el servidor. Intenta nuevamente.\n' + error.message,
-            confirmButtonColor: '#D4AF37'
-        });
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Continuar con el pago';
-    });
+    console.log('📦 Guardando datos para el pago:', datosPedido);
+
+    // Aquí NO se crea el pedido: el cobro se decide en el siguiente paso.
+    // Guardamos los datos y llevamos al índice de métodos de pago.
+    localStorage.setItem('checkoutData', JSON.stringify({
+        nombres: cliente.nombres,
+        apellidos: cliente.apellidos,
+        email: cliente.email,
+        telefono: cliente.telefono,
+        documento: cliente.documento,
+        direccion: cliente.direccion,
+        razon_social: cliente.razon_social || '',
+        direccion_fiscal: direccionFiscal || '',
+        tipo_comprobante: tipoComprobante
+    }));
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Continuar con el pago';
+    window.location.href = '/pasarela-pagos';
+    return;
 }
 
 // ============================================

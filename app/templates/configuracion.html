@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block titulito %}⚙️ Configuración técnica{% endblock %}
+
+{% block contenido %}
+<div class="container-fluid py-3 py-md-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h4 class="mb-1"><i class="fas fa-sliders me-2"></i>Configuración técnica</h4>
+            <p class="text-muted small mb-0">
+                Base de datos, correo y llaves de las pasarelas. Lo que guardes aquí
+                tiene prioridad sobre el <code>.env</code>.
+            </p>
+        </div>
+        <a href="/dashboard" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-2"></i>Volver
+        </a>
+    </div>
+
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+        {% if mensajes %}
+            {% for categoria, mensaje in mensajes %}
+                <div class="alert alert-{{ categoria if categoria != 'message' else 'info' }} py-2 small">{{ mensaje }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="alert alert-warning d-flex gap-2 align-items-start small">
+        <i class="fas fa-exclamation-triangle mt-1"></i>
+        <div>
+            Aquí se guardan contraseñas y llaves privadas. Para guardar cualquier
+            cambio tienes que escribir <strong>tu contraseña de administrador</strong>.
+            Cada cambio queda registrado con tu usuario y tu IP.
+        </div>
+    </div>
+
+    <form method="POST" autocomplete="off">
+        <div class="row g-3">
+
+            {% for grupo_clave, grupo_titulo, grupo_icono in grupos %}
+            {% set del_grupo = claves | selectattr('grupo', 'equalto', grupo_clave) | list %}
+            {% if del_grupo %}
+            <div class="col-12 col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="{{ grupo_icono }} me-2 text-primary"></i>{{ grupo_titulo }}</h6>
+                    </div>
+                    <div class="card-body">
+                        {% for item in del_grupo %}
+                        <div class="mb-3">
+                            <label class="form-label small mb-1" for="{{ item.clave }}">
+                                {{ item.etiqueta }}
+                                {% if item.definido %}
+                                    <span class="badge bg-success ms-1" style="font-size:.58rem">en el panel</span>
+                                {% elif item.origen == '.env' %}
+                                    <span class="badge bg-secondary ms-1" style="font-size:.58rem">del .env</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark ms-1" style="font-size:.58rem">sin definir</span>
+                                {% endif %}
+                            </label>
+
+                            <input type="{{ 'password' if item.secreto else 'text' }}"
+                                   class="form-control form-control-sm"
+                                   id="{{ item.clave }}"
+                                   name="{{ item.clave }}"
+                                   value=""
+                                   placeholder="{{ item.valor if item.valor else 'No configurado' }}"
+                                   {% if item.secreto %}autocomplete="new-password"{% endif %}>
+
+                            {% if item.actualizado %}
+                            <div class="form-text">Último cambio: {{ item.actualizado }}</div>
+                            {% endif %}
+                            {% if item.secreto and item.valor %}
+                            <div class="form-text text-warning">
+                                <i class="fas fa-eye-slash me-1"></i>
+                                Para cambiarlo escribe la nueva. Dejarlo vacío no lo borra.
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+
+        </div>
+
+        <!-- Confirmación de contraseña -->
+        <div class="card border-0 shadow-sm mt-3">
+            <div class="card-body">
+                <label class="form-label small mb-1" for="clave_admin">
+                    <i class="fas fa-lock me-1"></i>Tu contraseña de administrador
+                </label>
+                <div class="input-group input-group-sm" style="max-width:420px">
+                    <input type="password" class="form-control" id="clave_admin" name="clave_admin"
+                           placeholder="Obligatorio para guardar" autocomplete="current-password" required>
+                    <button class="btn btn-outline-secondary" type="button" onclick="verClave()">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="form-text">Si está mal, no se guarda nada.</div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-3">
+            <a href="/dashboard" class="btn btn-outline-secondary btn-sm">Cancelar</a>
+            <button type="submit" class="btn btn-primary btn-sm" onclick="return confirmar()">
+                <i class="fas fa-save me-2"></i>Guardar configuración
+            </button>
+        </div>
+    </form>
+
+    <!-- Historial -->
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white">
+            <h6 class="mb-0"><i class="fas fa-history me-2 text-primary"></i>Cambios recientes</h6>
+        </div>
+        <div class="card-body">
+            {% if cambios %}
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Clave</th>
+                            <th>Admin</th>
+                            <th>IP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in cambios %}
+                        <tr>
+                            <td class="text-nowrap">{{ c.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td><code>{{ c.clave }}</code></td>
+                            <td>{{ c.usuario.correo if c.usuario else 'desconocido' }}</td>
+                            <td><code>{{ c.ip or '-' }}</code></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted mb-0">Todavía no se cambió ninguna clave.</p>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function verClave(){
+    const campo = document.getElementById('clave_admin');
+    const boton = event.target;
+    if (campo.type === 'password') {
+        campo.type = 'text';
+        boton.innerHTML = '<i class="fas fa-eye-slash"></i>';
+    } else {
+        campo.type = 'password';
+        boton.innerHTML = '<i class="fas fa-eye"></i>';
+    }
+}
+
+function confirmar(){
+    // Avisar de qué campos realmente se van a cambiar
+    const conValor = [];
+    document.querySelectorAll('input[type="text"], input[type="password"]').forEach(i => {
+        if (i.id === 'clave_admin' || !i.value.trim()) return;
+        conValor.push(document.querySelector(`label[for="${i.id}"]`).textContent.trim().split(' en el')[0].split(' del ')[0].trim());
+    });
+
+    if (!conValor.length) {
+        return Swal.fire({
+            icon:'info',
+            title:'No cambiaste nada',
+            text:'Escribe al menos un campo para guardar.'
+        }).then(() => false);
+    }
+
+    return Swal.fire({
+        icon:'warning',
+        title:'¿Guardar estos cambios?',
+        html:'<div style="text-align:left">' + conValor.map(v => '• ' + v).join('<br>') + '</div>',
+        showCancelButton:true,
+        confirmButtonText:'Sí, guardar',
+        cancelButtonText:'Cancelar'
+    }).then(r => r.isConfirmed);
+}
+</script>
+{% endblock %}

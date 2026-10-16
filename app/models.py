@@ -155,9 +155,108 @@ class DetallePedido(db.Model):
     pedido = db.relationship("Pedido", back_populates="detalles")
     producto = db.relationship("Producto")
 
+
+class Pago(db.Model):
+    """Registro de un intento de pago de un pedido.
+
+    Se crea una fila por orden de Culqi abierta y se actualiza al confirmarse
+    el cobro. El monto se guarda en céntimos (int) porque Culqi trabaja así.
+    """
+    __tablename__ = "pagos"
+
+    id = db.Column(db.Integer, primary_key=True)
+    pedido_id = db.Column(db.Integer, db.ForeignKey("pedidos.id"), nullable=False)
+    proveedor = db.Column(db.String(30), default="culqi", nullable=False)
+
+    # culqi_order_id (ord_test/ord_live...) habilita PagoEfectivo, billeteras
+    # móviles y Cuotéalo. Sin él, Culqi solo ofrece tarjeta.
+    orden_id = db.Column(db.String(60), nullable=True, index=True)
+    cargo_id = db.Column(db.String(60), nullable=True, index=True)
+    token_id = db.Column(db.String(60), nullable=True)
+
+    metodo = db.Column(db.String(30), nullable=True)
+    monto = db.Column(db.Integer)          # céntimos
+    estado = db.Column(db.String(20), default="pendiente")  # pendiente|pagado|fallido|expirado
+
+    codigo_pago = db.Column(db.String(30), nullable=True)   # CIP de PagoEfectivo
+    respuesta = db.Column(db.Text, nullable=True)           # JSON crudo de Culqi
+    # Snapshot del pedido al abrir el pago: datos del cliente y tipo de
+    # comprobante. Se relee al confirmar el cobro para emitir la venta.
+    datos = db.Column(db.Text, nullable=True)
+    # Comprobante que sube el cliente cuando paga por Yape/Plin o transferencia
+    # y no hay cobro automático.
+    comprobante = db.Column(db.String(255), nullable=True)
+    codigo_error = db.Column(db.String(120), nullable=True)
+    mensaje_error = db.Column(db.String(255), nullable=True)
+
+    fecha_creacion = db.Column(db.DateTime, default=datetime.now)
+    fecha_pago = db.Column(db.DateTime, nullable=True)
+
+    pedido = db.relationship("Pedido", backref=db.backref("pagos", lazy="dynamic"))
+
+    @property
+    def monto_soles(self):
+        return round((self.monto or 0) / 100, 2)
+
 class RucEmpresa(db.Model):
     __tablename__ = "ruc_empresas"
     id = db.Column(db.Integer, primary_key=True)
     ruc = db.Column(db.String(11), unique=True, nullable=False)
     razon_social = db.Column(db.String(200), nullable=False)
     direccion = db.Column(db.Text, nullable=True)
+
+
+class AjustePago(db.Model):
+    """Ajustes de los métodos de pago que el personal edita desde el panel.
+
+    Solo lo que cambia seguido (números de cuenta, QR, cargos). Las llaves de
+    las pasarelas viven en ConfiguracionSistema, no aquí.
+    """
+    __tablename__ = "ajustes_pago"
+
+    clave = db.Column(db.String(60), primary_key=True)
+    valor = db.Column(db.Text, nullable=True)
+    tipo = db.Column(db.String(15), default="texto")  # texto|numero|bool
+    descripcion = db.Column(db.String(200), nullable=True)
+    actualizado = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+
+class ConfiguracionSistema(db.Model):
+    """Datos técnicos editables desde el panel: base de datos, correo y llaves.
+
+    Viven en la base y no en el .env para poder cambiarlos sin tocar el
+    archivo ni reiniciar el servidor. El .env sigue mandando como respaldo:
+    si aquí no hay nada, se usa lo que haya en el archivo.
+
+    Solo el administrador puede leer o escribir, y solo con su contraseña.
+    """
+    __tablename__ = "configuracion_sistema"
+
+    clave = db.Column(db.String(60), primary_key=True)
+    valor = db.Column(db.Text, nullable=True)
+    # Si es True, el valor nunca se devuelve entero a la interfaz: se
+    # enmascara. Ejemplos: contraseñas y llaves privadas.
+    secreto = db.Column(db.Boolean, default=False)
+    descripcion = db.Column(db.String(200), nullable=True)
+    grupo = db.Column(db.String(30), default="otros")
+    actualizado = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    actualizado_por = db.Column(db.Integer, db.ForeignKey("usuarios_sistema.id"), nullable=True)
+
+    @property
+    def tiene_valor(self):
+        return bool(self.valor and str(self.valor).strip())
+
+
+class CambioConfiguracion(db.Model):
+    """Rastro de quién cambió qué, porque aquí hay credenciales de por medio."""
+
+    __tablename__ = "cambios_configuracion"
+
+    id = db.Column(db.Integer, primary_key=True)
+    clave = db.Column(db.String(60), nullable=False)
+    valor_anterior = db.Column(db.Text, nullable=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey("usuarios_sistema.id"), nullable=True)
+    fecha = db.Column(db.DateTime, default=datetime.now)
+    ip = db.Column(db.String(45), nullable=True)
+
+    usuario = db.relationship("UsuarioSistema")

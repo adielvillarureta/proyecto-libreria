@@ -470,12 +470,78 @@
                                 <p><strong>⏱️ Estado:</strong><br>
                                     {% if pedido.estado == 'pendiente' %}
                                         <span class="badge bg-warning">⏳ PENDIENTE</span>
+                                    {% elif pedido.estado == 'pendiente_pago' %}
+                                        <span class="badge bg-info">💳 ESPERANDO PAGO</span>
                                     {% elif pedido.estado == 'confirmado' %}
                                         <span class="badge bg-success">✅ CONFIRMADO</span>
                                     {% elif pedido.estado == 'cancelado' %}
                                         <span class="badge bg-danger">❌ CANCELADO</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ pedido.estado }}</span>
                                     {% endif %}
                                 </p>
+
+                                <!-- Estado del pago -->
+                                {% if pagos %}
+                                <p class="mb-2">
+                                    <strong>💰 Pago:</strong><br>
+                                    {% for p in pagos %}
+                                    <span class="badge bg-light text-dark border">
+                                        {{ p.proveedor }}{% if p.metodo %} · {{ p.metodo }}{% endif %} ·
+                                        {% if p.estado == 'pagado' %}<span class="text-success">PAGADO</span>
+                                        {% elif p.estado == 'pendiente' %}<span class="text-warning">PENDIENTE</span>
+                                        {% else %}<span class="text-danger">{{ p.estado|upper }}</span>{% endif %}
+                                    </span>
+                                    {% if p.cargo_id %}<span class="badge bg-light text-muted border">ref {{ p.cargo_id }}</span>{% endif %}
+                                    {% endfor %}
+                                </p>
+                                {% endif %}
+
+                                <!-- Validación manual: Yape / Plin / transferencia -->
+                                {% if es_admin and pagos and pagos[0].estado == 'pendiente' %}
+                                <div class="card border-warning mb-2">
+                                    <div class="card-body p-3">
+                                        <strong class="small d-block mb-2">
+                                            <i class="fas fa-magnifying-glass me-1"></i>Validar pago
+                                        </strong>
+                                        {% if pagos[0].comprobante %}
+                                        <div class="mb-2">
+                                            <a href="/api/pagos/yape/comprobante/{{ pagos[0].id }}" target="_blank">
+                                                <img src="/api/pagos/yape/comprobante/{{ pagos[0].id }}"
+                                                     alt="Comprobante del cliente" class="img-fluid rounded border"
+                                                     style="max-height:260px">
+                                            </a>
+                                            <a href="/api/pagos/yape/comprobante/{{ pagos[0].id }}" target="_blank"
+                                               class="small d-inline-block mt-1">
+                                                <i class="fas fa-external-link-alt me-1"></i>Abrir en grande
+                                            </a>
+                                        </div>
+                                        <p class="text-muted small">
+                                            Confirma que el monto de <strong>S/. {{ '%.2f'|format(pagos[0].monto_soles) }}</strong>
+                                            entró a la cuenta antes de aprobar.
+                                        </p>
+
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-success btn-sm"
+                                                    onclick="validarPago({{ pagos[0].id }}, 'aprobar')">
+                                                <i class="fas fa-check me-1"></i>Confirmar pago
+                                            </button>
+                                            <button class="btn btn-outline-danger btn-sm"
+                                                    onclick="validarPago({{ pagos[0].id }}, 'rechazar')">
+                                                <i class="fas fa-xmark me-1"></i>Rechazar
+                                            </button>
+                                        </div>
+                                        {% else %}
+                                        <div class="alert alert-warning py-2 small mb-0">
+                                            <i class="fas fa-hourglass-half me-1"></i>
+                                            <strong>Falta el comprobante.</strong><br>
+                                            El cliente todavía no subió su captura del Yape.
+                                            Sin comprobante no se puede confirmar el pago.
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
                                 <p><strong>📄 Tipo Comprobante:</strong><br>
                                     {% if venta and venta.tipo_comprobante == 'factura' %}
                                         <span class="badge bg-primary">🏢 FACTURA</span>
@@ -554,11 +620,17 @@
                     {% endif %}
                     
                     <!-- Acciones para ADMIN -->
-                    {% if es_admin and pedido.estado == 'pendiente' %}
+                    {% if es_admin and pedido.estado in ('pendiente', 'pendiente_pago') %}
                     <div class="mt-4 p-3 bg-light rounded-3">
                         <h6 class="fw-bold mb-3">
                             <i class="fas fa-cog me-2"></i>Acciones de Administrador
                         </h6>
+                        {% if pedido.estado == 'pendiente_pago' %}
+                        <p class="small text-muted">
+                            Este pedido aún no tiene el pago confirmado. Si el cliente ya pagó
+                            en caja o por otra vía, confírmalo aquí y el pago queda saldado.
+                        </p>
+                        {% endif %}
                         <form action="/pedidos/cambiar-estado/{{ pedido.id }}" method="POST" class="row g-2 align-items-end">
                             <div class="col-12 col-sm-auto">
                                 <label class="form-label mb-1 small">Cambiar estado:</label>
@@ -639,5 +711,46 @@
             });
         }
     })();
+
+    // Validar un pago manual (Yape / Plin / transferencia)
+    async function validarPago(pagoId, accion) {
+        if (accion === 'rechazar') {
+            const ok = await Swal.fire({
+                icon:'warning',
+                title:'¿Rechazar el pago?',
+                text:'Se cancela el pedido y el stock vuelve al inventario.',
+                showCancelButton:true,
+                confirmButtonText:'Sí, rechazar',
+                cancelButtonText:'Volver'
+            });
+            if (!ok.isConfirmed) return;
+        } else {
+            const ok = await Swal.fire({
+                icon:'question',
+                title:'¿Confirmar el pago?',
+                text:'Se emitirá el comprobante y el pedido pasará a confirmado.',
+                showCancelButton:true,
+                confirmButtonText:'Sí, confirmar',
+                cancelButtonText:'Volver'
+            });
+            if (!ok.isConfirmed) return;
+        }
+
+        try {
+            const res = await fetch(`/api/pagos/${pagoId}/validar`, {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({accion: accion})
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire({icon:'success', title:'Listo', text:'Actualizando...'}).then(() => location.reload());
+            } else {
+                Swal.fire({icon:'error', title:'No se pudo', text: data.error});
+            }
+        } catch(e) {
+            Swal.fire({icon:'error', title:'Error de conexión', text:'Intenta de nuevo.'});
+        }
+    }
 </script>
 {% endblock %}

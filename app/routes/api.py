@@ -5,6 +5,7 @@ from app.models import Producto, Venta, Cliente, RucEmpresa, Categoria, Pedido
 from app.utils import login_required, login_required_cliente, tabla_existe, no_configurado
 from app.config import Config
 from sqlalchemy import func, text, or_
+from sqlalchemy.orm import joinedload
 from datetime import datetime, timedelta
 import requests
 
@@ -135,19 +136,26 @@ def api_productos_catalogo():
         q = request.args.get('q', '')
         categoria_id = request.args.get('categoria', type=int)
 
-        query = Producto.query.filter(Producto.cantidad > 0)
+        # Carga anticipada de categoria y proveedor. Sin esto SQLAlchemy hace
+        # una consulta por cada producto y por cada relacion: con 30 productos
+        # son 60 viajes a la base, que esta en otro servidor.
+        query = Producto.query.options(
+            joinedload(Producto.categoria_rel),
+            joinedload(Producto.proveedor),
+        ).filter(Producto.cantidad > 0)
+
         if q:
             query = query.filter(Producto.nombre.like(f'%{q}%'))
         if categoria_id:
             query = query.filter_by(id_categoria=categoria_id)
 
         productos = query.all()
+
         resultado = []
         for p in productos:
             try:
-                categoria_nombre = None
-                if hasattr(p, 'categoria_rel') and p.categoria_rel:
-                    categoria_nombre = p.categoria_rel.nombre
+                categoria_nombre = p.categoria_rel.nombre if p.categoria_rel else None
+                proveedor_nombre = p.proveedor.nombre if p.proveedor else None
 
                 resultado.append({
                     "id": p.id,
@@ -157,6 +165,8 @@ def api_productos_catalogo():
                     "precio_oferta": float(p.precio_oferta) if p.precio_oferta else None,
                     "categoria_id": p.id_categoria,
                     "categoria_nombre": categoria_nombre,
+                    "proveedor_id": p.proveedor_id,
+                    "proveedor_nombre": proveedor_nombre,
                     "cantidad": p.cantidad,
                     "destacado": p.destacado,
                     "imagen_url": url_for("static", filename=f"img/productos/{p.imagen}") if p.imagen else None,
