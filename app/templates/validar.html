@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block titulito %}Validador de Correos y Direcciones{% endblock %}
+
+{% block contenido %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0"><i class="fas fa-check-circle me-2 text-primary"></i>Validador de Correos y Direcciones</h3>
+        <a href="/dashboard" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-2"></i>Volver
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <!-- Validar Correo -->
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="fas fa-envelope me-2"></i>Validar Correo Electrónico</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label small">Correo a validar</label>
+                        <input type="email" class="form-control" id="emailInput" placeholder="ejemplo@correo.com" autocomplete="email">
+                    </div>
+                    <button class="btn btn-primary btn-sm w-100" onclick="validarCorreo()">
+                        <i class="fas fa-search me-1"></i>Validar
+                    </button>
+                    
+                    <div id="emailResultado" class="mt-3" style="display:none"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Validar Dirección -->
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="fas fa-map-marker-alt me-2 text-primary"></i>Validar Dirección</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label small">Dirección a validar</label>
+                        <textarea class="form-control" id="direccionInput" rows="2" placeholder="Av. Giráldez 450, Huancayo, Perú" style="resize:vertical"></textarea>
+                    </div>
+                    <button class="btn btn-primary btn-sm w-100" onclick="validarDireccion()">
+                        <i class="fas fa-map-marker-alt me-1"></i>Validar
+                    </button>
+                    
+                    <div id="direccionResultado" class="mt-3" style="display:none"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Validación Completa -->
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="fas fa-check-double me-2 text-success"></i>Validación Completa (Correo + Dirección)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small mb-1">Correo</label>
+                            <input type="email" class="form-control form-control-sm" id="completoEmail" placeholder="correo@ejemplo.com">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small mb-1">Dirección</label>
+                            <input type="text" class="form-control form-control-sm" id="completoDireccion" placeholder="Av. Giráldez 450, Huancayo, Perú">
+                        </div>
+                    </div>
+                    <button class="btn btn-success btn-sm" onclick="validarCompleto()">
+                        <i class="fas fa-check-double me-1"></i>Validar Ambos
+                    </button>
+                    
+                    <div id="completoResultado" class="mt-3" style="display:none"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function mostrarResultado(elemento, data, tipo) {
+    const div = document.getElementById(elemento);
+    let html = '';
+    let clase = 'alert-info';
+    
+    if (data.valido === true) {
+        clase = 'alert-success';
+    } else if (data.valido === false) {
+        clase = 'alert-danger';
+    } else if (data.error) {
+        clase = 'alert-warning';
+    }
+    
+    if (data.error) {
+        html = `<div class="alert ${clase} py-2 small mb-0"><i class="fas fa-exclamation-triangle me-1"></i>${data.error}</div>`;
+    } else {
+        const iconoValido = data.valido ? '<i class="fas fa-check-circle text-success me-1"></i>' : '<i class="fas fa-times-circle text-danger me-1"></i>';
+        let detalles = '';
+        if (data.entregable !== undefined) detalles += `<div class="small"><i class="fas fa-envelope-open-text me-1"></i>Entregable: ${data.entregable ? 'Sí' : 'No'}</div>`;
+        if (data.formato_valido !== undefined) detalles += `<div class="small"><i class="fas fa-check me-1"></i>Formato válido: ${data.formato_valido ? 'Sí' : 'No'}</div>`;
+        if (data.es_temporal !== undefined) detalles += `<div class="small"><i class="fas fa-clock me-1"></i>Es temporal: ${data.es_temporal ? 'Sí' : 'No'}</div>`;
+        if (data.es_gratis !== undefined) detalles += `<div class="small"><i class="fas fa-gift me-1"></i>Email gratis: ${data.es_gratis ? 'Sí' : 'No'}</div>`;
+        if (data.calidad !== undefined) detalles += `<div class="small"><i class="fas fa-star me-1"></i>Calidad: ${(data.calidad * 100).toFixed(0)}%</div>`;
+        if (data.sugerencia) detalles += `<div class="small text-warning"><i class="fas fa-lightbulb me-1"></i>¿Quisiste decir: ${data.sugerencia}?</div>`;
+        if (data.ambos_validos !== undefined) detalles += `<div class="small fw-bold ${data.ambos_validos ? 'text-success' : 'text-danger'}"><i class="fas fa-check-double me-1"></i>Ambos válidos: ${data.ambos_validos ? 'Sí' : 'No'}</div>`;
+        if (data.direccion_normalizada) detalles += `<div class="small"><i class="fas fa-map-marker-alt me-1"></i>Normalizada: ${data.direccion_normalizada}</div>`;
+        if (data.componentes) {
+            const c = data.componentes;
+            if (c.calle || c.numero || c.ciudad || c.codigo_postal) {
+                detalles += '<div class="small"><i class="fas fa-building me-1"></i>Componentes: ';
+                const partes = [];
+                if (c.calle) partes.push(c.calle + (c.numero ? ' ' + c.numero : ''));
+                if (c.ciudad) partes.push(c.ciudad);
+                if (c.codigo_postal) partes.push(c.codigo_postal);
+                if (c.pais) partes.push(c.pais);
+                detalles += partes.join(', ') + '</div>';
+            }
+        }
+        if (data.coordenadas) detalles += `<div class="small"><i class="fas fa-map-pin me-1"></i>Coordenadas: ${data.coordenadas[0].toFixed(6)}, ${data.coordenadas[1].toFixed(6)}</div>`;
+        if (data.confianza !== undefined) detalles += `<div class="small"><i class="fas fa-chart-line me-1"></i>Confianza: ${(data.confianza * 100).toFixed(0)}%</div>`;
+        
+        html = `<div class="alert ${clase} py-2 small mb-0">
+            <div class="d-flex align-items-center mb-2">${iconoValido} <strong>${data.valido ? 'VÁLIDO' : 'NO VÁLIDO'}</strong></div>
+            ${detalles}
+        </div>`;
+    }
+    
+    div.innerHTML = html;
+    div.style.display = 'block';
+}
+
+async function validarCorreo() {
+    const email = document.getElementById('emailInput').value.trim();
+    const btn = event.target;
+    const original = btn.innerHTML;
+    
+    if (!email) return Swal.fire({icon:'warning', title:'Ingresa un correo', timer:1500, showConfirmButton:false});
+    
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Validando...';
+    
+    try {
+        const resp = await fetch('/api/validar/correo', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: email})
+        });
+        const data = await resp.json();
+        mostrarResultado('emailResultado', data);
+    } catch (e) {
+        mostrarResultado('emailResultado', {error: 'Error de conexión: ' + e.message});
+    }
+    btn.disabled = false; btn.innerHTML = original;
+}
+
+async function validarDireccion() {
+    const dir = document.getElementById('direccionInput').value.trim();
+    const btn = event.target;
+    const original = btn.innerHTML;
+    
+    if (!dir) return Swal.fire({icon:'warning', title:'Ingresa una dirección', timer:1500, showConfirmButton:false});
+    
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Validando...';
+    
+    try {
+        const resp = await fetch('/api/validar/direccion', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({direccion: dir})
+        });
+        const data = await resp.json();
+        mostrarResultado('direccionResultado', data);
+    } catch (e) {
+        mostrarResultado('direccionResultado', {error: 'Error de conexión: ' + e.message});
+    }
+    btn.disabled = false; btn.innerHTML = original;
+}
+
+async function validarCompleto() {
+    const email = document.getElementById('completoEmail').value.trim();
+    const dir = document.getElementById('completoDireccion').value.trim();
+    const btn = event.target;
+    const original = btn.innerHTML;
+    
+    if (!email || !dir) return Swal.fire({icon:'warning', title:'Completa ambos campos', timer:1500, showConfirmButton:false});
+    
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Validando...';
+    
+    try {
+        const resp = await fetch('/api/validar/completo', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: email, direccion: dir})
+        });
+        const data = await resp.json();
+        mostrarResultado('completoResultado', data);
+    } catch (e) {
+        mostrarResultado('completoResultado', {error: 'Error de conexión: ' + e.message});
+    }
+    btn.disabled = false; btn.innerHTML = original;
+}
+</script>
+{% endblock %}

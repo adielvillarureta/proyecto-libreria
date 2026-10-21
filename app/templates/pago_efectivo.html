@@ -1,0 +1,125 @@
+{% extends "base_cliente.html" %}
+{% block titulito %}💵 Pago con PagoEfectivo - Librería Salesiana{% endblock %}
+
+{% block contenido %}
+<div class="container py-3 py-md-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-7">
+
+            <div class="card border-0 shadow-sm rounded-3 mb-3">
+                <div class="card-body p-3 p-md-4 text-center">
+                    <h5 class="mb-1"><i class="fas fa-qrcode me-2 text-success"></i>Paga con PagoEfectivo</h5>
+                    <p class="text-muted small mb-3">Pedido #{{ pedido.id }} · {{ nombre_cliente }}</p>
+
+                    <div class="display-6 fw-bold text-success mb-1">S/. {{ '%.2f'|format(total) }}</div>
+                    <p class="text-muted small mb-3">Paga este monto exacto para que reconozcamos tu pedido.</p>
+
+                    {% if pago.estado == 'pagado' %}
+                        <div class="alert alert-success py-3">
+                            <i class="fas fa-check-circle fa-2x me-2"></i>
+                            <strong>Pago confirmado</strong><br>
+                            <span class="small">Tu comprobante ya fue enviado a tu correo.</span>
+                        </div>
+                    {% else %}
+                        <div class="row g-3 justify-content-center">
+                            {% if qr_url %}
+                            <div class="col-12 col-sm-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <div class="fw-semibold small mb-2"><i class="fas fa-mobile-screen me-1"></i>Escanea el QR</div>
+                                    <img src="{{ qr_url }}" alt="Código QR de PagoEfectivo" class="img-fluid rounded" style="max-width:220px">
+                                    <p class="text-muted small mt-2 mb-0">Desde la app de tu banco o en un agente.</p>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if cip %}
+                            <div class="col-12 col-sm-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <div class="fw-semibold small mb-2"><i class="fas fa-key me-1"></i>Código CIP</div>
+                                    <div class="h4 fw-bold mb-2">{{ cip }}</div>
+                                    <p class="text-muted small mb-2">Ingresa este código en banca móvil, agente o bodega.</p>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="copiar('{{ cip }}')">
+                                        <i class="fas fa-copy me-1"></i>Copiar código
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {% if not qr_url and not cip %}
+                        <div class="alert alert-warning py-2 small">
+                            No pudimos generar el QR ni el código CIP. Escríbenos por WhatsApp para coordinar el pago.
+                        </div>
+                        {% endif %}
+
+                        <div class="alert alert-info py-2 small mt-3 mb-0 text-start">
+                            <i class="fas fa-clock me-1"></i>
+                            Las órdenes de PagoEfectivo vencen en 24 horas. Confirmamos tu pago automáticamente;
+                            también te avisamos por correo.
+                        </div>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-center gap-2 mt-3">
+                        <a href="/mis-pedidos" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-arrow-left me-2"></i>Mis pedidos
+                        </a>
+                        <button class="btn btn-success btn-sm" onclick="refrescarEstado({{ pedido.id }})" id="btnRefrescar">
+                            <i class="fas fa-rotate me-2"></i>Ya pagué, verificar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body p-3">
+                    <h6 class="mb-2"><i class="fas fa-list-check me-2"></i>Cómo pagar</h6>
+                    <ol class="small text-muted mb-0 ps-3">
+                        <li class="mb-1">Escanea el QR o ingresa el código CIP en la app de tu banco.</li>
+                        <li class="mb-1">Confirma el pago de <strong>S/. {{ '%.2f'|format(total) }}</strong>.</li>
+                        <li>Pulsa “Ya pagué”. Te confirmamos por correo apenas se refleje.</li>
+                    </ol>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copiar(texto){
+    navigator.clipboard.writeText(texto).then(() => {
+        Swal.fire({icon:'success', title:'Código copiado', timer:1200, showConfirmButton:false});
+    });
+}
+
+async function refrescarEstado(pedidoId){
+    const btn = document.getElementById('btnRefrescar');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Verificando...';
+    try{
+        const res = await fetch(`/api/pagos/${pedidoId}/estado`);
+        const data = await res.json();
+        if(data.success && data.estado_pago === 'pagado'){
+            Swal.fire({
+                icon:'success',
+                title:'¡Pago confirmado!',
+                text:'Tu comprobante fue enviado a tu correo.',
+                confirmButtonText:'Ver mis pedidos'
+            }).then(() => { window.location.href = '/mis-pedidos' });
+            return;
+        }
+        Swal.fire({
+            icon:'info',
+            title:'Todavía no lo vemos',
+            text:'Si ya pagaste, puede tardar unos minutos en reflejarse. Vuelve a intentar en un rato.'
+        });
+    }catch(e){
+        Swal.fire({icon:'error', title:'Error de conexión', text:'Intenta de nuevo en unos minutos.'});
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-rotate me-2"></i>Ya pagué, verificar';
+}
+</script>
+{% endblock %}

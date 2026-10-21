@@ -1,0 +1,1132 @@
+{% extends "base_cliente.html" %}
+{% block titulito %}Tienda Online — Librería Salesiana{% endblock %}
+
+{% block contenido %}
+<!-- BANNER CATÁLOGO -->
+<div class="catalogo-banner rounded-4 p-4 p-md-5 mb-4 text-white position-relative overflow-hidden">
+    <div class="banner-glow"></div>
+    <div class="row align-items-center position-relative" style="z-index:2;">
+        <div class="col-12">
+            <h1 class="fw-bold mb-1 fs-3 fs-md-2"><i class="fas fa-store me-2 text-warning"></i>Nuestra Tienda</h1>
+            <p class="mb-0 opacity-75">Encuentra útiles escolares, libros y artículos de oficina con los mejores precios. Usa el buscador de arriba para encontrar lo que necesitas.</p>
+        </div>
+    </div>
+</div>
+
+<!-- CARRUSEL DE DESTACADOS (ESTILO AMAZON) -->
+<div class="destacados-seccion mb-4" id="destacadosSeccion" style="display:none;">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h5 class="mb-0 fw-bold fs-6 fs-md-5">
+            <i class="fas fa-star text-warning me-2"></i>Los más destacados
+        </h5>
+        <button type="button" class="btn btn-sm btn-outline-warning rounded-pill fw-semibold" id="btnVerDestacados">
+            Ver todos <i class="fas fa-arrow-right ms-1"></i>
+        </button>
+    </div>
+    <div class="feat-slider">
+        <div class="feat-viewport" id="destacadosViewport">
+            <div class="feat-track" id="destacadosTrack"></div>
+        </div>
+        <button type="button" class="feat-arrow left" id="featPrev" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
+        <button type="button" class="feat-arrow right" id="featNext" aria-label="Siguiente"><i class="fas fa-chevron-right"></i></button>
+    </div>
+</div>
+
+<!-- Migas de pan -->
+<nav aria-label="Ruta de navegación" class="migas mb-3">
+    <a href="/catalogo">Tienda</a>
+    <i class="fas fa-chevron-right"></i>
+    <span id="migaCategoria">Todos los productos</span>
+</nav>
+
+<div class="row">
+    <!-- Panel de Filtros -->
+    <div class="col-12 col-lg-3 mb-4">
+        <div class="panel-filtros sticky-filtros">
+            <div class="cabecera d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-sliders-h me-2"></i>Filtrar productos</span>
+                <button class="btn btn-sm btn-link text-white p-0" onclick="limpiarFiltros()" style="font-size:.75rem">Limpiar</button>
+            </div>
+
+            <div class="p-3">
+
+                <!-- Categoría -->
+                <div class="filtro-bloque">
+                    <div class="filtro-titulo">Categoría</div>
+                    <ul class="filtro-lista">
+                        <li>
+                            <label>
+                                <input class="form-check-input mt-0" type="radio" name="filtroCategoria"
+                                       id="catTodas" value="" checked onchange="aplicarFiltros()">
+                                Todas las categorías
+                            </label>
+                        </li>
+                        {% for categoria in categorias %}
+                        <li>
+                            <label>
+                                <input class="form-check-input mt-0" type="radio" name="filtroCategoria"
+                                       id="cat{{ categoria.id_categoria }}"
+                                       value="{{ categoria.id_categoria }}" onchange="aplicarFiltros()">
+                                {{ categoria.nombre|capitalize }}
+                            </label>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Precio: rangos como los de Amazon -->
+                <div class="filtro-bloque">
+                    <div class="filtro-titulo">Precio</div>
+                    <ul class="filtro-lista">
+                        {% for etiqueta, lo, hi in [
+                            ('S/. 0 a 10', 0, 10), ('S/. 10 a 25', 10, 25),
+                            ('S/. 25 a 50', 25, 50), ('S/. 50 a 100', 50, 100),
+                            ('S/. 100 a 250', 100, 250), ('Más de S/. 250', 250, 999999)]
+                        %}
+                        <li>
+                            <label>
+                                <input class="form-check-input mt-0" type="radio" name="filtroPrecio"
+                                       value="{{ lo }}-{{ hi }}" onchange="aplicarFiltros()">
+                                {{ etiqueta }}
+                            </label>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
+                    <div class="row g-2 mt-2">
+                        <div class="col-6">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white">S/.</span>
+                                <input type="number" id="precioMin" class="form-control" placeholder="Mín" min="0" step="0.5" onchange="aplicarFiltros()">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white">S/.</span>
+                                <input type="number" id="precioMax" class="form-control" placeholder="Máx" min="0" step="0.5" onchange="aplicarFiltros()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ofertas -->
+                <div class="filtro-bloque">
+                    <div class="filtro-titulo">Ofertas</div>
+                    <ul class="filtro-lista">
+                        <li>
+                            <label>
+                                <input class="form-check-input mt-0" type="checkbox" id="soloOferta"
+                                       onchange="aplicarFiltros()">
+                                Solo productos con descuento
+                            </label>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Disponibilidad -->
+                <div class="filtro-bloque">
+                    <div class="filtro-titulo">Disponibilidad</div>
+                    <ul class="filtro-lista">
+                        <li>
+                            <label>
+                                <input class="form-check-input mt-0" type="radio" name="filtroStock"
+                                       id="stockTodos" value="" checked onchange="aplicarFiltros()">
+                                Todos
+                            </label>
+                        </li>
+                        <li>
+                            <label>
+                                <input class="form-check-input mt-0" type="radio" name="filtroStock"
+                                       id="stockDisponible" value="stock" onchange="aplicarFiltros()">
+                                En stock
+                            </label>
+                        </li>
+                        <li>
+                            <label>
+                                <input class="form-check-input mt-0" type="radio" name="filtroStock"
+                                       id="stockBajo" value="bajo" onchange="aplicarFiltros()">
+                                Stock bajo
+                            </label>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Marca / Proveedor: se rellena con lo que hay en el catálogo -->
+                <div class="filtro-bloque" id="bloqueProveedores" style="display:none">
+                    <div class="filtro-titulo">Marca</div>
+                    <ul class="filtro-lista" id="listaProveedores"></ul>
+                </div>
+
+            </div>
+
+            <div class="promo-banner text-center py-3">
+                <i class="fas fa-truck fa-2x mb-2"></i>
+                <div class="fw-bold small">¡Envíos a domicilio!</div>
+                <div class="small">Solo S/. 5.00 en todo Huancayo</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Productos -->
+    <div class="col-12 col-lg-9">
+
+        <!-- Barra de resultados, estilo Amazon -->
+        <div class="barra-resultados d-flex flex-wrap justify-content-between align-items-center gap-2 py-2 px-3 mb-3">
+            <div class="small" id="resumenResultados">
+                <i class="fas fa-spinner fa-spin me-1"></i> Cargando resultados...
+            </div>
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <div class="d-none d-md-flex align-items-center gap-1">
+                    <label class="small text-muted mb-0" for="porPagina">Mostrar</label>
+                    <select id="porPagina" class="form-select form-select-sm orden-select" onchange="cambiarPorPagina(this.value)">
+                        <option value="12">12</option>
+                        <option value="20" selected>20</option>
+                        <option value="48">48</option>
+                        <option value="96">96</option>
+                    </select>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <label class="small text-muted mb-0" for="filtroOrden">Ordenar por:</label>
+                    <select id="filtroOrden" class="form-select form-select-sm orden-select" onchange="aplicarFiltros()">
+                        <option value="destacado_desc">Relevancia</option>
+                        <option value="precio_asc">Precio: de menor a mayor</option>
+                        <option value="precio_desc">Precio: de mayor a menor</option>
+                        <option value="fecha_desc">Novedades</option>
+                        <option value="nombre_asc">Nombre: A-Z</option>
+                        <option value="nombre_desc">Nombre: Z-A</option>
+                        <option value="stock_desc">Más stock</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="productosGrid" class="rejilla-productos">
+            <div class="text-center py-5 w-100">
+                <div class="spinner-border" style="width:2.5rem;height:2.5rem;color:var(--salesiano-blue)"></div>
+                <p class="mt-3 text-muted mb-0">Cargando productos...</p>
+            </div>
+        </div>
+
+        <div id="paginacionCatalogo" class="mt-4 d-flex justify-content-center"></div>
+
+    </div>
+</div>
+
+<style>
+/* ==========================================
+   CATÁLOGO — formato de rejilla tipo Amazon,
+   con los colores de la librería (azul/dorado)
+   ========================================== */
+.rejilla-productos{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(210px, 1fr));
+    gap:1rem;
+}
+
+.prod-card{
+    background:#fff;
+    border:1px solid #e6e9f0;
+    border-radius:12px;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    transition:box-shadow .15s, border-color .15s, transform .15s;
+}
+.prod-card:hover{
+    border-color:var(--salesiano-blue);
+    box-shadow:0 6px 22px rgba(13,43,110,.12);
+    transform:translateY(-2px);
+}
+.prod-card.sin-stock{ opacity:.6; }
+
+/* Caja de imagen: alto fijo y recorte. Con max-height:100% la imagen se
+   salia de la caja dentro de un grid, porque el porcentaje no resolvia. */
+.prod-media{
+    position:relative;
+    height:200px;
+    overflow:hidden;
+    background:#f7f8fb;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:.7rem;
+    border-bottom:1px solid #f0f2f7;
+}
+.prod-media img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    mix-blend-mode:multiply;
+    transition:transform .25s ease;
+}
+.prod-card:hover .prod-media img{ transform:scale(1.05) }
+.prod-media .emoji-fallback{ font-size:3.2rem; opacity:.55 }
+
+.prod-insignia{
+    position:absolute;
+    top:8px; left:8px;
+    font-size:.62rem;
+    font-weight:700;
+    padding:.18rem .45rem;
+    border-radius:4px;
+    letter-spacing:.2px;
+}
+.prod-insignia.oferta{ background:#d13212; color:#fff }
+.prod-insignia.destacado{ background:var(--salesiano-gold); color:#1d2a4d }
+
+.prod-cuerpo{ padding:.7rem .8rem .8rem; display:flex; flex-direction:column; flex:1 }
+
+.prod-marca{
+    font-size:.66rem;
+    color:#6b7280;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    font-weight:600;
+    margin-bottom:.15rem;
+}
+.prod-nombre{
+    font-size:.82rem;
+    line-height:1.3;
+    color:var(--texto,#1a1f36);
+    margin:0 0 .35rem;
+    font-weight:500;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+    min-height:2.1em;
+}
+
+.prod-precio{ display:flex; align-items:baseline; flex-wrap:wrap; gap:.35rem }
+.prod-precio .antes{ font-size:.72rem; color:#9aa0ad; text-decoration:line-through }
+.prod-precio .actual{
+    font-size:1.35rem;
+    font-weight:700;
+    color:var(--salesiano-blue);
+    letter-spacing:-.5px;
+}
+.prod-precio .antes-precio{ font-size:.68rem; color:#9aa0ad }
+
+.prod-stock{ font-size:.68rem; margin-top:.3rem; font-weight:600 }
+.prod-stock.ok{ color:#15803d }
+.prod-stock.bajo{ color:#b45309 }
+.prod-stock.agotado{ color:#b91c1c }
+
+.btn-amazon{
+    margin-top:auto;
+    width:100%;
+    border:1px solid var(--salesiano-gold);
+    background:linear-gradient(135deg, var(--salesiano-gold), #f0c94a);
+    color:#1d2a4d;
+    font-weight:700;
+    font-size:.78rem;
+    padding:.45rem .5rem;
+    border-radius:999px;
+    cursor:pointer;
+    transition:filter .15s, transform .1s;
+}
+.btn-amazon:hover:not(:disabled){ filter:brightness(1.06) }
+.btn-amazon:active:not(:disabled){ transform:scale(.98) }
+.btn-amazon:disabled{ background:#e5e7eb; border-color:#d1d5db; color:#9ca3af; cursor:not-allowed }
+
+/* Barra de resultados */
+.barra-resultados{
+    background:#fff;
+    border:1px solid #e6e9f0;
+    border-radius:10px;
+}
+.orden-select{
+    border:1px solid #d1d5db;
+    border-radius:8px;
+    font-size:.8rem;
+    padding:.3rem 1.8rem .3rem .6rem;
+    color:var(--texto,#1a1f36);
+    background-color:#fff;
+}
+
+/* Panel de filtros, estilo Amazon */
+.filtro-bloque{ padding:.75rem 0; border-bottom:1px solid #eef1f6 }
+.filtro-bloque:last-of-type{ border-bottom:0 }
+.filtro-titulo{
+    font-size:.82rem;
+    font-weight:700;
+    color:var(--texto,#1a1f36);
+    margin-bottom:.5rem;
+}
+.filtro-lista{ list-style:none; padding:0; margin:0 }
+.filtro-lista li{ margin-bottom:.35rem }
+.filtro-lista label{
+    font-size:.78rem;
+    color:#374151;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:.4rem;
+}
+.filtro-lista label:hover{ color:var(--salesiano-blue) }
+
+.panel-filtros{
+    background:#fff;
+    border:1px solid #e6e9f0;
+    border-radius:12px;
+    overflow:hidden;
+}
+.panel-filtros .cabecera{
+    background:linear-gradient(135deg, var(--salesiano-blue), #173f9e);
+    color:#fff;
+    font-size:.82rem;
+    font-weight:700;
+    padding:.6rem .9rem;
+}
+
+.pag-catalogo{
+    min-width:38px;
+    height:38px;
+    border-radius:8px;
+    border:1px solid #d1d5db;
+    background:#fff;
+    font-size:.82rem;
+    font-weight:600;
+    color:#374151;
+    cursor:pointer;
+}
+.pag-catalogo:hover:not(:disabled){ border-color:var(--salesiano-gold); background:#fffdf5 }
+.pag-catalogo.activa{ background:var(--salesiano-blue); border-color:var(--salesiano-blue); color:#fff }
+.pag-catalogo:disabled{ opacity:.4; cursor:not-allowed }
+
+/* Migas de pan */
+.migas{
+    display:flex;
+    align-items:center;
+    gap:.4rem;
+    font-size:.78rem;
+    color:#6b7280;
+}
+.migas a{ color:var(--salesiano-blue); text-decoration:none }
+.migas a:hover{ text-decoration:underline }
+.migas i{ font-size:.55rem; color:#9aa0ad }
+
+/* Linea de entrega bajo el precio */
+.prod-precio + .entrega{ margin-top:.3rem }
+.entrega{
+    font-size:.72rem;
+    color:#0f766e;
+    font-weight:600;
+    display:inline-flex;
+    align-items:center;
+    gap:.25rem;
+}
+.entrega::before{ content:"\f0e0"; font-family:"Font Awesome 6 Free"; font-weight:900 }
+
+/* Ver mas / Ver menos */
+.prod-desc{
+    font-size:.72rem;
+    color:#6b7280;
+    line-height:1.35;
+    margin:.2rem 0 .3rem;
+}
+.ver-mas{
+    border:0;
+    background:none;
+    color:var(--salesiano-blue);
+    font-size:.72rem;
+    font-weight:700;
+    padding:0;
+    cursor:pointer;
+    text-decoration:underline;
+    align-self:flex-start;
+}
+.ver-mas:hover{ color:#000 }
+
+@media (max-width: 575.98px) {
+    .rejilla-productos{ grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:.6rem }
+    .prod-media{ height:150px; padding:.5rem }
+    .prod-precio .actual{ font-size:1.1rem }
+}
+</style>
+
+<!-- ===== ESTILOS ANTIGUOS DEL CARRUSEL (se conservan para "destacados") ===== -->
+
+<script>
+// ===============================
+// VARIABLES GLOBALES
+// ===============================
+var productosOriginal = [];
+var productosFiltrados = [];
+var busquedaInicial = '';
+
+// Devuelve el input de búsqueda activo (barra superior escritorio/móvil)
+function inputBusqueda() {
+    return document.getElementById('searchGlobal')
+        || document.getElementById('searchGlobalMovil')
+        || document.getElementById('filtroBuscar');
+}
+
+// Colores por categoría (deben coincidir con la BD)
+const COLORES_CAT = {
+    'libros': '#8e44ad', 'cuadernos': '#16a085', 'lapiceros': '#2e86de',
+    'arte': '#e67e22', 'oficina': '#34495e', 'herramientas': '#c0392b',
+    'papeleria': '#27ae60', 'mochilas': '#d35400'
+};
+const EMOJIS_CAT = {
+    'libros':'📚','cuadernos':'📓','lapiceros':'✍️','arte':'🎨',
+    'oficina':'📎','herramientas':'🔧','papeleria':'📄','mochilas':'🎒'
+};
+
+// ===============================
+// CARGAR PRODUCTOS
+// ===============================
+function cargarProductos() {
+    fetch('/api/productos/catalogo')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            productosOriginal = data;
+            productosFiltrados = data;
+            pintarMarcas(data);
+            renderDestacados(data);
+            aplicarFiltros();
+        })
+        .catch(function() {
+            document.getElementById('productosGrid').innerHTML =
+                '<div class="alert alert-danger text-center w-100">No pudimos cargar los productos. Recarga la página.</div>';
+        });
+}
+
+// La marca de cada producto es su proveedor. Solo mostramos las que existen.
+function pintarMarcas(productos) {
+    var vistas = {};
+    var html = '';
+    productos.forEach(function(p) {
+        if (!p.proveedor_nombre) return;
+        var clave = p.proveedor_id || p.proveedor_nombre;
+        if (vistas[clave]) return;
+        vistas[clave] = true;
+        html += '<li><label>' +
+            '<input class="form-check-input mt-0" type="checkbox" name="filtroMarca" value="' +
+            escapeHtml(String(clave)) + '" onchange="aplicarFiltros()">' +
+            escapeHtml(p.proveedor_nombre) + '</label></li>';
+    });
+    if (!html) return;
+    document.getElementById('listaProveedores').innerHTML = html;
+    document.getElementById('bloqueProveedores').style.display = '';
+}
+
+function cambiarPorPagina(valor) {
+    PER_PAGE = parseInt(valor, 10) || 20;
+    paginaActual = 0;
+    mostrarProductos(listaActual);
+}
+
+// ===============================
+// TARJETA DE PRODUCTO (FORMATO REJILLA)
+// ===============================
+// El precio que se muestra y se cobra: el menor entre el normal y el de
+// oferta. Si el dato de oferta viniera mal (mayor que el normal), el
+// cliente nunca paga de más.
+function precioEfectivo(p) {
+    var normal = parseFloat(p.precio) || 0;
+    var oferta = p.precio_oferta ? parseFloat(p.precio_oferta) : null;
+    if (oferta !== null && !isNaN(oferta) && oferta > 0 && oferta < normal) return oferta;
+    return normal;
+}
+
+var PER_PAGE = 20;
+var paginaActual = 0;
+var listaActual = [];   // la lista que se está pintando, para que la paginación
+                        // no dependa de una variable global que alguien más pise
+
+function productoCardHTML(p) {
+    var precioNormal = parseFloat(p.precio) || 0;
+    var precioOferta = p.precio_oferta ? parseFloat(p.precio_oferta) : null;
+
+    var tieneOferta = precioOferta !== null && !isNaN(precioOferta) && precioOferta > 0 && precioOferta < precioNormal;
+    var precioMostrar = precioEfectivo(p);
+
+    var catKey = (p.categoria_nombre || '').toLowerCase().trim();
+    var color = COLORES_CAT[catKey] || '#1e3a8a';
+    var emoji = EMOJIS_CAT[catKey] || '📦';
+    var marca = p.categoria_nombre ? (p.categoria_nombre.charAt(0).toUpperCase() + p.categoria_nombre.slice(1)) : 'Librería Salesiana';
+
+    var claseStock = 'ok', textoStock = 'En stock';
+    var cantidad = parseInt(p.cantidad) || 0;
+    if (cantidad === 0) { claseStock = 'agotado'; textoStock = 'Agotado'; }
+    else if (cantidad <= 5) { claseStock = 'bajo'; textoStock = 'Quedan ' + cantidad + ' unidades'; }
+
+    var ahorro = tieneOferta ? Math.round((1 - precioOferta / precioNormal) * 100) : 0;
+    var nombreLimpio = escapeHtml(p.nombre).replace(/\\/g, '').replace(/'/g, "\\'");
+    var hayImagen = !!p.imagen_url;
+    var idDesc = 'desc' + p.id;
+
+    // Entrega estimada:Amazon la pone bajo el precio, con el coste y el plazo
+    var esRecogo = (localStorage.getItem('tipoEntrega') || 'recojo') !== 'delivery';
+    var entrega = esRecogo
+        ? '<span class="entrega">Recojo hoy en tienda</span>'
+        : '<span class="entrega">Envío por S/. 5.00 · 2 a 3 días</span>';
+
+    var descripcion = p.descripcion
+        ? '<p class="prod-desc" id="' + idDesc + '" hidden>' + escapeHtml(p.descripcion) + '</p>'
+        : '';
+    var botonDesc = p.descripcion && p.descripcion.length > 0
+        ? '<button class="ver-mas" onclick="toggleDesc(\'' + idDesc + '\', this)">Ver más</button>'
+        : '';
+
+    return `
+    <article class="prod-card ${cantidad === 0 ? 'sin-stock' : ''}">
+        <div class="prod-media">
+            ${hayImagen
+                ? `<img src="${p.imagen_url}" alt="${escapeHtml(p.nombre)}" loading="lazy"
+                      onerror="this.replaceWith('<span class=&quot;emoji-fallback&quot;>${emoji}</span>');">`
+                : `<span class="emoji-fallback">${emoji}</span>`}
+            ${tieneOferta ? `<span class="prod-insignia oferta">-${ahorro}%</span>` : ''}
+            ${p.destacado ? `<span class="prod-insignia destacado" style="right:8px;left:auto">★ Destacado</span>` : ''}
+        </div>
+
+        <div class="prod-cuerpo">
+            <div class="prod-marca" style="color:${color}">${escapeHtml(marca)}</div>
+            <h3 class="prod-nombre">${escapeHtml(p.nombre)}</h3>
+            ${descripcion}${botonDesc}
+
+            <div class="prod-precio">
+                <span class="actual">S/. ${precioMostrar.toFixed(2)}</span>
+                ${tieneOferta ? `<span class="antes">S/. ${precioNormal.toFixed(2)}</span>` : ''}
+            </div>
+
+            ${entrega}
+            <div class="prod-stock ${claseStock}">● ${textoStock}</div>
+
+            ${cantidad > 0
+                ? `<button class="btn-amazon" onclick="agregarAlCarrito(${p.id}, '${nombreLimpio}', ${precioMostrar}, ${cantidad})">
+                       <i class="fas fa-cart-plus me-1"></i>Agregar al carrito
+                   </button>`
+                : `<button class="btn-amazon" disabled>No disponible</button>`}
+        </div>
+    </article>`;
+}
+
+function toggleDesc(id, boton) {
+    var d = document.getElementById(id);
+    if (!d) return;
+    var visible = !d.hidden;
+    d.hidden = visible;
+    boton.textContent = visible ? 'Ver más' : 'Ver menos';
+}
+
+function mostrarProductos(productos) {
+    var grid = document.getElementById('productosGrid');
+    var resumen = document.getElementById('resumenResultados');
+
+    listaActual = productos || [];
+
+    if (!listaActual.length) {
+        grid.innerHTML = `
+            <div class="text-center py-5 w-100">
+                <i class="fas fa-box-open fa-4x text-muted mb-3 opacity-50"></i>
+                <h5 class="mb-1">No encontramos productos</h5>
+                <p class="text-muted small mb-3">Prueba con otros filtros o revisa la ortografía.</p>
+                <button class="btn btn-sm btn-gold" onclick="limpiarFiltros()">Limpiar filtros</button>
+            </div>`;
+        document.getElementById('paginacionCatalogo').innerHTML = '';
+        resumen.innerHTML = 'Sin resultados';
+        paginaActual = 0;
+        return;
+    }
+
+    var total = listaActual.length;
+    var totalPaginas = Math.ceil(total / PER_PAGE);
+    if (paginaActual > totalPaginas - 1) paginaActual = totalPaginas - 1;
+    if (paginaActual < 0) paginaActual = 0;
+
+    var inicio = paginaActual * PER_PAGE;
+    var fin = Math.min(inicio + PER_PAGE, total);
+
+    var html = '';
+    for (var i = inicio; i < fin; i++) html += productoCardHTML(listaActual[i]);
+    grid.innerHTML = html;
+
+    // "1 a 20 de 143 resultados", al estilo Amazon
+    var rango = total > PER_PAGE
+        ? (inicio + 1) + ' a ' + fin + ' de ' + total + ' resultados'
+        : total + (total === 1 ? ' resultado' : ' resultados');
+    resumen.innerHTML = rango + (busquedaInicial ? ' para &ldquo;' + escapeHtml(busquedaInicial) + '&rdquo;' : '');
+
+    renderPaginacion(totalPaginas);
+}
+
+function renderPaginacion(totalPaginas) {
+    var cont = document.getElementById('paginacionCatalogo');
+    if (totalPaginas <= 1) { cont.innerHTML = ''; return; }
+
+    var h = '<div class="d-flex gap-2 flex-wrap justify-content-center">';
+    h += `<button class="pag-catalogo" ${paginaActual === 0 ? 'disabled' : ''} onclick="irAPagina(${paginaActual - 1})" aria-label="Anterior">‹</button>`;
+
+    for (var n = 1; n <= totalPaginas; n++) {
+        h += `<button class="pag-catalogo ${n - 1 === paginaActual ? 'activa' : ''}" onclick="irAPagina(${n - 1})">${n}</button>`;
+    }
+
+    h += `<button class="pag-catalogo" ${paginaActual === totalPaginas - 1 ? 'disabled' : ''} onclick="irAPagina(${paginaActual + 1})" aria-label="Siguiente">›</button>`;
+    h += '</div>';
+    cont.innerHTML = h;
+}
+
+function irAPagina(n) {
+    var totalPaginas = Math.max(1, Math.ceil(listaActual.length / PER_PAGE));
+    if (n < 0) n = 0;
+    if (n > totalPaginas - 1) n = totalPaginas - 1;
+    paginaActual = n;
+    mostrarProductos(listaActual);
+    var barra = document.querySelector('.barra-resultados');
+    if (barra) barra.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function escapeHtml(texto) {
+    if (!texto) return '';
+    return texto.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+// ===============================
+// CARRUSEL DE DESTACADOS (ESTILO AMAZON)
+// ===============================
+function seleccionarDestacados(lista) {
+    var destacados = (lista || []).filter(function(p) { return p.destacado; });
+    if (destacados.length >= 4) return destacados.slice(0, 12);
+
+    var copia = (lista || []).slice();
+    copia.sort(function(a, b) {
+        var aStock = a.cantidad > 0 ? 1 : 0;
+        var bStock = b.cantidad > 0 ? 1 : 0;
+        if (bStock !== aStock) return bStock - aStock;
+        return (parseFloat(b.precio) || 0) - (parseFloat(a.precio) || 0);
+    });
+    var resultado = destacados.slice();
+    var vistos = {};
+    resultado.forEach(function(p) { vistos[p.id] = true; });
+    for (var i = 0; i < copia.length && resultado.length < 8; i++) {
+        if (!vistos[copia[i].id]) { resultado.push(copia[i]); vistos[copia[i].id] = true; }
+    }
+    return resultado;
+}
+
+function featCardHTML(p) {
+    var precioOferta = p.precio_oferta ? parseFloat(p.precio_oferta) : null;
+    var tieneOferta = precioOferta && precioOferta < p.precio;
+    var precioMostrar = tieneOferta ? precioOferta : p.precio;
+    var catKey = (p.categoria_nombre || '').toLowerCase().trim();
+    var color = COLORES_CAT[catKey] || '#1e3a8a';
+    var emoji = EMOJIS_CAT[catKey] || '📂';
+    var agotado = p.cantidad === 0;
+
+    return `
+    <div class="feat-card card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+        <div class="feat-img position-relative" style="background:linear-gradient(135deg,#fff 0%, ${color}1a 100%);">
+            <span class="feat-emoji" style="color:${color};">${emoji}</span>
+            ${p.destacado ? `<span class="badge rounded-pill position-absolute" style="top:10px;right:10px;z-index:3;background:${color};font-size:0.58rem;"><i class="fas fa-star me-1"></i>Top</span>` : ''}
+            <img src="${p.imagen_url || '/static/img/default-product.png'}"
+                 alt="${escapeHtml(p.nombre)}" loading="lazy"
+                 onerror="this.onerror=null; this.src='/static/img/default-product.png';">
+        </div>
+        <div class="card-body p-2 d-flex flex-column text-center">
+            <div class="feat-nombre text-dark fw-semibold" title="${escapeHtml(p.nombre)}">${escapeHtml(p.nombre.substring(0, 32))}</div>
+            <div class="my-1">
+                ${tieneOferta ? `<span class="text-decoration-line-through text-muted small me-1">S/. ${p.precio.toFixed(2)}</span>` : ''}
+                <span class="fw-bold ${tieneOferta ? 'text-danger' : 'text-primary'}" style="font-size:0.95rem;">S/. ${precioMostrar.toFixed(2)}</span>
+            </div>
+            ${agotado
+                ? `<button class="btn btn-secondary btn-sm w-100 rounded-pill mt-auto" disabled>Agotado</button>`
+                : `<button class="btn btn-sm w-100 rounded-pill mt-auto fw-bold text-white" style="background:${color};" onclick="agregarAlCarrito(${p.id}, '${escapeHtml(p.nombre).replace(/\\\\/g,'')}', ${precioMostrar}, ${p.cantidad})"><i class="fas fa-cart-plus me-1"></i>Agregar</button>`}
+        </div>
+    </div>`;
+}
+
+function renderDestacados(lista) {
+    var seccion = document.getElementById('destacadosSeccion');
+    var track = document.getElementById('destacadosTrack');
+    if (!seccion || !track) return;
+    var seleccion = seleccionarDestacados(lista);
+    if (!seleccion.length) { seccion.style.display = 'none'; return; }
+    var html = '';
+    seleccion.forEach(function(p) { html += featCardHTML(p); });
+    track.innerHTML = html;
+    seccion.style.display = '';
+    setTimeout(actualizarFlechasDestacados, 50);
+}
+
+function scrollDestacados(dir) {
+    var vp = document.getElementById('destacadosViewport');
+    if (!vp) return;
+    vp.scrollBy({ left: dir * (vp.clientWidth * 0.85), behavior: 'smooth' });
+}
+
+function actualizarFlechasDestacados() {
+    var vp = document.getElementById('destacadosViewport');
+    var prev = document.getElementById('featPrev');
+    var next = document.getElementById('featNext');
+    if (!vp || !prev || !next) return;
+    var max = vp.scrollWidth - vp.clientWidth - 2;
+    prev.disabled = vp.scrollLeft <= 2;
+    next.disabled = vp.scrollLeft >= max;
+}
+
+// ===============================
+// VERIFICAR STOCK
+// ===============================
+async function verificarStock(productoId, cantidadDeseada) {
+    try {
+        const response = await fetch(`/api/productos/${productoId}/stock`);
+        const data = await response.json();
+        if (!response.ok) return { disponible: true, stock: 999 };
+        return { disponible: cantidadDeseada <= data.stock, stock: data.stock, nombre: data.nombre };
+    } catch (e) {
+        return { disponible: true, stock: 999 };
+    }
+}
+
+// ===============================
+// AGREGAR AL CARRITO
+// ===============================
+async function agregarAlCarrito(id, nombre, precio, stockDisponible) {
+    const stockInfo = await verificarStock(id, 1);
+
+    if (!stockInfo.disponible) {
+        Swal.fire({ icon: 'error', title: 'Stock insuficiente',
+            text: stockInfo.stock === 0 ? `"${nombre}" ya no tiene stock disponible.` : `Solo hay ${stockInfo.stock} unidades disponibles.` });
+        return;
+    }
+
+    var productoCompleto = productosOriginal.find(p => p.id === id);
+    var imagenUrl = productoCompleto ? productoCompleto.imagen_url : null;
+
+    var carrito = JSON.parse(localStorage.getItem('carritoCliente') || '[]');
+    var existente = carrito.find(p => p.id === id);
+    var nuevaCantidad = existente ? existente.cantidad + 1 : 1;
+
+    if (nuevaCantidad > stockInfo.stock) {
+        Swal.fire({ icon: 'warning', title: 'Stock insuficiente',
+            text: `Ya tienes ${existente.cantidad} en tu carrito. Solo puedes agregar ${stockInfo.stock - existente.cantidad} más.` });
+        return;
+    }
+
+    if (existente) {
+        existente.cantidad = nuevaCantidad;
+        existente.stock = stockInfo.stock;
+        if (imagenUrl && !existente.imagen_url) existente.imagen_url = imagenUrl;
+    } else {
+        carrito.push({ id, nombre, precio, cantidad: 1, stock: stockInfo.stock, imagen_url: imagenUrl });
+    }
+
+    localStorage.setItem('carritoCliente', JSON.stringify(carrito));
+    actualizarContadorCarrito();
+
+    var toast = document.createElement('div');
+    toast.className = 'position-fixed bottom-0 end-0 bg-success text-white p-3 m-3 rounded-4 shadow-lg d-flex align-items-center gap-2';
+    toast.innerHTML = '<i class="fas fa-check-circle"></i><span>' + nombre + '</span>';
+    toast.style.zIndex = '9999';
+    document.body.appendChild(toast);
+    setTimeout(function() { toast.remove(); }, 2000);
+}
+
+function actualizarContadorCarrito() {
+    var carrito = JSON.parse(localStorage.getItem('carritoCliente') || '[]');
+    var total = carrito.reduce(function(s, i) { return s + i.cantidad; }, 0);
+    var contador = document.getElementById('carritoContador');
+    if (contador) {
+        contador.textContent = total;
+        contador.style.display = total > 0 ? 'flex' : 'none';
+    }
+}
+
+// ===============================
+// APLICAR FILTROS
+// ===============================
+function aplicarFiltros() {
+    var buscarEl = inputBusqueda();
+    var buscar = ((buscarEl && buscarEl.value) || busquedaInicial || '').toLowerCase().trim();
+
+    var radioCat = document.querySelector('input[name="filtroCategoria"]:checked');
+    var categoriaId = radioCat ? radioCat.value : '';
+
+    var precioMinRaw = document.getElementById('precioMin').value;
+    var precioMaxRaw = document.getElementById('precioMax').value;
+    var precioMin = precioMinRaw === '' ? 0 : (parseFloat(precioMinRaw) || 0);
+    var precioMax = precioMaxRaw === '' ? Infinity : (parseFloat(precioMaxRaw) || Infinity);
+
+    var radioStock = document.querySelector('input[name="filtroStock"]:checked');
+    var stock = radioStock ? radioStock.value : '';
+    var orden = document.getElementById('filtroOrden').value;
+
+    // Rango de precio elegido en la lista (si hay) o el manual
+    var radioPrecio = document.querySelector('input[name="filtroPrecio"]:checked');
+    if (radioPrecio) {
+        var partes = radioPrecio.value.split('-');
+        precioMin = parseFloat(partes[0]) || 0;
+        precioMax = parseFloat(partes[1]) || Infinity;
+        document.getElementById('precioMin').value = '';
+        document.getElementById('precioMax').value = '';
+    }
+
+    var soloOferta = document.getElementById('soloOferta').checked;
+
+    var marcas = [].slice.call(document.querySelectorAll('input[name="filtroMarca"]:checked'))
+        .map(function(i) { return i.value; });
+
+    if (categoriaId) {
+        window.history.pushState({ categoria: categoriaId }, '', window.location.pathname + '?categoria=' + categoriaId);
+    } else {
+        window.history.pushState({ categoria: null }, '', window.location.pathname);
+    }
+
+    // Migas de pan
+    var miga = document.getElementById('migaCategoria');
+    if (miga) {
+        var radioCat = document.querySelector('input[name="filtroCategoria"]:checked');
+        miga.textContent = (categoriaId && radioCat)
+            ? (radioCat.parentNode.textContent || '').trim()
+            : 'Todos los productos';
+    }
+
+    productosFiltrados = productosOriginal.filter(function(p) {
+        // El precio que el cliente ve y paga: el menor de los dos.
+        var precioActual = precioEfectivo(p);
+        var nombre = (p.nombre || '').toLowerCase();
+        var categoria = (p.categoria_nombre || '').toLowerCase();
+        if (buscar && nombre.indexOf(buscar) === -1 && categoria.indexOf(buscar) === -1) return false;
+        if (categoriaId && String(p.categoria_id) !== String(categoriaId)) return false;
+        if (precioActual < precioMin || precioActual > precioMax) return false;
+        if (soloOferta && !(p.precio_oferta && precioEfectivo(p) < (parseFloat(p.precio) || 0))) return false;
+        if (marcas.length) {
+            var clave = String(p.proveedor_id || p.proveedor_nombre || '');
+            if (marcas.indexOf(clave) === -1) return false;
+        }
+        if (stock === 'stock' && p.cantidad === 0) return false;
+        if (stock === 'bajo' && p.cantidad > 5) return false;
+        return true;
+    });
+
+    productosFiltrados.sort(function(a, b) {
+        if (orden === 'nombre_asc') return a.nombre.localeCompare(b.nombre);
+        if (orden === 'nombre_desc') return b.nombre.localeCompare(a.nombre);
+        if (orden === 'precio_asc') return precioEfectivo(a) - precioEfectivo(b);
+        if (orden === 'precio_desc') return precioEfectivo(b) - precioEfectivo(a);
+        if (orden === 'stock_desc') return (b.cantidad || 0) - (a.cantidad || 0);
+        if (orden === 'fecha_desc') return (b.id || 0) - (a.id || 0);
+        if (orden === 'destacado_desc') return (b.destacado || 0) - (a.destacado || 0);
+        return 0;
+    });
+
+    paginaActual = 0;
+    mostrarProductos(productosFiltrados);
+}
+
+function limpiarFiltros() {
+    busquedaInicial = '';
+    ['searchGlobal', 'searchGlobalMovil', 'filtroBuscar'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    var catTodas = document.getElementById('catTodas');
+    if (catTodas) catTodas.checked = true;
+    document.getElementById('precioMin').value = '';
+    document.getElementById('precioMax').value = '';
+    document.getElementById('stockTodos').checked = true;
+    document.getElementById('soloOferta').checked = false;
+    document.querySelectorAll('input[name="filtroPrecio"], input[name="filtroMarca"]')
+        .forEach(function(i) { i.checked = false; });
+    document.getElementById('filtroOrden').value = 'destacado_desc';
+    window.history.pushState({ categoria: null }, '', window.location.pathname);
+    aplicarFiltros();
+}
+
+// ===============================
+// LEER PARÁMETROS DE LA URL (q y categoria)
+// ===============================
+function leerParametrosURL() {
+    var params = new URLSearchParams(window.location.search);
+    var q = params.get('q');
+    if (q) {
+        busquedaInicial = q;
+        ['searchGlobal', 'searchGlobalMovil', 'filtroBuscar'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.value = q;
+        });
+    }
+    var cat = params.get('categoria');
+    if (cat) {
+        var radio = null;
+        if (/^\d+$/.test(cat)) {
+            radio = document.getElementById('cat' + cat);
+        }
+        if (!radio) {
+            // Buscar por nombre de categoría entre las que hay en la página.
+            var botones = document.querySelectorAll('input[name="filtroCategoria"]');
+            for (var i = 0; i < botones.length; i++) {
+                var etiqueta = botones[i].parentNode.textContent.toLowerCase();
+                if (etiqueta.indexOf(cat.toLowerCase()) !== -1) { radio = botones[i]; break; }
+            }
+        }
+        if (radio) radio.checked = true;
+    }
+}
+
+// ===============================
+// EVENT LISTENERS
+// ===============================
+document.addEventListener('DOMContentLoaded', function() {
+    var btnLimpiar = document.getElementById('btnLimpiarFiltros');
+    if (btnLimpiar) btnLimpiar.addEventListener('click', limpiarFiltros);
+
+    // Búsqueda en vivo (con pequeño retardo para no filtrar en cada tecla)
+    var debounceTimer = null;
+    ['searchGlobal', 'searchGlobalMovil', 'filtroBuscar'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', function() {
+                busquedaInicial = '';
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(aplicarFiltros, 250);
+            });
+        }
+    });
+
+    // Carrusel de destacados
+    var featPrev = document.getElementById('featPrev');
+    var featNext = document.getElementById('featNext');
+    var featVp = document.getElementById('destacadosViewport');
+    var btnDestacados = document.getElementById('btnVerDestacados');
+
+    if (featPrev) featPrev.addEventListener('click', function() { scrollDestacados(-1); });
+    if (featNext) featNext.addEventListener('click', function() { scrollDestacados(1); });
+    if (featVp) featVp.addEventListener('scroll', actualizarFlechasDestacados);
+
+    if (btnDestacados) {
+        btnDestacados.addEventListener('click', function() {
+            document.getElementById('filtroOrden').value = 'destacado_desc';
+            aplicarFiltros();
+            var barra = document.querySelector('.barra-resultados');
+            if (barra) barra.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }
+
+    window.addEventListener('resize', actualizarFlechasDestacados);
+
+    leerParametrosURL();
+    cargarProductos();
+    actualizarContadorCarrito();
+});
+
+window.addEventListener('storage', function(e) {
+    if (e.key === 'carritoCliente') actualizarContadorCarrito();
+});
+</script>
+
+<style>:root{ --salesiano-gold: #D4AF37; --salesiano-blue: #0d2b6e; }.sticky-filtros{ position: sticky; top: 90px; }/* ===== BANNER CATÁLOGO ===== */
+    .catalogo-banner{
+        background: linear-gradient(120deg, #0d2b6e 0%, #1d4ed8 55%, #2c6ff2 100%);
+        box-shadow: 0 18px 45px rgba(13, 43, 110, 0.35);
+    }.banner-glow{
+        position: absolute;
+        top: -60px;
+        right: -40px;
+        width: 260px;
+        height: 260px;
+        background: radial-gradient(circle, rgba(212, 175, 55, 0.5), transparent 70%);
+        border-radius: 50%;
+        filter: blur(6px);
+    }.catalogo-banner .search-form{
+        border: 2px solid var(--salesiano-gold);
+        border-radius: 50px;
+        overflow: hidden;
+        background: #fff;
+        display: flex;
+    }.catalogo-banner .search-form input{ flex: 1; border: 0; outline: none; padding: 0.7rem 1rem; font-size: 0.9rem; }.catalogo-banner .search-form button{
+        border: 0; background: linear-gradient(135deg, var(--salesiano-gold), #f0c94a);
+        color: #1d2a4d; font-weight: 700; padding: 0 1.2rem; cursor: pointer;
+    }.bg-gradient-primary{ background: linear-gradient(135deg, #0d2b6e 0%, #1d4ed8 100%); }.promo-banner{ background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); }.bg-gold{ background: var(--salesiano-gold); color: #1d2a4d; font-weight: 700; }.rounded-4{ border-radius: 1rem !important; }.slider-paginas{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+        margin-top: 16px;
+    }/* ===== CARRUSEL DE DESTACADOS (ESTILO AMAZON) ===== */
+    .destacados-seccion{
+        background: linear-gradient(135deg, #ffffff 0%, #fff8e6 100%);
+        border: 1px solid rgba(212, 175, 55, 0.35);
+        border-radius: 1rem;
+        padding: 1rem 1rem 0.75rem;
+        box-shadow: 0 10px 30px -18px rgba(13, 43, 110, 0.25);
+    }.feat-slider{ position: relative; }.feat-viewport{
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        padding: 4px 2px 12px;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }.feat-viewport::-webkit-scrollbar{ display: none; }.feat-track{
+        display: flex;
+        gap: 14px;
+        width: max-content;
+        align-items: stretch;
+    }.feat-card{
+        flex: 0 0 180px;
+        max-width: 180px;
+        scroll-snap-align: start;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }.feat-card:hover{
+        transform: translateY(-6px);
+        box-shadow: 0 16px 30px -14px rgba(13, 43, 110, 0.3) !important;
+    }.feat-img{
+        height: 140px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+    }.feat-img img{
+        position: relative;
+        z-index: 2;
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+        transition: transform 0.3s;
+    }.feat-card:hover .feat-img img{ transform: scale(1.06); }.feat-emoji{
+        position: absolute;
+        left: 10px;
+        top: 10px;
+        font-size: 1.5rem;
+        opacity: 0.2;
+        z-index: 1;
+        pointer-events: none;
+    }.feat-nombre{
+        font-size: 0.8rem;
+        line-height: 1.15;
+        min-height: 2.3em;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }.feat-arrow{
+        position: absolute;
+        top: 42%;
+        transform: translateY(-50%);
+        width: 38px;
+        height: 38px;
+        border: 0;
+        border-radius: 50%;
+        background: #fff;
+        color: var(--salesiano-blue);
+        box-shadow: 0 6px 18px rgba(13, 43, 110, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 6;
+        transition: all 0.2s ease;
+    }.feat-arrow:hover:not(:disabled){ background: var(--salesiano-gold); color: #1d2a4d; }.feat-arrow.left{ left: -10px; }.feat-arrow.right{ right: -10px; }.feat-arrow:disabled{ opacity: 0; pointer-events: none; }
+
+    @media (max-width: 576px) {.feat-card{ flex-basis: 145px; max-width: 145px; }.feat-img{ height: 115px; }.feat-arrow{ width: 32px; height: 32px; }.feat-arrow.left{ left: -4px; }.feat-arrow.right{ right: -4px; }
+    }
+</style>
+{% endblock %}
