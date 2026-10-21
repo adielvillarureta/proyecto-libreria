@@ -34,6 +34,54 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             // ============================================
+            // CAJON DE MENU LATERAL
+            // ============================================
+            const cajon = document.getElementById('cajonMenu');
+            const fondo = document.getElementById('cajonFondo');
+            const boton = document.getElementById('botonMenu');
+            const cerrar = document.getElementById('botonCerrarMenu');
+
+            function abrirCajon() {
+                if (!cajon) return;
+                cajon.classList.add('abierto');
+                cajon.setAttribute('aria-hidden', 'false');
+                if (boton) boton.setAttribute('aria-expanded', 'true');
+                if (fondo) { fondo.hidden = false; requestAnimationFrame(() => fondo.classList.add('visible')); }
+                document.body.style.overflow = 'hidden';
+            }
+
+            function cerrarCajon() {
+                if (!cajon) return;
+                cajon.classList.remove('abierto');
+                cajon.setAttribute('aria-hidden', 'true');
+                if (boton) boton.setAttribute('aria-expanded', 'false');
+                if (fondo) {
+                    fondo.classList.remove('visible');
+                    // Se oculta despues de la transicion, no de golpe.
+                    setTimeout(() => { if (!cajon.classList.contains('abierto')) fondo.hidden = true; }, 280);
+                }
+                document.body.style.overflow = '';
+            }
+
+            if (boton) boton.addEventListener('click', abrirCajon);
+            if (cerrar) cerrar.addEventListener('click', cerrarCajon);
+            if (fondo) fondo.addEventListener('click', cerrarCajon);
+
+            // Escape cierra el cajon
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && cajon && cajon.classList.contains('abierto')) cerrarCajon();
+            });
+
+            // Si haces mas ancho que el cajon, este se cierra solo
+            let anchoPrevio = window.innerWidth;
+            window.addEventListener('resize', function() {
+                if (window.innerWidth !== anchoPrevio) {
+                    anchoPrevio = window.innerWidth;
+                    if (anchoPrevio > 992 && cajon && cajon.classList.contains('abierto')) cerrarCajon();
+                }
+            });
+
+            // ============================================
             // EFECTO DE SOMBRA AL HACER SCROLL
             // ============================================
             const panel = document.getElementById('panelSalesiano');

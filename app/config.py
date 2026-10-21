@@ -56,10 +56,13 @@ class Config:
     # "test" o "live": solo se usa para saber contra qué entorno apuntamos.
     CULQI_MODO = os.getenv("CULQI_MODO", "test")
 
-    # Pasarela de pagos Mercado Pago
+# Pasarela de pagos Mercado Pago
     MP_ACCESS_TOKEN = os.getenv("MP_ACCESS_TOKEN", "")
-    # Secreto del webhook, en Mercado Pago > Notificaciones > Webhooks.
     MP_WEBHOOK_SECRET = os.getenv("MP_WEBHOOK_SECRET", "")
+
+    # APIs de validación externa
+    ABSTRACT_API_KEY = os.getenv("ABSTRACT_API_KEY", "")
+    GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "")
 
     # URL pública de la aplicación (ngrok, dominio, etc.)
     # Se usa para construir los links de OAuth y de correos.

@@ -725,11 +725,17 @@
     filter: brightness(1.05);
 }
 
-/* ---------- Pantallas medianas: una sola columna, menu arriba ---------- */
+/* ---------- Pantallas medianas: una sola columna, menus arriba ---------- */
 @media (max-width: 1199.98px) {
     .contenedor-lateral {
         grid-template-columns: minmax(0, 1fr);
     }
+
+    /* En una sola columna los dos menus van arriba, antes del contenido.
+       Con order, porque en el DOM el menu derecho va despues. */
+    .menu-izquierdo { order: 1; }
+    .menu-derecho   { order: 2; }
+    .contenido-principal { order: 3; }
 
     .menu-lateral {
         position: static;
@@ -772,4 +778,169 @@
     .menu-lateral .btn-card i {
         font-size: .85rem;
     }
+}
+
+/* ==========================================================
+   PANEL ADMIN — CAJON DE MENU LATERAL
+   El menu entero se despliega desde el lado. El contenido
+   ocupa el ancho completo.
+   ========================================================== */
+
+.cabecera-panel {
+    position: sticky;
+    top: 0;
+    z-index: 1040;
+    padding: .5rem 0;
+    background: rgba(248, 249, 252, .95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 0 0 16px 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, .06);
+    margin-bottom: .75rem;
+    transition: box-shadow .3s ease;
+}
+
+.cabecera-panel.scrolled {
+    box-shadow: 0 4px 30px rgba(0, 0, 0, .14);
+    background: rgba(255, 255, 255, .98);
+}
+
+.cabecera-panel-caja {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    background: linear-gradient(135deg, #f8f9fc 0%, #fff 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 16px;
+    padding: .55rem 1rem;
+}
+
+.cabecera-panel-titulo { flex: 1 1 auto; min-width: 0 }
+.cabecera-panel-titulo h1 { font-size: 1.05rem !important }
+.cabecera-panel-titulo p  { font-size: .7rem !important; margin-bottom: 0 }
+
+/* ---------- Boton del menu ---------- */
+.boton-menu {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0d2b6e, #173f9e);
+    color: #fff;
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition: transform .15s, filter .15s;
+}
+.boton-menu:hover { filter: brightness(1.15) }
+.boton-menu:active { transform: scale(.94) }
+
+/* ---------- Cajon ---------- */
+.cajon-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 278px;
+    max-width: 84vw;
+    background: linear-gradient(180deg, #0d2b6e 0%, #0a1f52 100%);
+    color: #fff;
+    z-index: 1090;
+    transform: translateX(-100%);
+    transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 6px 0 28px rgba(0, 0, 0, .28);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.cajon-menu.abierto { transform: translateX(0) }
+
+.cajon-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    padding: .9rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, .14);
+    font-size: .9rem;
+    position: sticky;
+    top: 0;
+    background: rgba(10, 31, 82, .95);
+    backdrop-filter: blur(6px);
+}
+
+.cajon-cuerpo {
+    padding: .6rem .7rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+}
+
+.cajon-menu .menu-titulo {
+    font-size: .66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .9px;
+    color: rgba(255, 255, 255, .55);
+    padding: .45rem .5rem .25rem;
+}
+
+/* ---------- Botones dentro del cajon ---------- */
+.cajon-menu .btn-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    gap: .65rem;
+    width: 100%;
+    padding: .55rem .7rem !important;
+    border-radius: 10px !important;
+    text-align: left;
+    font-size: .82rem !important;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 !important;
+    transition: transform .12s, filter .12s;
+}
+.cajon-menu .btn-card:hover { transform: translateX(3px); filter: brightness(1.12); color: #fff }
+.cajon-menu .btn-card i { font-size: .95rem; width: 20px; text-align: center; flex: 0 0 20px }
+.cajon-menu .btn-card span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+
+/* Los botones usan su propio color de fondo; sobre azul oscuro se
+   recortan con un borde claro para que no se pierdan. */
+.cajon-menu .btn-card[class*="btn-card-"] {
+    border: 1px solid rgba(255, 255, 255, .22);
+}
+
+/* ---------- Fondo oscurecido ---------- */
+.cajon-fondo {
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 17, 40, .5);
+    z-index: 1080;
+    opacity: 0;
+    transition: opacity .28s ease;
+}
+.cajon-fondo.visible { opacity: 1 }
+
+/* ---------- Contenido ---------- */
+.contenido-panel {
+    max-width: 1560px;
+    margin: 0 auto;
+    padding: 0 1rem 2.5rem;
+}
+.contenido-panel.sin-sesion { max-width: 1140px }
+
+/* ---------- Moviles ---------- */
+@media (max-width: 575.98px) {
+    .cabecera-panel-caja { padding: .5rem .7rem; border-radius: 12px }
+    .cabecera-panel-titulo h1 { font-size: .9rem !important }
+    .cabecera-panel-titulo p { display: none }
+    .contenido-panel { padding: 0 .6rem 2rem }
+    .boton-menu { width: 36px; height: 36px; flex-basis: 36px }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cajon-menu, .cajon-fondo { transition: none }
 }

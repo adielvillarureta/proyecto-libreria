@@ -30,6 +30,12 @@ def contacto():
     return render_template('contacto.html')
 
 
+@main_bp.route('/validar')
+@login_required
+def validar():
+    return render_template('validar.html')
+
+
 @main_bp.route('/favicon.ico')
 def favicon():
     return ("", 204)
